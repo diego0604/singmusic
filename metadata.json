@@ -1,0 +1,10 @@
+{
+  "name": "Remix Enciclopedia Interactiva de Música",
+  "description": "Enciclopedia interactiva de teoría musical, armonía práctica, composición e instrumentos con laboratorios de síntesis y visualización.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

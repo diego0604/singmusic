@@ -1,0 +1,242 @@
+<div class="min-h-screen flex flex-col bg-[#0b0f19] text-slate-100">
+  <!-- Clean Top Header Bar (Single Menu Architecture + Quick Tools) -->
+  <header class="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-2.5 bg-[#0f172a]/95 backdrop-blur border-b border-slate-800">
+    <div class="flex items-center gap-3 min-w-0">
+      <a
+        href="#intro"
+        (click)="$event.preventDefault(); loadCategory(categories[0])"
+        class="text-base sm:text-lg font-extrabold tracking-tight text-white whitespace-nowrap shrink-0">
+        🎼 Enciclopedia Interactiva de Música
+      </a>
+      <span class="hidden xl:inline-block text-xs text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-0.5 rounded font-semibold truncate max-w-md">
+        {{ activeNoteLabel() }}
+      </span>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2 shrink-0">
+      <button
+        type="button"
+        (click)="openQuickLab('canto', 'v-detector-tesitura')"
+        class="px-2.5 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 rounded-lg hover:bg-emerald-500/25 transition-colors whitespace-nowrap cursor-pointer">
+        🎤 Detector de Tesitura
+      </button>
+
+      <button
+        type="button"
+        (click)="openQuickLab('guitarra-ac', 'ga-diccionario-inverso')"
+        class="px-2.5 py-1.5 text-xs font-semibold text-sky-300 bg-sky-500/15 border border-sky-500/40 rounded-lg hover:bg-sky-500/25 transition-colors whitespace-nowrap cursor-pointer">
+        🎸 ¿Qué Acorde Piso?
+      </button>
+
+      <button
+        type="button"
+        (click)="toggleGlossary()"
+        class="px-2.5 py-1.5 text-xs font-semibold text-purple-300 bg-purple-500/15 border border-purple-500/40 rounded-lg hover:bg-purple-500/25 transition-colors whitespace-nowrap cursor-pointer">
+        📖 Glosario Musical
+      </button>
+
+      <button
+        type="button"
+        (click)="stopAllAudio()"
+        class="px-2.5 py-1.5 text-xs font-semibold text-rose-300 bg-rose-500/15 border border-rose-500/40 rounded-lg hover:bg-rose-500/25 transition-colors whitespace-nowrap cursor-pointer">
+        ⏹ Detener
+      </button>
+
+      <button
+        type="button"
+        (click)="toggleInstrument()"
+        class="px-2.5 py-1.5 text-xs font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-lg hover:bg-amber-500/25 transition-colors whitespace-nowrap cursor-pointer">
+        @if (currentInstrument() === 'guitar') {
+          🎸 Timbre: Guitarra (6c)
+        } @else if (currentInstrument() === 'bass') {
+          🎸 Timbre: Bajo (4c)
+        } @else {
+          🎹 Timbre: Piano Acústico
+        }
+      </button>
+
+      <button
+        type="button"
+        (click)="playMidiNote(69, 1.3)"
+        class="px-3 py-1.5 text-xs font-semibold text-slate-950 bg-sky-400 rounded-lg hover:bg-sky-300 transition-colors whitespace-nowrap shrink-0 cursor-pointer">
+        🔊 A4 (440 Hz)
+      </button>
+    </div>
+  </header>
+
+  <!-- Floating Interactive Glossary Modal/Drawer -->
+  @if (showGlossary()) {
+    <div class="fixed inset-0 z-50 flex items-start justify-end bg-black/60 backdrop-blur-xs p-4 sm:p-6">
+      <div class="w-full max-w-xl bg-[#111827] border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
+        <div class="flex items-center justify-between px-5 py-4 bg-slate-900 border-b border-slate-800">
+          <div>
+            <h2 class="text-base font-extrabold text-amber-400">📖 Glosario Musical Interactivo</h2>
+            <p class="text-xs text-slate-400">Consulta definiciones técnicas, escucha ejemplos en vivo o salta al capítulo exacto.</p>
+          </div>
+          <button
+            type="button"
+            (click)="toggleGlossary()"
+            class="px-3 py-1 text-xs font-bold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg cursor-pointer">
+            ✕ Cerrar
+          </button>
+        </div>
+
+        <div class="p-4 border-b border-slate-800 bg-slate-900/50">
+          <input
+            type="search"
+            [value]="glossaryFilter()"
+            (input)="onGlossaryInput($event)"
+            placeholder="Filtrar término (ej. Appoggio, Passaggio, SOVT, Arka, Sesquiáltera, Drop 2)..."
+            class="w-full px-3.5 py-2 text-sm bg-[#0b0f19] border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-400" />
+        </div>
+
+        <div class="p-4 overflow-y-auto space-y-3">
+          @for (item of filteredGlossary(); track item.term) {
+            <div class="p-3.5 rounded-xl bg-[#0b0f19] border border-slate-800 hover:border-slate-700 transition-colors">
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <span class="font-bold text-sm text-amber-300">{{ item.term }}</span>
+                <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30">
+                  {{ item.category }}
+                </span>
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed mb-2.5">{{ item.definition }}</p>
+              <div class="flex items-center gap-2">
+                @if (item.demoRun) {
+                  <button
+                    type="button"
+                    (click)="playGlossaryDemo(item.demoRun)"
+                    class="px-2.5 py-1 text-[11px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded hover:bg-amber-500/30 cursor-pointer">
+                    🔊 Escuchar Ejemplo
+                  </button>
+                }
+                <button
+                  type="button"
+                  (click)="jumpFromGlossary(item)"
+                  class="px-2.5 py-1 text-[11px] font-semibold bg-slate-800 text-sky-300 hover:bg-slate-700 rounded cursor-pointer">
+                  Ir al Capítulo →
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Main Workspace -->
+  <div class="flex-1 max-w-[1480px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 sm:px-6 py-6">
+    <!-- Single Unified Hierarchical Sidebar Menu + Instant Global Search -->
+    <aside class="lg:col-span-3">
+      <nav
+        aria-label="Índice general de la enciclopedia"
+        class="bg-[#111827] border border-slate-800 rounded-xl p-4 sticky top-16 max-h-[calc(100vh-5rem)] overflow-y-auto">
+        <!-- Global Instant Search Box -->
+        <div class="mb-4">
+          <label for="globalEncyclopediaSearch" class="block text-[11px] font-bold uppercase tracking-wider text-sky-400 mb-1.5">
+            🔍 Buscador Global (74 Capítulos)
+          </label>
+          <div class="relative">
+            <input
+              id="globalEncyclopediaSearch"
+              type="search"
+              [value]="searchQuery()"
+              (input)="onSearchInput($event)"
+              placeholder="Ej: Lidio, Passaggio, Quena, Slap, Chacarera..."
+              class="w-full px-3 py-2 text-xs bg-[#0b0f19] border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-400" />
+            @if (searchQuery().length > 0) {
+              <button
+                type="button"
+                (click)="clearSearch()"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white px-1 cursor-pointer">
+                ✕
+              </button>
+            }
+          </div>
+
+          @if (searchQuery().trim().length >= 2) {
+            <div class="mt-2 bg-[#0b0f19] border border-sky-500/40 rounded-lg p-2 max-h-80 overflow-y-auto space-y-1.5">
+              <div class="text-[11px] font-semibold text-slate-400 px-1">
+                Resultados encontrados ({{ searchResults().length }}):
+              </div>
+              @if (searchResults().length === 0) {
+                <div class="text-xs text-slate-400 p-2">
+                  No se encontraron capítulos para "{{ searchQuery() }}".
+                </div>
+              }
+              @for (res of searchResults(); track res.sectionId) {
+                <button
+                  type="button"
+                  (click)="jumpToSearchResult(res)"
+                  class="w-full text-left p-2 rounded-lg bg-slate-900/90 hover:bg-sky-500/15 border border-slate-800 hover:border-sky-500/40 transition-colors cursor-pointer block">
+                  <div class="flex items-center justify-between gap-1">
+                    <span class="text-xs font-bold text-amber-300 truncate">{{ res.sectionTitle }}</span>
+                    <span class="text-[10px] font-mono text-sky-400 shrink-0">N{{ res.nivel }}</span>
+                  </div>
+                  <div class="text-[10px] text-sky-300/90 font-semibold truncate">{{ res.catLabel }}</div>
+                  <p class="text-[11px] text-slate-400 line-clamp-2 mt-0.5">{{ res.snippet }}</p>
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2.5">
+          Índice de la Enciclopedia (11 Módulos)
+        </div>
+
+        <div class="space-y-1.5">
+          @for (cat of categories; track cat.id) {
+            <div>
+              <button
+                type="button"
+                (click)="loadCategory(cat)"
+                class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-between cursor-pointer"
+                [class.bg-sky-500/20]="activeCat().id === cat.id"
+                [class.text-sky-300]="activeCat().id === cat.id"
+                [class.border]="activeCat().id === cat.id"
+                [class.border-sky-500/40]="activeCat().id === cat.id"
+                [class.text-slate-300]="activeCat().id !== cat.id"
+                [class.hover:bg-slate-800/70]="activeCat().id !== cat.id">
+                <span class="truncate">{{ cat.label }}</span>
+                <span class="text-[11px] text-slate-400 ml-2 shrink-0">{{ cat.count }} cap.</span>
+              </button>
+
+              @if (activeCat().id === cat.id && sections().length > 0) {
+                <div class="mt-1.5 mb-2.5 ml-2 pl-2.5 border-l-2 border-sky-500/40 space-y-1">
+                  @for (sec of sections(); track sec.id) {
+                    <button
+                      type="button"
+                      (click)="scrollToSection(sec.id)"
+                      class="w-full text-left px-2.5 py-1.5 rounded text-xs text-slate-300 hover:text-amber-300 hover:bg-slate-800/80 transition-colors flex items-center justify-between gap-2 cursor-pointer">
+                      <span class="truncate">{{ sec.title }}</span>
+                      <span class="text-[10px] text-sky-400/80 font-mono shrink-0">N{{ sec.nivel }}</span>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Encyclopedia Content Area -->
+    <main class="lg:col-span-9 min-w-0">
+      @if (loading()) {
+        <div class="bg-[#111827] border border-slate-800 rounded-xl p-12 text-center text-slate-300">
+          Cargando {{ activeCat().label }}...
+        </div>
+      } @else {
+        <div
+          #contentHost
+          tabindex="0"
+          role="region"
+          aria-label="Contenido del módulo"
+          (click)="handleContentClick($event)"
+          (keydown.enter)="handleContentClick($any($event))"
+          [innerHTML]="safeContent()">
+        </div>
+      }
+    </main>
+  </div>
+</div>

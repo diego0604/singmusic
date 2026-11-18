@@ -1,0 +1,261 @@
+<section id="p-fundamentos" class="module-section" data-cat="produccion" data-nivel="2" data-menu="1. Acústica, Microfonía y Grabación">
+  <div class="module-header">
+    <span class="nav-badge badge-lvl2">Nivel 2 · Intermedio · Ingeniería de Estudio</span>
+    <h2 class="module-title">Fundamentos de Producción Musical: Cadena Electroacústica, Microfonía, Estructura de Ganancia y Sincronía Temporal</h2>
+    <p class="module-subtitle">Cómo capturar instrumentos reales y sintetizadores con fidelidad profesional, evitando el recorte digital, los problemas de fase y calculando tiempos en milisegundos.</p>
+  </div>
+  <p>La producción musical contemporánea une el arte de la composición y el arreglo (<a href="#a-fundamentos">ver Arreglos</a>) con la física del sonido (<a href="#t-sonido">ver Acústica</a>). Un error en el primer eslabón de la cadena (una mala elección de micrófono, una fase invertida o una ganancia saturada en el preamplificador) no se puede arreglar con ningún plugin de mezcla posterior (recuerda: C = Do, D = Re, E = Mi, F = Fa, G = Sol, A = La, B = Si).</p>
+
+  <h3 id="p-fundamentos-microfonos-fase">1.1 Transductores (Dinámicos, Condensador y Cinta), Patrones Polares y la Regla 3:1 de Fase</h3>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Tipo de Micrófono</th>
+          <th>Principio Físico</th>
+          <th>Respuesta Transitoria y Frecuencial</th>
+          <th>Aplicaciones Ideales en el Estudio</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Dinámico (Bobina Móvil)</strong><br>(ej. SM57, SM7B, RE20, MD421)</td>
+          <td>Diafragma unido a una bobina dentro de un imán; no requiere alimentación externa.</td>
+          <td>Masa mayor: soporta presiones extremas (>135 dB SPL) y redondea los transitorios agresivos.</td>
+          <td>Caja de batería, amplificadores de guitarra eléctrica, toms, metales potentes y voces de rock/rap.</td>
+        </tr>
+        <tr>
+          <td><strong>Condensador (Capacitivo)</strong><br>(Diafragma grande LDC y pequeño SDC)</td>
+          <td>Placa ligera cargada eléctricamente (requiere alimentación fantasma <strong>+48V</strong>).</td>
+          <td>Respuesta ultrarrápida a los transitorios y extensión completa hasta 20 kHz.</td>
+          <td>Voces principales (LDC), guitarra acústica, piano, quena/flautas y aéreos de batería (<em>overheads</em> SDC).</td>
+        </tr>
+        <tr>
+          <td><strong>Cinta (Ribbon)</strong><br>(ej. Royer R-121, Coles 4038)</td>
+          <td>Finísima lámina de aluminio corrugado suspendida en un campo magnético (patrón bidireccional figura 8).</td>
+          <td>Atenúa la aspereza digital aguda y ofrece el timbre más natural y cálido, similar al oído humano.</td>
+          <td>Secciones de vientos, cuerdas, gabinetes de guitarra eléctrica y salas (<em>room mics</em>).</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <ul>
+    <li><strong>Estructura de Ganancia (<em>Gain Staging</em>):</strong> En el mundo digital de 24 bits (donde el techo absoluto es <strong><code>0 dBFS</code></strong>), grabar demasiado caliente destruye el sonido por recorte cuadrado. El punto dulce de grabación (equivalente al `0 VU` analógico) se sitúa con un nivel promedio de <strong><code>-18 dBFS RMS</code></strong> y picos máximos que no superen <strong><code>-6 dBFS</code> a <code>-10 dBFS</code></strong>.</li>
+    <li><strong>Cancelación de Fase y la Regla 3:1:</strong> Si grabas una guitarra acústica o una batería con dos micrófonos a distintas distancias, la onda llega unos milisegundos más tarde al segundo micrófono, creando un <strong>filtro de peine (<em>comb filtering</em>)</strong> que vacía los graves. Para evitarlo: la distancia entre dos micrófonos debe ser <strong>al menos 3 veces mayor que la distancia de cada micrófono a su fuente sonora</strong>.</li>
+  </ul>
+
+  <article class="interactive-widget" id="lab-produccion-calculadora" data-lab="production-calc" data-nivel="2">
+    <header class="widget-header">
+      <div>
+        <strong>Laboratorio: Calculadora de Estudio (BPM a Milisegundos de Delay/Reverb y Frecuencia a Nota/Cents)</strong>
+        <p>Nivel 2 · Conocimientos previos: figuras rítmicas (<a href="#t-ritmo">sección 7 de Teoría</a>) y hercios (<a href="#t-sonido">sección 1</a>).</p>
+      </div>
+    </header>
+    <p><strong>Objetivo.</strong> Calcular al instante los tiempos exactos en milisegundos (ms) para ajustar el <em>Pre-Delay</em> y el <em>Decay</em> de la reverberación, los ecos de <em>Delay</em> (negras, corcheas, corcheas con puntillo y tresillos), los tiempos de liberación (<em>Release</em>) del compresor y las frecuencias de corte de ecualización según la tonalidad. <strong>Teoría del laboratorio.</strong> Como 1 minuto tiene 60 000 ms, una negra dura exactamente <code>60 000 / BPM</code> ms; una corchea con puntillo (el sonido clásico de The Edge / U2 y Pink Floyd) dura <code>0.75 × negra</code>; y un tresillo de corchea dura <code>negra / 3</code>.</p>
+    <div class="lab-stage"></div>
+    <details>
+      <summary>Instrucciones de uso</summary>
+      <ol>
+        <li>Ajusta el control de <strong>BPM</strong> al tempo de tu canción (por ejemplo 120 BPM o 96 BPM).</li>
+        <li>Anota los valores en milisegundos de la negra (1/4), corchea (1/8), semicorchea (1/16), corchea con puntillo (1/8.) y tresillo (1/8T).</li>
+        <li>Usa el conversor de frecuencia (Hz) a nota musical para identificar qué nota está resonando en tu sala o dónde afinar el bombo.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>Ejemplo resuelto</summary>
+      <p>A <strong>120 BPM</strong>: 1 negra dura <code>500 ms</code>, 1 corchea dura <code>250 ms</code>, 1 semicorchea dura <code>125 ms</code> y una <strong>corchea con puntillo dura <code>375 ms</code></strong>. Si queremos que la reverberación de la voz principal sea enorme pero no ensucie la dicción de la sílaba inicial, ajustamos el <strong>Pre-Delay a una fusa o semifusa (<code>31.25 ms</code> o <code>62.5 ms</code>)</strong>: así la voz seca golpea primero limpia y la cola de la sala entra sincronizada con el groove un instante después.</p>
+    </details>
+    <details>
+      <summary>Ejercicios guiados y retos libres</summary>
+      <ol>
+        <li>Calcula para una canción a <strong>100 BPM</strong> el tiempo exacto en ms de un delay en corchea con puntillo (1/8.) y el de un pre-delay en 1/32 (fusa).</li>
+        <li>Si tu canción está en <strong>A menor (La = 55 Hz / 110 Hz)</strong>, ¿a qué frecuencia exacta debes colocar el filtro paso-altos (<em>High-Pass Filter</em>) del bajo para limpiar el subgrave inaudible sin cortar la fundamental E1 (41.2 Hz) ni A1 (55 Hz)?</li>
+        <li>Determina cuántos hercios (Hz) debe tener el LFO de un <em>tremolo</em> o <em>autopan</em> para que oscile exactamente en corcheas a 120 BPM.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>Soluciones razonadas</summary>
+      <p>1) A 100 BPM la negra vale <code>600 ms</code>; la corchea con puntillo vale <code>600 × 0.75 = 450 ms</code>; la fusa (1/32 = negra / 8) vale <code>600 / 8 = 75 ms</code> (o 1/64 = <code>37.5 ms</code>). 2) El filtro paso-altos del bajo debe situarse en torno a <strong>30–35 Hz</strong> (justo por debajo de E1 = 41.2 Hz). 3) A 120 BPM una corchea dura <code>0.25 segundos</code>, por lo que su frecuencia en hercios es <code>1 / 0.25 = 4 Hz</code>.</p>
+    </details>
+    <details>
+      <summary>Errores frecuentes y aplicación en una composición real</summary>
+      <ul>
+        <li><strong>Error frecuente:</strong> Poner un tiempo de <em>Release</em> (liberación) del compresor del bus maestro demasiado largo o fuera de tempo, haciendo que el compresor siga aplastando el siguiente golpe de bombo. Ajustar el <em>Release</em> a una semicorchea o corchea del tempo hace que el compresor "respire" y baile con la canción.</li>
+        <li><strong>Aplicación real:</strong> Automatiza el envío al delay de corchea con puntillo para que solo se abra en la <strong>última palabra de cada frase vocal</strong>, llenando el hueco instrumental sin ensuciar las estrofas.</li>
+      </ul>
+    </details>
+  </article>
+
+  <div class="callout exercise">
+    <div class="callout-title">Reto de dominio · Plan de Grabación y Cálculo de Tiempos a 90 BPM</div>
+    <p>Conocimientos previos: tipos de micrófonos, regla 3:1 y calculadora de estudio (1.1). Vas a grabar una sesión en vivo a <strong>90 BPM</strong> en la tonalidad de <strong>G Mayor (Sol mayor)</strong> con voz, guitarra acústica y percusión: 1) Calcula los milisegundos exactos de la negra, la corchea con puntillo y el pre-delay de 1/32; 2) Indica qué frecuencia en Hz tiene la tónica grave G1 y G2 en el bajo; 3) Explica a qué distancia mínima debes separar dos micrófonos que apuntan a una guitarra acústica si cada micrófono está a 20 cm de las cuerdas.</p>
+    <details>
+      <summary>Solución razonada</summary>
+      <p>1) A 90 BPM: Negra = <code>60 000 / 90 = 666.7 ms</code>; Corchea con puntillo (`×0.75`) = <strong><code>500 ms</code></strong>; Pre-delay de 1/32 (`÷8`) = <strong><code>83.3 ms</code></strong> (o 1/64 = <code>41.7 ms</code>). 2) Como A2 = 110 Hz y G está 2 semitonos abajo: <code>G2 = 98.0 Hz</code> y su octava grave en el bajo es <strong><code>G1 = 49.0 Hz</code></strong>. 3) Por la Regla 3:1, si cada micrófono está a 20 cm de la guitarra, la distancia entre las dos cápsulas debe ser de al menos <strong><code>3 × 20 cm = 60 cm</code></strong> (o bien colocar ambas cápsulas pegadas en par coincidente X/Y a 90° para eliminar por completo la diferencia de fase).</p>
+    </details>
+  </div>
+</section>
+
+<section id="p-mezcla" class="module-section" data-cat="produccion" data-nivel="3" data-menu="2. Mezcla, EQ, Compresión y Espacio 3D">
+  <div class="module-header">
+    <span class="nav-badge badge-lvl3">Nivel 3 · Avanzado · Mezcla y Masterización</span>
+    <h2 class="module-title">El Arte de la Mezcla Tridimensional: Ecualización Sustractiva, Compresión Dinámica y Profundidad</h2>
+    <p class="module-subtitle">Cómo ubicar cada instrumento en los tres ejes del espacio sonoro (Altura frecuencial, Anchura estéreo y Profundidad) para lograr una mezcla cristalina y potente.</p>
+  </div>
+  <p>Mezclar una canción no consiste en poner todos los instrumentos fuertes a la vez, sino en esculpir un <strong>escenario tridimensional (3D)</strong> dentro de los dos altavoces para que cada elemento tenga su propio bolsillo de aire sin enmascarar a los demás (<a href="#a-integracion">ver enmascaramiento en Arreglos</a>; recuerda: C = Do, D = Re, E = Mi, F = Fa, G = Sol, A = La, B = Si):</p>
+
+  <h3 id="p-mezcla-tres-ejes">2.1 Los 3 Ejes de la Mezcla (Vertical = EQ, Horizontal = Panorama, Profundidad = Reverb/Transitorios)</h3>
+  <div class="grid-3">
+    <div class="card">
+      <h4>1. Eje Vertical (Altura = Frecuencia / EQ)</h4>
+      <p>Nuestro oído percibe las frecuencias agudas (`4–16 kHz`: platos, aire vocal) como situadas físicamente más arriba y las frecuencias subgraves (`40–100 Hz`: bombo y bajo) en el suelo. La <strong>Ecualización Sustractiva</strong> recorta en cada pista las frecuencias que no necesita para dejar hueco a las demás.</p>
+    </div>
+    <div class="card">
+      <h4>2. Eje Horizontal (Anchura = Panorama L–C–R)</h4>
+      <p>Los elementos de anclaje vital y de alta energía grave van <strong>estrictamente en el Centro (Mono)</strong>: <strong>Bombo, Caja, Bajo y Voz Principal</strong>. Las guitarras dobladas, pianos, coros, cuerdas y percusiones se abren a izquierda y derecha (`L / R`).</p>
+    </div>
+    <div class="card">
+      <h4>3. Eje de Profundidad (Frente a Fondo)</h4>
+      <p>¿Cómo acercas la voz a la cara del oyente y alejas un pad al fondo de la sala? Un sonido se percibe <strong>Cerca</strong> cuando tiene <strong>transitorios intactos, todos sus agudos presentes y poca reverberación (o con Pre-Delay largo >40 ms)</strong>; se percibe <strong>Lejos</strong> cuando atenúas sus agudos sobre `6 kHz` y lo bañas en reverberación con Pre-Delay corto (`0–10 ms`).</p>
+    </div>
+  </div>
+
+  <h3 id="p-mezcla-eq-compresion">2.2 Mapa de Bandas Frecuenciales y Los 4 Parámetros del Compresor</h3>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Banda de Frecuencia</th>
+          <th>Nombre y Sensación Acústica</th>
+          <th>Protagonistas de esa Zona</th>
+          <th>Cirugía de Mezcla Habitual (Qué Cortar)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>20 – 60 Hz</strong></td>
+          <td><strong>Subgraves (Sub-Bass):</strong> Se siente en el pecho más de lo que se oye; consume el 50% de la energía del amplificador.</td>
+          <td>Fundamental del Bombo y 4ª/5ª cuerda del Bajo.</td>
+          <td>Aplicar <strong>Filtro Paso-Altos (HPF) a 80–120 Hz en TODAS las demás pistas</strong> (guitarras, voces, teclados, platos) para limpiar el barro subgrave.</td>
+        </tr>
+        <tr>
+          <td><strong>60 – 200 Hz</strong></td>
+          <td><strong>Graves (Punch / Fundamental):</strong> Cuerpo, pegada y calor físico.</td>
+          <td>Pegada del bombo (`60–80 Hz`), cuerpo del bajo (`90–140 Hz`), peso de la caja (`180 Hz`).</td>
+          <td>Si el bombo pega en `65 Hz`, hacer una pequeña muesca de `-3 dB` en `65 Hz` en el bajo (o usar compresión <em>sidechain</em>) para que no peleen.</td>
+        </tr>
+        <tr>
+          <td><strong>250 – 500 Hz</strong></td>
+          <td><strong>Medios-Graves ("Zona de Cartón / Barro"):</strong> Acumulación de armónicos bajos de todos los instrumentos.</td>
+          <td>Cuerpo de guitarras, pianos y maderas.</td>
+          <td><strong>La zona más crítica:</strong> atenuar `-2 a -4 dB` alrededor de `300–400 Hz` en guitarras, baterías y pianos destapa toda la mezcla como si quitaras una manta de los altavoces.</td>
+        </tr>
+        <tr>
+          <td><strong>800 Hz – 4 kHz</strong></td>
+          <td><strong>Medios y Presencia (Máxima sensibilidad del oído humano):</strong> Inteligibilidad de las consonantes de la voz y ataque de púa.</td>
+          <td>Voz principal (`1.5–3.5 kHz`), guitarra líder, ataque del bajo (`900 Hz`) y chasquido del bombo.</td>
+          <td>En las guitarras y teclados acompañantes, hacer un hueco suave en `2–3 kHz` para que la voz principal reine sin tener que subir su volumen.</td>
+        </tr>
+        <tr>
+          <td><strong>5 – 20 kHz</strong></td>
+          <td><strong>Brillo y Aire (Seda):</strong> Sensación de estudio caro y cercanía.</td>
+          <td>Aire de la voz (`10–14 kHz`), platos, guitarra acústica de acero y <em>shakers</em>.</td>
+          <td>Controlar las "S" hirientes de la voz entre `5–8 kHz` con un <strong>De-Esser</strong> antes de dar aire arriba en `12 kHz`.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <ul>
+    <li><strong>Cómo domar un Compresor sin matar la vida de la música:</strong> Un compresor es un control automático de volumen con 4 mandos: 1) <strong>Threshold (Umbral):</strong> a partir de qué nivel empieza a actuar; 2) <strong>Ratio (Proporción, ej. `4:1`):</strong> cuánto reduce lo que supera el umbral; 3) <strong>Attack (Ataque, el mando más importante):</strong> si pones un <strong>ataque lento (`20–40 ms`)</strong>, dejas pasar libremente el golpe inicial percusivo de la caja, el bajo o la guitarra acústica y comprimes solo la cola, **aumentando la pegada (<em>punch</em>)**; si pones un **ataque ultrarrápido (`0.5–3 ms`)**, aplastas el pico inicial y empujas el instrumento hacia atrás en la mezcla; 4) <strong>Release (Recuperación):</strong> qué tan rápido suelta la ganancia de vuelta a cero.</li>
+  </ul>
+
+  <div class="callout pro">
+    <div class="callout-title">Truco profesional · Compresión en Serie (76 + 2A) para una Voz Principal Inamovible</div>
+    <p>En lugar de usar un solo compresor reduciendo `12 dB` de golpe (lo que suena ahogado y artificial), los ingenieros de mezcla usan **dos compresores distintos en serie**: el primero es un compresor rápido tipo FET (estilo 1176, ataque rápido y release rápido) que atrapa únicamente los **picos rebeldes de `2 a 3 dB`** en las sílabas fuertes; inmediatamente detrás va un compresor óptico suave (estilo LA-2A) que nivela la masa general de la frase otros **`2 a 3 dB`**. La voz queda flotando delante de los altavoces con total naturalidad.</p>
+  </div>
+
+  <div class="callout exercise">
+    <div class="callout-title">Reto de dominio · Diagnóstico y Cirugía de una Mezcla Embarrada</div>
+    <p>Conocimientos previos: los 3 ejes de la mezcla, tabla de frecuencias y ataque del compresor (2.1–2.2). Recibes una mezcla con tres problemas graves: a) Cuando entran las guitarras acústicas y el piano en el estribillo, el bajo y el bombo pierden definición y todo suena opaco y "encajonado"; b) La caja de la batería suena débil y aplastada al fondo a pesar de tener un compresor puesto; c) La voz principal se pierde cada vez que entra el solo o el riff de guitarra eléctrica en el centro. Prescribe la solución exacta de EQ, compresión y panorama para cada uno de los tres problemas.</p>
+    <details>
+      <summary>Solución razonada</summary>
+      <p>a) **Limpieza del barro grave y encajonamiento:** Aplicamos un **Filtro Paso-Altos (HPF) a `100 Hz`** tanto a las guitarras acústicas como al piano (para que no invadan la zona `40–90 Hz` del bombo y el bajo) y hacemos un corte sustractivo de **`-3 dB` en `300–380 Hz`** en ambos instrumentos para eliminar la resonancia de cartón. b) **Rescate del *punch* de la caja:** El compresor de la caja tiene el *Attack* demasiado rápido y está matando el transitorio inicial del golpe de baqueta; **abrimos el *Attack* a `25–30 ms`** (dejando pasar el latigazo inicial) y ponemos un *Release* rápido de `60–80 ms` para que el parche escupa hacia adelante. c) **Despeje de la voz principal:** Movemos las guitarras eléctricas fuera del centro (**paneadas a `60% L` y `60% R`**) y les aplicamos una atenuación de **`-2.5 dB` en `2.5 kHz`** (la zona de presencia de las consonantes de la voz).</p>
+    </details>
+  </div>
+</section>
+
+<section id="pr-proyectos" class="module-section" data-cat="proyectos" data-nivel="3" data-menu="1. Proyectos Integradores Master">
+  <div class="module-header">
+    <span class="nav-badge badge-lvl5">Nivel 4 · Experto · Síntesis e Integración Total</span>
+    <h2 class="module-title">Proyectos Integradores de Dominio: 3 Retos Completos de Composición, Arreglo, Instrumentación y Producción</h2>
+    <p class="module-subtitle">Pon a prueba las 11 categorías de la enciclopedia resolviendo tres encargos profesionales de principio a fin con guion técnico completo.</p>
+  </div>
+  <p>Has recorrido el camino completo desde la física de la serie armónica (<a href="#t-sonido">Teoría</a>), la construcción de pirámides extendidas, acordes híbridos, sustitución tritonal y teoría neorriemanniana (<a href="#h-triadas">Armonía</a>), el diseño de motivos, prosodia y formas (<a href="#c-pensamiento">Composición</a>), hasta la técnica específica de la <a href="#ga-fundamentos">Guitarra Acústica</a>, la <a href="#ge-fundamentos">Guitarra Eléctrica</a>, el <a href="#b-fundamentos">Bajo</a>, la <a href="#d-fundamentos">Batería</a>, el <a href="#v-fundamentos">Canto</a>, los <a href="#a-fundamentos">Arreglos</a> y la <a href="#p-fundamentos">Producción</a>. En esta sección final enfrentarás tres proyectos integradores reales con sus soluciones maestras desarrolladas paso a paso (recuerda: C = Do, D = Re, E = Mi, F = Fa, G = Sol, A = La, B = Si).</p>
+
+  <h3 id="pr-proyectos-tres-encargos">1.1 Los 3 Grandes Proyectos de Graduación</h3>
+  <div class="grid-3">
+    <div class="card">
+      <h4>Proyecto 1: Fusión Andina-Sinfónica Contemporánea (6/8 ↔ 3/4)</h4>
+      <p><strong>Tonalidad:</strong> E menor / G Mayor (con paso a E Dórico).<br><strong>Plantilla:</strong> Dúo de Quenas en 3ªs/6ªs, Guitarra Acústica en décimas, Bajo Eléctrico, Bombo Legüero + Batería en sesquiáltera `3:2` y Voz.<br><strong>Objetivo:</strong> Integrar polirritmia `3:2`, armonía modal dórica, préstamo napolitano (`Fmaj7`) y mezcla espacial.</p>
+    </div>
+    <div class="card">
+      <h4>Proyecto 2: Funk / Neo-Soul / Jazz-Pop Urbano (96 BPM en 4/4)</h4>
+      <p><strong>Tonalidad:</strong> C menor ↔ Eb Mayor.<br><strong>Plantilla:</strong> Batería con notas fantasma, Bajo *laid-back* en semicorcheas, Guitarra Eléctrica en tríadas agudas (*skank*), Teclado Rhodes en voicings cuartales/híbridos, Sección de 3 Vientos y Coros a 3 voces.<br><strong>Objetivo:</strong> Dominar el *pocket*, los dominantes alterados (`G7#9b13`), la sustitución tritonal y los Drops para vientos.</p>
+    </div>
+    <div class="card">
+      <h4>Proyecto 3: Balada Cinematográfica con Modulación Épica (72 BPM)</h4>
+      <p><strong>Tonalidad:</strong> Estrofa en D menor → Estribillo en F Mayor → Puente Neorriemanniano → Estribillo Final modulado en G Mayor ("Escalera que Sube").<br><strong>Plantilla:</strong> Piano/Guitarra en *Travis Picking*, Violonchelo en contrapunto, Banda completa y Coro SATB.<br><strong>Objetivo:</strong> Conducción de voces sin saltos, acordes puente disminuidos (`°7`) y curva de tensión en 3 actos.</p>
+    </div>
+  </div>
+
+  <article class="interactive-widget" id="lab-proyectos-arreglista" data-lab="arrangement-lab" data-nivel="4" data-preset="andino">
+    <header class="widget-header">
+      <div>
+        <strong>Laboratorio Maestro: Mesa de Orquestación, Registros y Producción Multipista (`arrangement-lab`)</strong>
+        <p>Nivel 4 · Conocimientos previos: todas las secciones anteriores de la enciclopedia.</p>
+      </div>
+    </header>
+    <p><strong>Objetivo.</strong> Audicionar y manipular en tiempo real las capas instrumentales de los proyectos integradores (`andino`, `funk`, `ballad`, `pop`, `rock`), vigilando el reparto de octavas en el analizador de registros para evitar colisiones de enmascaramiento antes de exportar tu arreglo. <strong>Teoría del laboratorio.</strong> Un arreglo maestro logra que 6 u 8 instrumentos suenen simultáneamente con total transparencia porque ninguno ocupa la misma octava con la misma densidad rítmica que su vecino.</p>
+    <div class="lab-stage"></div>
+    <details>
+      <summary>Instrucciones de uso</summary>
+      <ol>
+        <li>Carga sucesivamente los presets `andino` (Proyecto 1), `funk` (Proyecto 2) y `ballad` (Proyecto 3).</li>
+        <li>Activa y desactiva cada pista (Batería, Bajo, Guitarra, Teclado, Vientos/Quenas, Voz) observando el mapa de frecuencias y registros.</li>
+        <li>Comprueba qué ocurre en el medidor de colisión cuando dos instrumentos de registro medio se solapan y cómo se corrige desplazando una octava o cambiando a inversiones Drop 2.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>Ejemplo resuelto · Desarrollo completo del Proyecto 1 (Fusión Andina en Mi menor) </summary>
+      <p>En el **Proyecto 1 (`Em` a 90 BPM en 6/8)**: 1) **Batería y Bombo Legüero:** El aro marca las corcheas `1 y 4` (pulso de 6/8 = `3+3`) mientras el parche grave del bombo y el bajo marcan las 3 negras de 3/4 (corcheas `1, 3 y 5` = polirritmia `3:2`); 2) **Guitarra Acústica:** En lugar de rasguear acordes sucios, toca una "Escalera que Baja" en **décimas sobre cuerdas `6ª y 3ª`** con la `1ª cuerda (e)` al aire: `Em (0-x-x-0-x-0) → D6 (10-x-x-11-x-0) → Cmaj7 (8-x-x-9-x-0) → B7 (7-x-x-8-x-0)`; 3) **Dúo de Quenas:** Entra en el registro agudo (`E5–E6`) armonizado en **terceras y sextas diatónicas** usando la pentatónica menor de Mi (`E–G–A–B–D`) y en el puente introduce la nota característica **C# (6ª mayor de Mi Dórico)** sobre el vamp `Em7 – A9`.</p>
+    </details>
+    <details>
+      <summary>Ejercicios guiados y retos libres</summary>
+      <ol>
+        <li>Desarrolla los 8 compases del estribillo del **Proyecto 2 (Funk/Neo-Soul en C menor / Eb Mayor)** especificando qué toca el bajo, qué voicings toca la guitarra eléctrica y cómo se escriben los 3 vientos (Trompeta, Saxo Alto, Trombón) en el corte final `Fm9 → E9(#11) → Ebmaj9`.</li>
+        <li>Desarrolla la transición de modulación del **Proyecto 3 (de F Mayor a G Mayor)** usando acordes puente disminuidos y un acorde híbrido `V9sus4`.</li>
+        <li>Configura los parámetros de mezcla (HPF, panorama y delay en ms) para las 6 pistas del Proyecto 2 a 96 BPM.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>Soluciones razonadas</summary>
+      <p>1) **Proyecto 2 (Funk en Cm/Eb):** • *Armonía con sustitución tritonal:* `| Cm11 | Fm9  Bb13 | Ebmaj9  Abmaj7(#11) | Dm7b5  G7(#9,b13) |`; en el cierre hacia Eb usa el sustituto tritonal **`Fm9 → E9(#11) → Ebmaj9`** (bajo cromático `F → E → Eb`). • *Guitarra eléctrica:* Tríadas agudas en cuerdas `3–2–1` atacando solo las semicorcheas `2` y `4` con corte seco. • *Sección de 3 Vientos sobre `G7(#9,b13)` (`UST Eb Mayor`):* Trombón en `B3` (3ª), Saxo Alto en `F4` (b7) y Trompeta en `Bb4` (#9) / `Eb4` (b13) resolviendo por semitonos a `Cm9`. 2) **Proyecto 3 (Modulación de F a G):** `| Fmaj7  F#°7 | Gm7  G#°7 | Am7 (iii de F = ii de G!) | C/D (D9sus4)  D7(b9) | Gmaj9 |`. 3) **Mezcla a 96 BPM:** Negra = `625 ms`; Delay en corchea con puntillo = `468.75 ms`; Pre-Delay vocal (1/32) = `78.1 ms`; Bombo, Caja, Bajo y Voz en el centro; Guitarra Funk a `55% L`, Rhodes a `55% R` (ambos con HPF a `110 Hz`) y Vientos abiertos en arco estéreo.</p>
+    </details>
+    <details>
+      <summary>Errores frecuentes y aplicación en una composición real</summary>
+      <ul>
+        <li><strong>Error frecuente:</strong> Intentar meter todas las técnicas avanzadas (polirritmia, sustitución tritonal, modulación neorriemanniana y contrapunto a 4 voces) en los mismos 4 compases. La maestría consiste en elegir el recurso exacto que pide la emoción de cada momento de la canción.</li>
+        <li><strong>Aplicación real:</strong> Utiliza esta enciclopedia y sus laboratorios como tu banco de pruebas diario antes de cada sesión de composición, ensayo o grabación.</li>
+      </ul>
+    </details>
+  </article>
+
+  <div class="callout exercise">
+    <div class="callout-title">Reto de dominio final · Tu Obra Maestra Integral en 8 Compases</div>
+    <p>Conocimientos previos: dominio integral de la Enciclopedia Interactiva de Música. Diseña en una sola ficha técnica una sección de estribillo de **8 compases en A Mayor (La mayor) a 100 BPM en 4/4** que integre de forma musical y orgánica: 1) Una progresión armónica que incluya al menos **una inversión en el bajo, un acorde puente disminuido (`°7`), un préstamo de intercambio modal (`iv` o `bVI`), un dominante secundario y una sustitución tritonal (`subV7`)**; 2) Una melodía con título de **prosodia perfecta en español** indicando dónde cae su clímax único; 3) El reparto exacto de **Bajo, Guitarra, Piano/Cuerdas y Voz** sin solapamiento de registros.</p>
+    <details>
+      <summary>Solución razonada</summary>
+      <p>1) **Progresión Maestra en A Mayor (8 compases):** <strong><code>| Amaj9 | E/G#  G7(#11) | F#m11  B9 | Dmaj9  D#°7 | A/E  F#7(b9,b13) | Bm9  Bb7(#11) | D/E  Dm6/E | Amaj9(#11) |</code></strong>. *Análisis:* `E/G#` es 1ª inversión; `G7(#11)` es sustituto tritonal hacia `F#m11`; `B9` es dominante secundario `V7/V`; `D#°7` es acorde puente disminuido de "La Escalera que Sube" (`D → D#°7 → A/E`); `F#7(b9,b13)` es `V7/ii` alterado; `Bb7(#11)` es el sustituto tritonal de `E7` (`bII7` con bajo cromático `B → Bb → A`); y `Dm6/E` une el acorde híbrido `D/E` con el intercambio modal menor `Dm6` sobre pedal de dominante. 2) **Melodía y Prosodia:** Verso titular *"Des-per-**TÓ** la_e-ter-ni-**DÁD**"* (sinalefa en *"la_e-"*, sílabas tónicas agudas con vocales abiertas `O` y `A` clavadas en los pulsos 1 de los compases 1 y 3), alcanzando el **clímax único en `A5` / `F#5`** en el compás 5 sobre `A/E → F#7(b9)` y descendiendo por grados conjuntos `E5 → D5 → C#5 → B4` sobre el desenlace cromático. 3) **Reparto de Registros y Mezcla (100 BPM: Delay 1/8. = `450 ms`):** • **Bajo (Centro, `45–180 Hz`):** Línea caminante `A1 → G#1 → G♮1 → F#1 → B1 → D2 → D#2 → E2 → F#2 → B1 → Bb1 → E1 → A1`; • **Piano Rhodes (`50% L`, `250–1200 Hz`):** Voicings sin raíz en conducción cerrada (`G#3–B3–C#4–E4`); • **Guitarra Acústica/Eléctrica (`50% R`, `500–4000 Hz`):** Décimas y arpegios agudos con cuerdas `B` y `e` abiertas al aire; • **Violonchelo (`30% R`, `130–500 Hz`):** Contramelodía activándose en los silencios de la voz en los compases 2, 4 y 6; • **Voz Principal (Centro, `200 Hz – 12 kHz`):** Reina absoluta en el bolsillo central con pre-delay de `75 ms`.</p>
+    </details>
+  </div>
+</section>

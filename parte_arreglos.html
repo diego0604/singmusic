@@ -1,0 +1,347 @@
+<section id="a-fundamentos" class="module-section" data-cat="arreglos" data-nivel="2" data-menu="1. Fundamentos del Arreglo y Roles">
+  <div class="module-header">
+    <span class="nav-badge badge-lvl2">Nivel 2 · Intermedio · Arquitectura Orquestal</span>
+    <h2 class="module-title">Fundamentos de Arreglos: Composición vs. Arreglo, los 5 Roles Funcionales y la Ley del Enmascaramiento Acústico</h2>
+    <p class="module-subtitle">Por qué una canción con 20 instrumentos puede sonar pequeña y confusa mientras una con 4 instrumentos bien repartidos en el espectro suena gigantesca.</p>
+  </div>
+  <p>Si la <strong>composición</strong> (<a href="#c-desde-cero">ver módulo de Composición</a>) es el dibujo arquitectónico de la melodía, la letra y los acordes básicos de una obra, el <strong>arreglo (y la orquestación)</strong> es el arte de vestir esa estructura decidiendo <em>qué instrumentos tocan, en qué octava exacta, con qué ritmo, en qué sección entran o se callan y cómo dialogan entre sí</em>. Un mal arreglo puede enterrar una gran canción; un gran arreglo convierte tres acordes sencillos en una obra maestra atemporal (recuerda: C = Do, D = Re, E = Mi, F = Fa, G = Sol, A = La, B = Si).</p>
+
+  <h3 id="a-fundamentos-cinco-roles">1.1 Los 5 Roles Funcionales de Cualquier Arreglo (La Regla de los 4 Elementos Simultáneos)</h3>
+  <p>El cerebro humano tiene un límite estricto de atención auditiva (memoria de trabajo de 3 a 4 flujos independientes): <strong>si en un mismo segundo hay más de 4 ideas distintas compitiendo por la atención del oyente, el cerebro no escucha ninguna y percibe "ruido"</strong>. Por eso, independientemente de que arregles para un cuarteto de rock, un grupo folclórico andino o una orquesta de 80 músicos, todos los instrumentos se agrupan siempre en **5 roles funcionales**:</p>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Rol Funcional en el Arreglo</th>
+          <th>Misión Acústica y Dramática</th>
+          <th>Zona del Espectro / Octava Típica</th>
+          <th>Instrumentos Habituales en este Rol</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. El Líder (Lead / Foco Principal)</strong></td>
+          <td>Lleva la melodía principal y el texto; todo el resto del arreglo existe para servirle de marco sin pisarlo.</td>
+          <td>Medio-Agudo (`C4–C6`, presencia en `1–4 kHz`)</td>
+          <td>Voz principal, guitarra solista, quena, violín, trompeta o sintetizador líder.</td>
+        </tr>
+        <tr>
+          <td><strong>2. El Cimiento (Foundation / Bass &amp; Kick)</strong></td>
+          <td>Define la raíz armónica y el peso físico de los tiempos fuertes (<a href="#b-bajo-bateria">ver matrimonio bajo-batería</a>).</td>
+          <td>Subgrave y Grave (`40–200 Hz`, octavas `E1–C3`)</td>
+          <td>Bajo eléctrico, contrabajo, sintetizador Moog, tuba, violonchelos/bajos + bombo.</td>
+        </tr>
+        <tr>
+          <td><strong>3. El Colchón Armónico (Pad / Glue)</strong></td>
+          <td>Sostiene notas largas con conducción de voces suave (<a href="#h-conduccion">sección 14 de Armonía</a>) rellenando el vacío entre los golpes rítmicos.</td>
+          <td>Medio (`C3–C5`, `250–1000 Hz`)</td>
+          <td>Órgano Hammond, pad de sintetizador, sección de cuerdas en blancas/redondas, coros `"Ahhh"`.</td>
+        </tr>
+        <tr>
+          <td><strong>4. El Motor Rítmico (Rhythm / Pulse)</strong></td>
+          <td>Marca la subdivisión (`8ªs` o `16ªs`) y el *backbeat* que hace bailar la canción.</td>
+          <td>Transientes medios y agudos (`2–12 kHz`)</td>
+          <td>Batería/percusión, guitarra acústica rasgueada, charango, piano rítmico o guitarra funk.</td>
+        </tr>
+        <tr>
+          <td><strong>5. Respuesta y Contramelodía (Fills / Counterline)</strong></td>
+          <td>Aparece **únicamente en los huecos donde el Líder respira** (<a href="#c-contrapunto">ley de complementariedad</a>).</td>
+          <td>Varía (nunca en la misma octava exacta del Líder mientras este canta)</td>
+          <td>Sección de vientos (metales), violonchelo solista, guitarra eléctrica de respuesta, zampoña.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="a-fundamentos-enmascaramiento">1.2 El Enemigo Público #1 del Arreglista: El Enmascaramiento de Frecuencias (Frequency Masking)</h3>
+  <div class="callout why">
+    <div class="callout-title">Si un problema de claridad nace en el arreglo (dos instrumentos tocando en la misma octava al mismo tiempo), ningún ecualizador en la mezcla podrá arreglarlo del todo</div>
+    <p>El fenómeno psicoacústico del **enmascaramiento (<em>masking</em>)** ocurre cuando dos instrumentos con timbres parecidos tocan en la **misma octava (`C3–C4`) y con el mismo ritmo**: el sonido más fuerte devora al más débil y la suma de ambos suena turbia y congestionada en la zona de los medios-graves (`200–500 Hz`). La solución maestra del arreglista antes siquiera de tocar un botón de mezcla (<a href="#p-mezcla">ver sección 2 de Producción</a>) es el **Reparto de Octavas basado en la Serie Armónica**:
+      <ul>
+        <li>**Octava 1–2 (`E1–B2`):** Exclusiva para el **Bajo** (fundamental y quintas). Prohibido que la mano izquierda del piano o las cuerdas graves de la guitarra bajen a pelear aquí.</li>
+        <li>**Octava 3 (`C3–B3`):** Zona de calor para **acordes de piano/pad o guitarra cuerpo**, dejando hueco central.</li>
+        <li>**Octava 4 (`C4–C5`):** Reservada como un trono despejado para la **Voz Principal**. Mientras el cantante está en `C4–C5`, la guitarra o el piano acompañan un piso más abajo (`C3–B3`) o con brillos cristalinos un piso más arriba (`D5–C6`).</li>
+      </ul>
+    </p>
+  </div>
+
+  <article class="interactive-widget" id="lab-arreglos-capas-espectro" data-lab="arrangement-lab" data-nivel="2" data-preset="pop">
+    <header class="widget-header">
+      <div>
+        <strong>Laboratorio: Analizador de Capas Instrumentales y Enmascaramiento Espectral (`arrangement-lab`)</strong>
+        <p>Nivel 2 · Conocimientos previos: serie armónica (<a href="#t-sonido">sección 1 de Teoría</a>) y conducción de voces (<a href="#h-conduccion">sección 14 de Armonía</a>).</p>
+      </div>
+    </header>
+    <p><strong>Objetivo.</strong> Activar, silenciar y cambiar de octava distintas capas instrumentales en arreglos de `pop`, `ballad`, `funk`, `andino` y `rock`, observando en el visor espectral cuándo se producen colisiones de registro (enmascaramiento) y cómo se solucionan al separar las octavas. <strong>Teoría del laboratorio.</strong> Un arreglo suena transparente y tridimensional cuando cada instrumento ocupa su propio "piso del edificio" en altura (frecuencia), en tiempo (ritmo complementario) y en anchura (panorama estéreo).</p>
+    <div class="lab-stage"></div>
+    <details>
+      <summary>Instrucciones de uso</summary>
+      <ol>
+        <li>Selecciona el preset `pop` o `rock` y observa las franjas de registro que ocupa cada instrumento (bajo, piano/teclado, guitarras, voz/líder).</li>
+        <li>Prueba qué ocurre cuando colocas el teclado y la guitarra rítmica exactamente en la misma octava media (`C3–C4`) que la voz: el indicador marca alerta de solapamiento.</li>
+        <li>Separa un instrumento una octava hacia arriba o hacia abajo y escucha cómo todo el arreglo se abre como por arte de magia.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>Ejemplo resuelto</summary>
+      <p>En una banda con **Bajo, Piano, Guitarra Acústica, Guitarra Eléctrica y Voz**, si durante el estribillo en Do Mayor todos tocan el acorde `C` en la octava central (`C3–C4`), la voz desaparece. **Solución de Arreglo:** 1) **Bajo:** toca `C2` en negras con el bombo; 2) **Piano:** omite la mano izquierda grave y toca un voicing suave `G3–B3–E4` en blancas; 3) **Guitarra Acústica:** toca con cejilla/capo o en posición alta para brillar en `E4–G5` haciendo semicorcheas percusivas; 4) **Guitarra Eléctrica:** toca respuestas melódicas en `C5–G5` solo cuando el cantante calla; 5) **Voz:** reina sola en `C4–G4`.</p>
+    </details>
+    <details>
+      <summary>Ejercicios guiados y retos libres</summary>
+      <ol>
+        <li>Cambia el preset a `andino` y analiza cómo se reparten los 5 roles entre el **bombo legüero / bajo** (cimiento), la **guitarra criolla** (colchón/armonía media), el **charango** (motor rítmico agudo en `C5–C6`) y las **quenas / zampoñas** (líder y contramelodía).</li>
+        <li>Compara el preset `ballad` frente al preset `funk` fijándote en qué rol lleva el peso principal en cada uno.</li>
+        <li>Explica cómo aplicar la **regla de entrada cada 4 u 8 compases** para que un arreglo de 3 minutos nunca suene estático.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>Soluciones razonadas</summary>
+      <p>1) El conjunto andino tradicional es una obra maestra de ingeniería acústica natural: el **bombo legüero** ocupa `60–120 Hz`, la **guitarra de nailon** ocupa `150–800 Hz`, la **quena/voz** ocupa `400–2500 Hz` y el **charango** (con sus 5 órdenes dobles agudos en `E4–E5`) brilla por encima de `2.5–8 kHz` como un *hi-hat* armónico sin chocar jamás con la guitarra. 2) En `ballad` domina el **Colchón (Pad/Piano/Cuerdas)** con notas largas; en `funk` se elimina casi por completo el colchón largo y todo es **Motor Rítmico corto y sincopado** dejando aire entre golpes. 3) Introducir o retirar un único elemento cada 4 u 8 compases (una pandereta, un *pad* sutil, una segunda voz o pasar del aro a la caja) renueva el interés cerebral sin saturar.</p>
+    </details>
+    <details>
+      <summary>Errores frecuentes y aplicación en una composición real</summary>
+      <ul>
+        <li><strong>Error frecuente:</strong> Meter todos los instrumentos desde el compás 1 de la canción ("el síndrome del muro constante"). Si todo suena desde el segundo 1, cuando llegue el estribillo no tendrás ninguna sorpresa tímbrica que ofrecer.</li>
+        <li><strong>Aplicación real:</strong> Haz siempre la **"Prueba del Muteo"**: en tu maqueta, apaga una pista (por ejemplo, la segunda guitarra o el pad); si al apagarla la canción suena más clara, más grande y no la echas de menos, **¡borra esa pista sin piedad! Menos es más**.</li>
+      </ul>
+    </details>
+  </article>
+
+  <div class="callout exercise">
+    <div class="callout-title">Reto de dominio · Cirugía de un Arreglo Embarrado</div>
+    <p>Conocimientos previos: los 5 roles funcionales y ley de reparto de octavas (1.1–1.2). Un grupo te pide ayuda porque su grabación suena "sucia y sin fuerza": mientras la cantante (Mezzosoprano) canta la melodía del verso entre `C4` y `A4`, el pianista toca acordes cerrados con la mano derecha en `C4–G4` y octavas pesadas con la mano izquierda en `C2–C3`, el guitarrista eléctrico rasguea acordes con cejilla en el traste 3–5 con distorsión durante toda la frase, y el bajista toca en `C2–C3`. Reasigna exactamente qué debe tocar cada uno de los 4 músicos (indicando registro/octava y figura rítmica) para lograr una claridad de disco profesional.</p>
+    <details>
+      <summary>Solución razonada</summary>
+      <p>Actualmente hay dos choques mortales: 1) La mano izquierda del piano (`C2–C3`) está peleando con el bajo (`C2–C3`); y 2) La mano derecha del piano (`C4–G4`) y la guitarra con cejilla están sepultando el registro exacto de la cantante (`C4–A4`). **Plan de Cirugía de Arreglo:** • **Bajo:** Se queda como dueño exclusivo de la octava grave **`C2–C3`** en negras/corcheas con el bombo. • **Piano:** **Se le prohíbe bajar de `C3` con la mano izquierda**; toca un colchón suave de acordes en conducción cerrada un piso por debajo de la voz (**`C3–B3`**) en blancas. • **Guitarra Eléctrica:** Deja de rasguear acordes continuos sobre la voz y pasa a tocar **pequeños arpegios limpios o respuestas en décimas/sextas en la octava alta (`C5–G5`) únicamente en los compases pares cuando la cantante hace pausa**. • **Voz (`C4–A4`):** Queda completamente despejada en su propia franja espectral.</p>
+    </details>
+  </div>
+</section>
+
+<section id="a-integracion" class="module-section" data-cat="arreglos" data-nivel="3" data-menu="2. Integración de Banda (Piano, Guitarra, Bajo)">
+  <div class="module-header">
+    <span class="nav-badge badge-lvl3">Nivel 3 · Avanzado · Conversación Instrumental</span>
+    <h2 class="module-title">Integración de la Sección Armónica y Rítmica: Cómo Conviven Piano y Guitarra, y Doblajes Estratégicos</h2>
+    <p class="module-subtitle">Cómo evitar el histórico choque entre el teclista y el guitarrista, y cómo usar unísonos, octavas y el diálogo estéreo para crear una banda cohesionada.</p>
+  </div>
+  <p>En una formación con un solo instrumento armónico (un trío de Guitarra + Bajo + Batería, o un trío de Piano + Bajo + Batería), ese único instrumento armónico tiene total libertad para ocupar el centro del espectro. Pero en el instante en que juntamos en el mismo escenario o estudio a <strong>un Pianista/Teclista y a uno o dos Guitarristas</strong>, surge el conflicto clásico de las bandas: ambos son instrumentos polifónicos de registro medio (`C3–C5`) y, si ambos tocan acordes completos a la vez con ritmos distintos, el arreglo se convierte en una guerra de barro (recuerda: C = Do, D = Re, E = Mi, F = Fa, G = Sol, A = La, B = Si).</p>
+
+  <h3 id="a-integracion-piano-guitarra">2.1 Las 4 Fórmulas de Convivencia Pacífica entre Piano/Teclado y Guitarra</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h4>Fórmula 1: División Rítmica ("Sustain vs. Percusión")</h4>
+      <p>Uno hace de **Colchón largo (`Pad`)** y el otro hace de **Motor rítmico corto (`Pulse`)**. Por ejemplo: el teclado (órgano Hammond o Rhodes) mantiene acordes largos ligados en redondas (`C3–C4`), mientras la guitarra acústica o eléctrica funk hace semicorcheas cortas y percusivas arriba (`C4–C5`). Nunca ambos rasgueando/golpeando ritmos distintos a la vez.</p>
+    </div>
+    <div class="card">
+      <h4>Fórmula 2: División Registral ("Graves-Medios vs. Cristal Agudo")</h4>
+      <p>Si el **Piano** ocupa la zona media-cálida (`G2–G4`) con acordes completos, la **Guitarra** se traslada a los trastes altos (`trastes 7 al 14` en las 3 primeras cuerdas) para tocar **tríadas agudas, sextas o un ostinato cristalino de 2 notas (`C5–C6`)**, o viceversa.</p>
+    </div>
+    <div class="card">
+      <h4>Fórmula 3: División Armónica (Poliacorde Repartido)</h4>
+      <p>En acordes extendidos (<a href="#h-poli-hibridos">sección 5 de Armonía</a>), el **Piano** toca el esqueleto básico `1 – 3 – 7` abajo (por ejemplo `C – E – B` de `Cmaj9(#11)`) mientras la **Guitarra** toca únicamente la **tríada superior (`Bm` o `D Mayor`: D – F# – A)** en arpegio arriba.</p>
+    </div>
+    <div class="card">
+      <h4>Fórmula 4: Diálogo Estéreo Pregunta-Respuesta (L vs. R)</h4>
+      <p>Paneamos el Piano/Rhodes un `40–50% a la Izquierda (L)` y la Guitarra un `40–50% a la Derecha (R)` (<a href="#p-mezcla">ver panorama en mezcla</a>): en el compás 1 el piano lanza un acorde sincopado y en el compás 2 la guitarra le responde desde el altavoz opuesto.</p>
+    </div>
+  </div>
+
+  <h3 id="a-integracion-dos-guitarras-doblajes">2.2 El Arte de las Dos Guitarras (Guitarra 1 vs. Guitarra 2) y los Doblajes de Impacto</h3>
+  <ul>
+    <li><strong>Cómo arreglar para Dos Guitarras sin que suenen como una sola guitarra desafinada:</strong>
+      <ol>
+        <li><strong>Contraste de posición CAGED (<a href="#ga-acordes">ver sección 2 de Guitarra Acústica</a>):</strong> Si la Guitarra 1 toca `C – Am – F – G` en posición abierta (trastes 0–3), la Guitarra 2 toca esos mismos acordes usando las formas CAGED de los **trastes 5 al 8** (o coloca un **Capo/Cejilla en el traste 5** y toca las formas de `G – Em – C – D`). La suma de ambas abre un paisaje estéreo glorioso.</li>
+        <li><strong>Contraste de pastilla y ganancia (<a href="#ge-fundamentos">ver Guitarra Eléctrica</a>):</strong> Combina una guitarra con pastilla simple (*Single-Coil* tipo Strat/Tele, sonido brillante y definido) en un lado con una guitarra de doble bobina (*Humbucker* tipo Les Paul, sonido grueso y medio) en el otro.</li>
+        <li><strong>Dúo en Terceras o Sextas Paralelas (Estilo Thin Lizzy, Iron Maiden, Eagles o Folclore):</strong> En los riffs melódicos o solos temáticos, la Guitarra 1 toca la melodía principal y la Guitarra 2 toca exactamente una **3ª o 6ª diatónica por encima o por debajo**.</li>
+      </ol>
+    </li>
+    <li><strong>El Poder del Unísono y la Octava (<em>Tutti / Unison Hit</em>):</strong> Cuando quieras que un riff o un corte rítmico al final del puente golpee al oyente como un tren de mercancías, haz que **el Bajo (en `E1–E2`), la Guitarra Eléctrica (en `E2–E3`) y la mano izquierda del Piano toquen exactamente la misma línea al unísono/octava junto con los golpes del Bombo y la Caja**.</li>
+  </ul>
+
+  <div class="tab-block"><span class="tab-label">PARTITURA DE ARREGLO INTEGRADO EN DO MAYOR / LA MENOR (PIANO + GUITARRA 1 + GUITARRA 2 + BAJO SIN PISARSE)</span>Compás (4/4):       | 1: Am9                                  | 2: Fmaj7(#11)                           |
+Voz Principal:      | "Cuan - do_el   sol   se   va..." (en C4-E4, pulso 1 y 2; calla en pulsos 3 y 4)  |
+---------------------------------------------------------------------------------------------------------
+Guitarra 2 (Aguda): | [Calla en 1-2 mientas canta la voz...]  | (En pulsos 3-4 responde arpegio: B4-C5-E5)|
+Guitarra 1 (Rítm.): | Rasgueo suave o arpegio constante en semicorcheas en zona media-alta (E4-A4-B4)   |
+Piano / Rhodes:     | Acorde largo ligado en zona cálida media-baja: [G3 - B3 - C4] -> [E3 - A3 - B3]   |
+Bajo Eléctrico:     | A1 (pulso 1) ----------> E2 (pulso 2&amp;)  | F1 (pulso 1) ----------> C2 (pulso 4)   |</div>
+
+  <div class="callout exercise">
+    <div class="callout-title">Reto de dominio · Matriz de Orquestación para un Quinteto en 3 Secciones</div>
+    <p>Conocimientos previos: las 4 fórmulas de convivencia y arreglo de dos guitarras (2.1–2.2). Tienes una banda formada por **Voz, Piano/Teclado, Guitarra Acústica, Guitarra Eléctrica, Bajo y Batería** tocando una canción en **E Mayor (Mi mayor)**. Diseña la matriz exacta de qué hace el Piano, la Guitarra Acústica y la Guitarra Eléctrica en: 1) **Estrofa 1**; 2) **Precoro**; 3) **Estribillo**, garantizando que nunca haya dos instrumentos haciendo el mismo rol en la misma octava.</p>
+    <details>
+      <summary>Solución razonada</summary>
+      <p>1) **Estrofa 1 (Transparencia acústica):** • *Guitarra Acústica:* Lleva el motor rítmico-armónico haciendo *fingerpicking* (`p-i-m-a`) con las cuerdas 1ª y 2ª al aire (`E` y `B` como pedal agudo); • *Piano:* Solo toca una nota larga grave/media suave al inicio de cada 2 compases; • *Guitarra Eléctrica:* En silencio (guardando su entrada para sorprender después). 2) **Precoro (Tensión ascendente):** • *Piano:* Toma el protagonismo marcando acordes en negras crecientes en la octava `C3–C4` subiendo por la escalera `F#m7 – E/G# – A – B9sus4`; • *Guitarra Acústica:* Pasa a rasgueo suave en corcheas; • *Guitarra Eléctrica:* Entra con un sonido limpio + *delay* tocando un **ostinato de 2 notas agudas (`B4 – E5`)** en los trastes 9–12. 3) **Estribillo (Explosión estéreo sin barro):** • *Guitarra Eléctrica (Derecha):* Abre con *overdrive* usando voicings limpios `1–5–10` en zona media; • *Guitarra Acústica (Izquierda):* Rasguea semicorcheas brillantes usando formas altas con cuerdas abiertas (aportando el brillo percusivo de `3–8 kHz`); • *Piano/Órgano (Centro-L/R):* Cambia a un colchón ligado (*Pad*) en `E3–B3` que une las guitarras sin chocar con sus ataques rítmicos.</p>
+    </details>
+  </div>
+</section>
+
+<section id="a-vientos-orquestacion" class="module-section" data-cat="arreglos" data-nivel="3" data-menu="3. Vientos, Cuerdas, Quena y Transposición">
+  <div class="module-header">
+    <span class="nav-badge badge-lvl3">Nivel 3 · Avanzado · Vientos y Orquestación</span>
+    <h2 class="module-title">Arreglos para Vientos, Metales, Cuerdas y Aerófonos Andinos (Quena/Zampoña): Instrumentos Transpositores y Voicings de Sección</h2>
+    <p class="module-subtitle">Cómo escribir para trompeta, saxofones, trombón, cuerdas y quena sin equivocarse de tonalidad al transportar y logrando el sonido potente de una sección profesional.</p>
+  </div>
+  <p>Cuando un compositor que viene del piano o la guitarra intenta escribir por primera vez una línea para una <strong>sección de vientos (<em>Horn Section</em>: Trompeta, Saxo Alto, Saxo Tenor, Trombón)</strong> o integrar instrumentos de viento madera y aerófonos tradicionales como la <strong>Quena y el Siku (Zampoña)</strong>, se topa con un fenómeno sorprendente: <strong>si le escribes un Do (`C`) en el papel a un trompetista o a un saxofonista, cuando lo toca NO suena un Do</strong>. Son los llamados <strong>instrumentos transpositores</strong> (recuerda: C = Do, D = Re, E = Mi, F = Fa, G = Sol, A = La, B = Si).</p>
+
+  <h3 id="a-vientos-orquestacion-transpositores">3.1 La Ley de los Instrumentos Transpositores (`Bb` y `Eb`): Cómo Calcular Qué Escribir en 2 Segundos</h3>
+  <div class="callout why">
+    <div class="callout-title">La Regla de Oro de la Transposición: "El nombre del instrumento te dice qué nota real de piano suena cuando ese músico lee un DO (C) en su partitura"</div>
+    <p>Si un instrumento está afinado **"en Si bemol (`Bb`)"** (como la Trompeta, el Clarinete en Bb o el Saxo Tenor), significa que **cuando el músico ve escrito un `C (Do)` en su papel, de su campana sale un `Bb (Si bemol)` real de piano**. Por lo tanto, para que de su campana salga la nota real del piano que tú quieres, **tienes que escribirle la partitura el mismo intervalo en sentido contrario (más alta)**:</p>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Instrumento</th>
+          <th>Afinación del Instrumento</th>
+          <th>Qué Suena en el Piano cuando Lee un `C4`</th>
+          <th>Regla para Escribir su Partitura (Desde el Sonido Real)</th>
+          <th>Ejemplo: Si la Canción está en **C Mayor**, le escribes en…</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Flauta, Oboe, Trombón, Violín, Chelo, Quena (en Sol/Do)</strong></td>
+          <td><strong>En Do (`C` · Concert Pitch)</strong></td>
+          <td>Suena `C4` exacto (Flauta/Violín; Quena suena 1 octava más aguda de lo escrito)</td>
+          <td><strong>No transporta:</strong> se escribe exactamente en la tonalidad real del piano.</td>
+          <td><strong>C Mayor</strong> (0 alteraciones)</td>
+        </tr>
+        <tr>
+          <td><strong>Trompeta en Bb</strong> y <strong>Clarinete en Bb</strong></td>
+          <td><strong>En Si bemol (`Bb`)</strong></td>
+          <td>Suena <strong>`Bb3`</strong> (1 tono más grave)</td>
+          <td>Escribe su partitura <strong>1 Tono Mayor MÁS ARRIBA (+2 semitonos)</strong> que el piano.</td>
+          <td><strong>D Mayor</strong> (2 sostenidos: F#, C#)</td>
+        </tr>
+        <tr>
+          <td><strong>Saxofón Alto</strong> y <strong>Saxofón Barítono</strong></td>
+          <td><strong>En Mi bemol (`Eb`)</strong></td>
+          <td>Suena <strong>`Eb3`</strong> (una 6ª mayor más grave en el Alto; 1 octava + 6ªM en el Barítono)</td>
+          <td>Escribe su partitura una <strong>Sexta Mayor MÁS ARRIBA (+9 st, o baja 1 tercera menor y sube 1 octava)</strong>.</td>
+          <td><strong>A Mayor</strong> (3 sostenidos: F#, C#, G#)</td>
+        </tr>
+        <tr>
+          <td><strong>Saxofón Tenor</strong></td>
+          <td><strong>En Si bemol (`Bb`)</strong></td>
+          <td>Suena <strong>`Bb2`</strong> (una 9ª mayor = 1 octava + 1 tono más grave en clave de Sol)</td>
+          <td>Escribe en Clave de Sol una <strong>Novena Mayor MÁS ARRIBA (+1 octava y +1 tono)</strong> que el sonido real.</td>
+          <td><strong>D Mayor</strong> (2 sostenidos: F#, C#)</td>
+        </tr>
+        <tr>
+          <td><strong>Corno Francés (Trompa)</strong></td>
+          <td><strong>En Fa (`F`)</strong></td>
+          <td>Suena <strong>`F3`</strong> (una 5ª justa más grave)</td>
+          <td>Escribe su partitura una <strong>Quinta Justa MÁS ARRIBA (+7 semitonos)</strong>.</td>
+          <td><strong>G Mayor</strong> (1 sostenido: F#)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="a-vientos-orquestacion-quena-metales">3.2 Aerófonos Andinos (La Quena y el Siku/Zampoña) y Cómo Armonizar una Sección de Vientos</h3>
+  <p>La <strong>Quena</strong> (flauta vertical con muesca o escotadura de origen prehispánico andino, con 6 orificios frontales y 1 posterior para el pulgar) está afinada tradicionalmente en **G Mayor / E menor (`G4 – A4 – B4 – C5 – D5 – E5 – F#5 – G5`)**, alcanzando hasta tres octavas mediante el control del bisel de los labios y medias tapaduras cromáticas. Cuando dos quenas (o dos zampoñas complementarias *Ira* y *Arca*) tocan juntas, su sonoridad característica es el **dúo en terceras diatónicas paralelas que reposa en una quinta justa o unísono al final de la frase**. Explora ahora mismo las digitaciones, escalas, el dúo de quenas en terceras y su fusión con banda completa en nuestros dos laboratorios interactivos de quena:</p>
+<!--USAR:quena-lab-->
+<!--USAR:quena-demos-->
+
+  <p>Cuando escribas para una **Sección de Metales/Vientos de 3 o 4 músicos** (por ejemplo: **Trompeta [Voz 1 aguda] + Saxo Alto o Tenor [Voz 2 media] + Trombón [Voz 3 grave]** en salsa, funk, soul, ska o pop), aplica estas 3 técnicas de escritura de sección:</p>
+  <ol>
+    <li><strong>En frases rápidas de semicorcheas:</strong> Escribe a los 3 vientos en **Unísono u Octavas** (tienen el doble de agilidad y pegada rítmica que si intentan cambiar de acorde en cada semicorchea).</li>
+    <li><strong>En golpes largos, caídas (*falls*) y cierres de frase (*stabs / punches*):</strong> Ábrelos en **Tríadas cerradas, Sextas o Voicings Drop 2** (<a href="#h-voicings">sección 6 de Armonía</a>), colocando siempre la **Trompeta en la voz más aguda (Voz 1)**, el **Saxo en el centro (Voz 2: a una 3ª o 4ª debajo de la trompeta)** y el **Trombón en la base (Voz 3: llevando la 3ª o la 7ª del acorde, ya que el bajo ya toca la raíz)**.</li>
+    <li><strong>Para una Sección de Cuerdas (Violín I, Violín II, Viola, Violonchelo):</strong> Funciona exactamente igual que un coro SATB a 4 voces (<a href="#v-armonia-vocal">sección 4 de Canto</a>), donde el **Violonchelo** puede doblar al bajo una octava arriba o independizarse en el estribillo para cantar una contramelodía lírica en su registro tenor (`G3–E4`).</li>
+  </ul>
+
+  <div class="callout exercise">
+    <div class="callout-title">Reto de dominio · Escritura y Transposición Real para un Trío de Vientos (Trompeta, Saxo Alto y Trombón)</div>
+    <p>Conocimientos previos: tabla de instrumentos transpositores y voicings de sección (3.1–3.2). Tu banda está tocando un tema funk/salsa en **F Mayor (Fa mayor)** y en el último golpe del estribillo quieres que tu sección de 3 vientos (**Trompeta en Bb, Saxo Alto en Eb y Trombón en C**) toque un acorde brillante de **`F9` (sin raíz en los vientos, porque el bajo ya toca F: las 3 notas reales de piano de grave a agudo serán `A3 [3ª] – Eb4 [b7] – G4 [9ª]`)**: 1) Asigna qué nota de sonido real toca cada uno de los 3 instrumentos; 2) Escribe qué **armadura de clave** y qué **nota escrita exacta** debe ver en su papel el Trombonista, el Trompetista y el Saxofonista Alto para que suene ese acorde perfecto.</p>
+    <details>
+      <summary>Solución razonada</summary>
+      <p>1) **Reparto de voces reales (Concert Pitch) de grave a agudo:** • **Trombón (Voz 3 grave):** toca **`A3` (La3, la 3ª mayor de F9)**; • **Saxo Alto (Voz 2 media):** toca **`Eb4` (Mi bemol 4, la b7 de F9)**; • **Trompeta (Voz 1 aguda):** toca **`G4` (Sol4, la 9ª mayor brillante en la cima)**. 2) **Partitura transportada para cada músico:** • **Trombón (en Do, Clave de Fa):** No transporta; su armadura es **F Mayor (1 bemol = Bb)** y lee exactamente **`A3` (5ª línea de clave de Fa)**. • **Trompeta en Bb (+1 Tono Mayor hacia arriba):** Transportamos F Mayor un tono arriba → su armadura escrita es **G Mayor (1 sostenido = F#)**, y para que suene un `G4` real, le escribimos un tono más alto: **`A4` (La4, 2º espacio de clave de Sol)**. • **Saxo Alto en Eb (+1 Sexta Mayor hacia arriba / -3ª menor):** Transportamos F Mayor una 6ª mayor arriba → su armadura escrita es **D Mayor (2 sostenidos: F#, C#)**, y para que suene un `Eb4` real, le escribimos una 6ª mayor más alta: **`C5` natural (Do5 becuadro, 3er espacio de clave de Sol)**.</p>
+    </details>
+  </div>
+</section>
+
+<section id="a-generos" class="module-section" data-cat="arreglos" data-nivel="3" data-menu="4. Plantillas de Arreglo por Género">
+  <div class="module-header">
+    <span class="nav-badge badge-lvl3">Nivel 3 · Avanzado · ADN Estilístico</span>
+    <h2 class="module-title">Radiografía de Arreglos por Género: Pop/Rock, Balada Cinematográfica, Funk/Soul, Jazz/Bossa y Fusión Andina/Latina</h2>
+    <p class="module-subtitle">Cómo traducir una misma canción a cinco universos estilísticos distintos cambiando la instrumentación, el voicing de los acordes y el patrón rítmico.</p>
+  </div>
+  <p>¿Por qué cuando escuchas tan solo 3 segundos de una canción en la radio sabes instantáneamente si es un tema de rock, una bossa nova brasileña, un funk de los 70, un huayno andino contemporáneo o una balada de película, incluso antes de que entre el cantante? Porque cada género musical posee un **ADN de arreglo específico** que combina cuatro elementos: **1) El tipo de acordes permitido (tríadas vs. novenas/trecenas); 2) El reparto de acentos rítmicos; 3) La paleta tímbrica; y 4) El tratamiento del espacio** (recuerda: C = Do, D = Re, E = Mi, F = Fa, G = Sol, A = La, B = Si).</p>
+
+  <h3 id="a-generos-matriz">4.1 Matriz Comparativa de los 5 Grandes Ecosistemas de Arreglo</h3>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Género / Estilo</th>
+          <th>Vocabulario Armónico y Voicings</th>
+          <th>Sección Rítmica (Bajo + Batería)</th>
+          <th>Tratamiento de Guitarras, Teclados y Vientos</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. Rock y Pop-Rock</strong></td>
+          <td>Tríadas abiertas, *power chords* (`1–5`), acordes `sus2/sus4`, híbridos `1–5–10` e intercambio modal (`bVI – bVII – I`).</td>
+          <td>Bombo y bajo clavados en corcheas rectas o con *push* en el `4&amp;`; caja potente en `2` y `4`.</td>
+          <td>Guitarras dobladas en estéreo (`L/R`) con contraste limpio en verso vs. saturado en estribillo; órgano Hammond de pegamento.</td>
+        </tr>
+        <tr>
+          <td><strong>2. Balada Pop / Cinematográfica</strong></td>
+          <td>Acordes `add9`, `maj7`, inversiones con bajo caminante (`I – V/7 – vi – I/5 – IV – ivm6`) y acordes puente disminuidos.</td>
+          <td>Arranca sin batería en el Verso 1; entra aro de caja en el Verso 2 y batería amplia con *reverb* y notas largas de bajo en el Coro.</td>
+          <td>Piano acústico como columna vertebral + guitarra acústica arpegiada + **cuarteto/orquesta de cuerdas** entrando en el Precoro.</td>
+        </tr>
+        <tr>
+          <td><strong>3. Funk, Soul y R&amp;B / Disco</strong></td>
+          <td>Pocos acordes (vamps dóricos o mixolidios en `9`, `11`, `13`, `9sus4`); armonía estática para liberar el ritmo.</td>
+          <td>Semicorcheas con *ghost notes*, golpe sagrado en **"The One" (pulso 1)** y silencio respetuoso en la caja del 2 y 4.</td>
+          <td>Guitarra eléctrica limpia en las 3 cuerdas agudas ("*skank* / *chank*"), Clavinet o Rhodes percusivo + **sección de metales en cortes secos**.</td>
+        </tr>
+        <tr>
+          <td><strong>4. Jazz, Bossa Nova y Bolero</strong></td>
+          <td>Cuatríadas y extensiones obligatorias (`maj9`, `m11`, `13`, `7b9`, `7alt`), cadenas `ii–V–I` y sustituciones tritonales.</td>
+          <td>*Walking Bass* en 4 negras (Jazz) o patrón de `Raíz–Quinta` en blancas con bombo en `1, 2&amp;, 3, 4&amp;` (Bossa).</td>
+          <td>En Bossa: guitarra de nailon con pulgar en `1 y 3` y dedos sincopados; en Jazz: piano haciendo *comping* con voicings sin raíz (`3-7-9-13`).</td>
+        </tr>
+        <tr>
+          <td><strong>5. Fusión Andina y Folclore Latinoamericano</strong></td>
+          <td>Eje bimodal relativo (**Menor Eólico ↔ Relativo Mayor**: ej. `Em ↔ G` o `Am ↔ C`), cadencias `bVII → I` y escalas pentatónicas/dóricas.</td>
+          <td>Polirritmia `6/8 contra 3/4` (Chacarera/Cueca/Bambuco) o `2/4` con síncopa de **Huayno (`corchea + 2 semicorcheas`)**.</td>
+          <td>Guitarra criolla en bordoneos graves + **Charango** en repiques agudos + **Quenas y Zampoñas** dobladas en **terceras paralelas**.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tab-block"><span class="tab-label">LA MISMA PROGRESIÓN (| Am7 | Dm7 | G7 | Cmaj7 |) ARREGLADA EN 3 GÉNEROS OPUESTOS (BOSSA NOVA vs. FUNK vs. FUSIÓN ANDINA)</span>1) Versión Bossa Nova (4/4: Bajo en Blancas Raíz-5ª + Guitarra Nailon con Síncopa de Clave):
+   Pulso 4/4:  | 1   &amp;   2   &amp;   3   &amp;   4   &amp; | 1   &amp;   2   &amp;   3   &amp;   4   &amp; |
+   Acordes MD: | (Am9)   X       X   X       X | (Dm9)   .   X       X   .   X | (Voicings 3-7-9-5 en cuerdas 4-3-2)
+   Bajo/Pulgar:| A1              E2            | D2              A1            |
+
+2) Versión Funk / R&amp;B (4/4 en 16ªs: Bajo en "The One" + Guitarra Eléctrica en Tríadas Agudas en el 2&amp; y 4e):
+   Semicorch.: | 1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a |
+   Guit. Aguda:| x  x  .  .  .  . >X  .  x  x  .  .  . >X  .  . | (Tríada C-E-G sobre Am en trastes 8-9-8 de cuerdas 1-2-3)
+   Bajo Funk:  | A1 .  .  G2 x  .  A2 .  .  .  C2 C#2 D2 .  .  . | (Golpe pesado en 1 + aproximación cromática C->C#->D!)
+
+3) Versión Huayno / Fusión Andina (2/4: Célula [Corchea + 2 Semicorcheas] en Charango + Quenas en 3ªs Paralelas):
+   Pulso 2/4:  | 1     &amp;  a  2     &amp;  a  | 1     &amp;  a  2     &amp;  a  |
+   Quena 1 y 2:| [E5/C5]--->[D5/B4]      | [F5/D5]--->[E5/C5]      | (Dúo de Quenas en 3ªs diatónicas!)
+   Charango/B.:| ↓     ↓  ↑  ↓(ch) ↓  ↑  | (Bajo marca corchea 1 y el "&amp;-a" del 2 empuja al compás siguiente)</div>
+
+  <div class="callout pro">
+    <div class="callout-title">Truco profesional · Cómo hacer "Fusión" auténtica sin caer en el pastiche artificial</div>
+    <p>Cuando fusiones dos géneros (por ejemplo, **Folclore Andino con Jazz/Rock**, o **Flamenco con Pop Electrónico**), nunca mezcles todos los elementos al 50% de forma tibia: **elige qué género manda en el Piso Inferior (el Groove de Bajo y Batería) y qué género manda en el Piso Superior (la Armonía y los Instrumentos Solistas)**. Por ejemplo: pon una base de batería y bajo de *Jazz-Funk* o *Rock Progresivo* abajo y coloca encima el charango y un dúo de quenas en terceras; o al revés, mantén un bombo legüero y un ritmo de huayno tradicional abajo y vístelo arriba con acordes de `maj9(#11)`, sustitución tritonal y guitarra eléctrica líquida.</p>
+  </div>
+
+  <div class="callout exercise">
+    <div class="callout-title">Reto de dominio · Re-Arreglo Estilístico en 3 Versiones ("Traducción de Género")</div>
+    <p>Conocimientos previos: matriz de los 5 géneros (4.1) y laboratorio de arreglos (`arrangement-lab`). Toma una canción sencilla cuya estrofa tiene los acordes **`| Em | C | G | D |`** y escribe la receta técnica exacta de arreglo (especificando qué acordes sustitutos/extendidos usas, qué patrón tocan el bajo y la batería, y qué instrumento lleva el color principal) para transformarla en: 1) Una **Bossa Nova / Jazz Brasileño**; 2) Un tema de **Funk / Neo-Soul**; 3) Un tema de **Fusión Andina Contemporánea**.</p>
+    <details>
+      <summary>Solución razonada</summary>
+      <p>1) **Traducción a Bossa Nova:** • *Armonía:* Convertimos las tríadas en cuatríadas con 9ª y sustitución tritonal: **`| Em9 | Cmaj9(#11) | G6/9 | Eb9(#11) o F#m7b5 – B7(b9) |`**; • *Rítmica:* Batería con aro en clave de bossa (`3-2`) y bombo suave en `1, 2&amp;, 3, 4&amp;`; bajo tocando blancas en `Raíz – Quinta`; • *Instrumento líder:* Guitarra de nailon y flauta travesera en registro medio. 2) **Traducción a Funk / Neo-Soul:** • *Armonía:* Usamos acordes `m11` y `9sus4`: **`| Em11 | Cmaj9 | Gmaj7  F#m7b5 B7(#9) |`**; • *Rítmica:* Batería con *pocket* detrás del pulso (*laid-back*) y notas fantasma en semicorcheas; bajo eléctrico golpeando el `1` con silencios en el `2` y `4`; • *Color:* Piano Rhodes + guitarra limpia haciendo *double stops* en las 3 cuerdas agudas y cortes de 3 vientos. 3) **Traducción a Fusión Andina:** • *Armonía y Compás:* Pasamos a `6/8` (aire de zamba/chacarera o kullawada/huayno en `2/4`) cerrando con cadencia hacia el relativo menor (`G – D7 – Em` o `C – D – Bm7 – Em`); • *Instrumentación:* Bombo legüero marcando las corcheas `4 y 6`, charango haciendo repiques en la octava `E4–E5` y un **dúo de quenas en terceras paralelas (`G5/E5 → F#5/D#5 → E5/E5`)** respondiendo a la voz.</p>
+    </details>
+  </div>
+</section>
