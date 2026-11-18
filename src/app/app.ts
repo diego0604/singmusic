@@ -18,6 +18,16 @@ import {
   hydrateAllLabs,
   replaceLegacyMarkers,
 } from './lab-engine';
+import {
+  SECTION_GAMES_SEARCH_META,
+  hydrateInteractiveArcade,
+  injectSectionGamesIntoCategoryHtml,
+} from './interactive-arcade';
+import {
+  TREATISE_ENRICHMENT_SEARCH_META,
+  hydrateTreatiseEnrichment,
+  injectTreatiseEnrichmentIntoCategoryHtml,
+} from './treatise-enrichment';
 
 export interface CategoryPart {
   id: string;
@@ -82,6 +92,7 @@ export class App implements OnInit {
   readonly safeContent = signal<SafeHtml>('');
   readonly loading = signal<boolean>(false);
   readonly sections = signal<SectionAnchor[]>([]);
+  readonly mobileMenuOpen = signal<boolean>(false);
   readonly activeNoteLabel = signal<string>(
     'Motor de Síntesis Activo (Guitarra / Bajo / Piano / Voz / Vientos Andinos / Batería)'
   );
@@ -111,7 +122,7 @@ export class App implements OnInit {
       definition:
         'Equilibrio muscular entre los intercostales externos (que mantienen las costillas abiertas) y el transverso abdominal para regular la presión subglótica sin apretar la garganta.',
       demoRun: 'vocalBreathPacer',
-      sectionId: 'v-anatomia-respiracion',
+      sectionId: 'v-fundamentos',
     },
     {
       term: 'Passaggio (Puente Vocal)',
@@ -119,7 +130,7 @@ export class App implements OnInit {
       definition:
         'Zona de transición biomecánica donde el músculo tiroaritenoideo (voz de pecho) cede gradualmente el control al cricotiroideo (voz de cabeza) para evitar el quiebre o gallo.',
       demoRun: 'vocalOctaveSiren',
-      sectionId: 'v-registros-passaggio',
+      sectionId: 'v-afinacion-registros',
     },
     {
       term: 'SOVT (Tracto Vocal Semi-Ocluido)',
@@ -127,7 +138,7 @@ export class App implements OnInit {
       definition:
         'Ejercicios como Lip Trill (Brrrr) o fonación en popote que devuelven presión acústica (impedancia retrógrada) hacia los pliegues vocales para separarlos suavemente sin impacto.',
       demoRun: 'vocalSovtSlide',
-      sectionId: 'v-calentamiento-sovt',
+      sectionId: 'v-calentamiento',
     },
     {
       term: 'Arka e Ira (Pareja Sikuri)',
@@ -156,28 +167,28 @@ export class App implements OnInit {
       category: 'Teoría / Modos',
       definition:
         'Escala mayor con el cuarto grado aumentado (1-2-3-#4-5-6-7). Evoca asombro espacial, ingravidez cinematográfica y luminosidad sin tirón hacia la subdominante.',
-      sectionId: 't-modos-griegos',
+      sectionId: 't-modos',
     },
     {
       term: 'Modo Dórico (6ª Mayor en Menor)',
       category: 'Teoría / Modos',
       definition:
         'Modo menor con sexta mayor natural (1-2-b3-4-5-6-b7). Sonoridad característica del Funk, Latin Rock (Santana), Jazz Modal y música andina contemporánea.',
-      sectionId: 't-modos-griegos',
+      sectionId: 't-modos',
     },
     {
       term: 'Tritono (Diabolus in Musica)',
       category: 'Armonía',
       definition:
         'Intervalo de 6 semitonos (4ª aumentada o 5ª disminuida) entre el 3er y 7º grado de un acorde dominante G7 (B y F), responsable de la máxima tensión que exige resolver a la tónica.',
-      sectionId: 'h-dominantes-secundarios',
+      sectionId: 'h-dominantes',
     },
     {
       term: 'Voicing Drop 2',
       category: 'Armonía / Guitarra',
       definition:
         'Disposición de un acorde de 4 notas donde la segunda voz más aguda se baja una octava exacta, creando un espaciado abierto e ideal para las 4 cuerdas contiguas de la guitarra.',
-      sectionId: 'h-voicings-drop',
+      sectionId: 'h-voicings',
     },
     {
       term: 'Travis Picking',
@@ -185,7 +196,7 @@ export class App implements OnInit {
       definition:
         'Técnica fingerstyle donde el pulgar derecho mantiene un bajo alternado constante en negras (cuerdas 6-4) mientras los dedos índice y medio pellizcan melodías sincopadas.',
       demoRun: 'guitarTravisDrill',
-      sectionId: 'ga-fingerstyle',
+      sectionId: 'ga-ritmo-fingerstyle',
     },
     {
       term: 'Floating Thumb (Pulgar Flotante)',
@@ -201,7 +212,7 @@ export class App implements OnInit {
       definition:
         'Golpes o pulsaciones de muy baja amplitud (ejecutados a 2 cm del parche en la tarola o con cuerda apagada en el bajo) que rellenan la subdivisión de semicorcheas y crean el groove.',
       demoRun: 'drumParadiddleDrill',
-      sectionId: 'd-rudimentos',
+      sectionId: 'd-fundamentos',
     },
     {
       term: 'Single Paradiddle (R L R R - L R L L)',
@@ -209,7 +220,7 @@ export class App implements OnInit {
       definition:
         'Rudimento fundamental que combina dos golpes simples seguidos de un golpe doble, permitiendo cambiar naturalmente la mano líder en cada pulso sin cruzar los brazos.',
       demoRun: 'drumParadiddleDrill',
-      sectionId: 'd-rudimentos',
+      sectionId: 'd-fundamentos',
     },
   ];
 
@@ -237,9 +248,22 @@ export class App implements OnInit {
   }
 
   private buildGlobalSearchIndex(): void {
+    for (const meta of [...SECTION_GAMES_SEARCH_META, ...TREATISE_ENRICHMENT_SEARCH_META]) {
+      this.globalIndex.push({
+        catId: meta.catId,
+        catLabel: meta.catLabel,
+        sectionId: meta.sectionId,
+        sectionTitle: meta.sectionTitle,
+        nivel: meta.nivel,
+        keywords: this.normalizeText(`${meta.catLabel} ${meta.sectionTitle} ${meta.keywords}`),
+        snippet: meta.snippet,
+      });
+    }
+
     for (const cat of this.categories) {
       if (cat.id === 'all') continue;
-      const html = ENCYCLOPEDIA_CONTENT[cat.id] || '';
+      const rawHtml = ENCYCLOPEDIA_CONTENT[cat.id] || '';
+      const html = injectTreatiseEnrichmentIntoCategoryHtml(cat.id, rawHtml);
       const secRegex =
         /<section\s+id="([^"]+)"[^>]*data-nivel="([^"]+)"[^>]*data-menu="([^"]+)"[^>]*>([\s\S]*?)<\/section>/g;
       let match: RegExpExecArray | null;
@@ -267,6 +291,14 @@ export class App implements OnInit {
     }
   }
 
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((v) => !v);
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
+  }
+
   onSearchInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchQuery.set(input.value);
@@ -289,28 +321,18 @@ export class App implements OnInit {
     const targetCat = this.categories.find((c) => c.id === item.catId);
     if (!targetCat) return;
     this.searchQuery.set('');
+    this.mobileMenuOpen.set(false);
     if (this.activeCat().id !== targetCat.id) {
       this.loadCategory(targetCat);
-      setTimeout(() => this.scrollToSection(item.sectionId), 110);
+      setTimeout(() => this.scrollToSection(item.sectionId), 120);
     } else {
       this.scrollToSection(item.sectionId);
     }
   }
 
-  openQuickLab(catId: string, sectionId: string): void {
-    const targetCat = this.categories.find((c) => c.id === catId);
-    if (!targetCat) return;
-    this.showGlossary.set(false);
-    if (this.activeCat().id !== targetCat.id) {
-      this.loadCategory(targetCat);
-      setTimeout(() => this.scrollToSection(sectionId), 110);
-    } else {
-      this.scrollToSection(sectionId);
-    }
-  }
-
   jumpFromGlossary(entry: GlossaryEntry): void {
     this.showGlossary.set(false);
+    this.mobileMenuOpen.set(false);
     this.jumpToCrossSection(entry.sectionId);
   }
 
@@ -321,20 +343,21 @@ export class App implements OnInit {
   loadCategory(cat: CategoryPart): void {
     this.audio.stopAll();
     this.activeCat.set(cat);
+    this.mobileMenuOpen.set(false);
     if (cat.id === 'bajo') {
       this.currentInstrument.set('bass');
     } else if (this.currentInstrument() === 'bass') {
       this.currentInstrument.set('guitar');
     }
 
-    let rawHtml = '';
-    if (cat.id === 'all') {
-      rawHtml = Object.values(ENCYCLOPEDIA_CONTENT).join('\n');
-    } else {
-      rawHtml = ENCYCLOPEDIA_CONTENT[cat.id] || '<p>Módulo no encontrado.</p>';
-    }
+    const baseHtml =
+      cat.id === 'all'
+        ? Object.values(ENCYCLOPEDIA_CONTENT).join('\n')
+        : ENCYCLOPEDIA_CONTENT[cat.id] || '<p>Módulo no encontrado.</p>';
 
-    const expandedHtml = replaceLegacyMarkers(rawHtml);
+    const withTreatiseEnrichment = injectTreatiseEnrichmentIntoCategoryHtml(cat.id, baseHtml);
+    const withSectionGames = injectSectionGamesIntoCategoryHtml(cat.id, withTreatiseEnrichment);
+    const expandedHtml = replaceLegacyMarkers(withSectionGames);
     this.extractSections(expandedHtml);
     this.safeContent.set(this.sanitizer.bypassSecurityTrustHtml(expandedHtml));
 
@@ -344,6 +367,8 @@ export class App implements OnInit {
         const hostEl = this.contentHost()?.nativeElement;
         if (hostEl) {
           hydrateAllLabs(hostEl, this.audio, (msg) => this.activeNoteLabel.set(msg));
+          hydrateInteractiveArcade(hostEl, this.audio, (msg) => this.activeNoteLabel.set(msg));
+          hydrateTreatiseEnrichment(hostEl, this.audio, (msg) => this.activeNoteLabel.set(msg));
         }
       }, 20);
     }
@@ -384,6 +409,7 @@ export class App implements OnInit {
 
   scrollToSection(id: string): void {
     if (!isPlatformBrowser(this.platformId)) return;
+    this.mobileMenuOpen.set(false);
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });

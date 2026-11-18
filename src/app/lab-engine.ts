@@ -1,3 +1,10 @@
+import {
+  analyzePedalInterval,
+  classifyVocalRangeDetailed,
+  createPitchAcuityRound,
+  midiToNoteName,
+} from './music-games-logic';
+
 export interface ScaleDefinition {
   id: string;
   name: string;
@@ -317,15 +324,22 @@ interface ActiveVoiceHandle {
   sources: (OscillatorNode | AudioBufferSourceNode)[];
 }
 
+export type DrumKitPieceCode = 'BD' | 'SD' | 'HH' | 'HHP' | 'T1' | 'T2' | 'FT' | 'RD' | 'CR';
+
 export class MusicAudioEngine {
   private ctx: AudioContext | null = null;
+  private masterAnalyser: AnalyserNode | null = null;
   private activeVoices: ActiveVoiceHandle[] = [];
   private activeTimers: ReturnType<typeof setTimeout>[] = [];
   private droneHandle: ActiveVoiceHandle | null = null;
 
-  private ensureContext(): AudioContext {
+  ensureContext(): AudioContext {
     if (!this.ctx) {
       this.ctx = new AudioContext();
+      this.masterAnalyser = this.ctx.createAnalyser();
+      this.masterAnalyser.fftSize = 2048;
+      this.masterAnalyser.smoothingTimeConstant = 0.82;
+      this.masterAnalyser.connect(this.ctx.destination);
     }
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
@@ -333,8 +347,66 @@ export class MusicAudioEngine {
     return this.ctx;
   }
 
+  getMasterAnalyser(): AnalyserNode {
+    this.ensureContext();
+    return this.masterAnalyser!;
+  }
+
+  private getDestination(): AudioNode {
+    const ctx = this.ensureContext();
+    return this.masterAnalyser || ctx.destination;
+  }
+
   midiToFreq(midi: number): number {
     return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  isDroneActive(): boolean {
+    return this.droneHandle !== null;
+  }
+
+  /**
+   * Plays an exact frequency in Hz (used for Pitch Acuity Test & Microtonal Cents Comparison)
+   */
+  playFreqTone(
+    freqHz: number,
+    duration = 0.95,
+    delay = 0,
+    volume = 0.26,
+    stopPrevious = false
+  ): void {
+    if (stopPrevious && delay === 0) {
+      this.stopAll(true);
+    }
+    const ctx = this.ensureContext();
+    const now = ctx.currentTime + delay;
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.0001, now);
+    masterGain.gain.linearRampToValueAtTime(volume, now + 0.012);
+    masterGain.gain.exponentialRampToValueAtTime(volume * 0.65, now + 0.18);
+    masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'triangle';
+    osc1.frequency.setValueAtTime(freqHz, now);
+
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(freqHz * 2, now);
+    const g2 = ctx.createGain();
+    g2.gain.setValueAtTime(0.22, now);
+
+    osc1.connect(masterGain);
+    osc2.connect(g2);
+    g2.connect(masterGain);
+    masterGain.connect(this.getDestination());
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + duration + 0.03);
+    osc2.stop(now + duration + 0.03);
+    this.registerVoice(masterGain, [osc1, osc2]);
   }
 
   /**
@@ -433,7 +505,7 @@ export class MusicAudioEngine {
     osc2.connect(g2);
     g2.connect(filter);
     filter.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
 
     osc1.start(now);
     osc2.start(now);
@@ -533,7 +605,7 @@ export class MusicAudioEngine {
     });
 
     filter.connect(masterGain);
-    masterGain.connect(ctx.destination);
+    masterGain.connect(this.getDestination());
     this.registerVoice(masterGain, sources);
   }
 
@@ -625,7 +697,7 @@ export class MusicAudioEngine {
     sources.push(noise);
 
     filter.connect(masterGain);
-    masterGain.connect(ctx.destination);
+    masterGain.connect(this.getDestination());
 
     subOsc.start(now);
     growlOsc.start(now);
@@ -683,7 +755,7 @@ export class MusicAudioEngine {
       sources.push(osc);
     });
 
-    masterGain.connect(ctx.destination);
+    masterGain.connect(this.getDestination());
     this.registerVoice(masterGain, sources);
   }
 
@@ -759,7 +831,7 @@ export class MusicAudioEngine {
 
     subWarmth.connect(subGain);
     subGain.connect(masterGain);
-    masterGain.connect(ctx.destination);
+    masterGain.connect(this.getDestination());
 
     glottal.start(now);
     subWarmth.start(now);
@@ -808,7 +880,7 @@ export class MusicAudioEngine {
     osc.connect(masterGain);
     osc2.connect(osc2Gain);
     osc2Gain.connect(masterGain);
-    masterGain.connect(ctx.destination);
+    masterGain.connect(this.getDestination());
 
     osc.start(now);
     osc2.start(now);
@@ -821,6 +893,111 @@ export class MusicAudioEngine {
   }
 
   /**
+   * Dedicated Top-View Drum Kit Piece Synthesizer (BD, SD, HH, HHP, T1, T2, FT, RD, CR)
+   */
+  playDrumPiece(piece: DrumKitPieceCode, delay = 0): void {
+    if (piece === 'BD') {
+      this.playDrumHit('kick', delay);
+    } else if (piece === 'SD') {
+      this.playDrumHit('snare', delay);
+    } else if (piece === 'HH') {
+      this.playDrumHit('hihat', delay);
+    } else if (piece === 'CR') {
+      this.playDrumHit('crash', delay);
+    } else {
+      const ctx = this.ensureContext();
+      const now = ctx.currentTime + delay;
+      const dest = this.getDestination();
+
+      if (piece === 'HHP') {
+        // Tight foot-pedal hi-hat chick
+        const master = ctx.createGain();
+        master.gain.setValueAtTime(0.32, now);
+        master.gain.exponentialRampToValueAtTime(0.0001, now + 0.042);
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(8600, now);
+        bp.Q.setValueAtTime(2.5, now);
+
+        const bufSize = Math.floor(ctx.sampleRate * 0.045);
+        const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufSize * 0.28));
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buf;
+        noise.connect(bp);
+        bp.connect(master);
+        master.connect(dest);
+        noise.start(now);
+        this.registerVoice(master, [noise]);
+      } else if (piece === 'T1' || piece === 'T2' || piece === 'FT') {
+        // Distinct pitched acoustic Toms: T1 (High 220->112Hz), T2 (Mid 168->84Hz), FT (Floor 115->56Hz)
+        const startF = piece === 'T1' ? 225 : piece === 'T2' ? 168 : 115;
+        const endF = piece === 'T1' ? 112 : piece === 'T2' ? 84 : 56;
+        const dur = piece === 'FT' ? 0.44 : 0.34;
+
+        const master = ctx.createGain();
+        master.gain.setValueAtTime(0.72, now);
+        master.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(startF, now);
+        osc.frequency.exponentialRampToValueAtTime(endF, now + dur * 0.78);
+
+        const punch = ctx.createOscillator();
+        punch.type = 'triangle';
+        punch.frequency.setValueAtTime(startF * 1.48, now);
+        punch.frequency.exponentialRampToValueAtTime(endF * 1.2, now + 0.07);
+        const pg = ctx.createGain();
+        pg.gain.setValueAtTime(0.28, now);
+        pg.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+
+        osc.connect(master);
+        punch.connect(pg);
+        pg.connect(master);
+        master.connect(dest);
+        osc.start(now);
+        punch.start(now);
+        osc.stop(now + dur + 0.01);
+        punch.stop(now + 0.08);
+        this.registerVoice(master, [osc, punch]);
+      } else if (piece === 'RD') {
+        // Ride Cymbal with crystalline ping + warm metallic shimmer
+        const dur = 0.62;
+        const master = ctx.createGain();
+        master.gain.setValueAtTime(0.32, now);
+        master.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+        const hp = ctx.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.setValueAtTime(5200, now);
+
+        const ratios = [465, 688, 912, 1260, 1790, 2420];
+        const sources: (OscillatorNode | AudioBufferSourceNode)[] = [];
+        ratios.forEach((f, idx) => {
+          const osc = ctx.createOscillator();
+          osc.type = idx < 2 ? 'triangle' : 'square';
+          osc.frequency.setValueAtTime(f, now);
+          const og = ctx.createGain();
+          og.gain.setValueAtTime(idx === 0 ? 0.22 : 0.1, now);
+          osc.connect(og);
+          og.connect(hp);
+          osc.start(now);
+          osc.stop(now + dur + 0.01);
+          sources.push(osc);
+        });
+
+        hp.connect(master);
+        master.connect(dest);
+        this.registerVoice(master, sources);
+      }
+    }
+  }
+
+  /**
    * Upgraded Studio Acoustic Drum Synthesizer
    * Supports: kick, snare, ghost, hihat, openhat, crash, tom, clap
    */
@@ -830,6 +1007,7 @@ export class MusicAudioEngine {
   ): void {
     const ctx = this.ensureContext();
     const now = ctx.currentTime + delay;
+    const dest = this.getDestination();
 
     if (type === 'kick') {
       const master = ctx.createGain();
@@ -855,7 +1033,7 @@ export class MusicAudioEngine {
       osc.connect(master);
       clickOsc.connect(clickGain);
       clickGain.connect(master);
-      master.connect(ctx.destination);
+      master.connect(dest);
 
       osc.start(now);
       clickOsc.start(now);
@@ -910,7 +1088,7 @@ export class MusicAudioEngine {
       noise.connect(hp);
       hp.connect(nGain);
       nGain.connect(master);
-      master.connect(ctx.destination);
+      master.connect(dest);
 
       osc1.start(now);
       osc2.start(now);
@@ -963,7 +1141,7 @@ export class MusicAudioEngine {
       sources.push(noise);
 
       hp.connect(master);
-      master.connect(ctx.destination);
+      master.connect(dest);
       this.registerVoice(master, sources);
     } else if (type === 'tom') {
       const master = ctx.createGain();
@@ -975,7 +1153,7 @@ export class MusicAudioEngine {
       osc.frequency.setValueAtTime(185, now);
       osc.frequency.exponentialRampToValueAtTime(86, now + 0.26);
       osc.connect(master);
-      master.connect(ctx.destination);
+      master.connect(dest);
       osc.start(now);
       osc.stop(now + 0.33);
       this.registerVoice(master, [osc]);
@@ -993,7 +1171,7 @@ export class MusicAudioEngine {
       osc2.frequency.setValueAtTime(840, now);
       osc.connect(master);
       osc2.connect(master);
-      master.connect(ctx.destination);
+      master.connect(dest);
       osc.start(now);
       osc2.start(now);
       osc.stop(now + 0.07);
@@ -1497,9 +1675,32 @@ function buildMultiInstrumentExplorer(
         <button type="button" class="btn js-drone-btn" style="background:rgba(16,185,129,0.16); color:#34d399; border:1px solid rgba(16,185,129,0.4);">
           🔊 Pedal Tónica
         </button>
+        <button type="button" class="btn js-pedal-explain-btn" style="background:rgba(56,189,248,0.16); color:#38bdf8; border:1px solid rgba(56,189,248,0.35);">
+          💡 ¿Para qué sirve el Pedal C?
+        </button>
         <button type="button" class="btn js-stop-btn" style="background:rgba(244,63,94,0.18); color:#fb7185; border:1px solid rgba(244,63,94,0.4);">
           ⏹ Detener
         </button>
+      </div>
+    </div>
+
+    <div class="js-pedal-coach-box" style="display:none; margin-bottom:14px; padding:12px 15px; background:rgba(14,116,144,0.16); border:1px solid rgba(56,189,248,0.45); border-radius:8px; font-size:0.84rem; line-height:1.55;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
+        <strong style="color:#38bdf8; font-size:0.92rem;">💡 ¿Para qué sirve el Pedal de Tónica (Pedal C / Drone)?</strong>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-primary js-pedal-demo-modes" style="padding:3px 10px; font-size:0.75rem;">▶ Demo 1: Sentir Grados sobre Pedal C (3ªM vs b3 vs #4 Lidio)</button>
+          <button type="button" class="btn js-pedal-demo-chords" style="padding:3px 10px; font-size:0.75rem; background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid rgba(245,158,11,0.4);">▶ Demo 2: Acordes sobre Bajo Pedal C (C → Dm/C → Fm/C → G7/C → C)</button>
+        </div>
+      </div>
+      <p style="margin:0 0 6px 0; color:#e2e8f0;">
+        Un <strong>Pedal (Drone)</strong> es una nota grave continua que sostiene la tónica (por defecto <strong>Do / C2 = 65.4 Hz</strong>). Sirve para <strong>4 funciones esenciales</strong>:
+        <strong>1) Entrenar el Oído:</strong> Una nota aislada no tiene emoción por sí sola, pero al sonar contra el Pedal C sientes al instante su <em>gravedad</em> (reposo en 1-3-5, nostalgia en b6, flotación espacial en #4 Lidio).
+        <strong>2) Comparar Modos Paralelos:</strong> Mantén el Pedal C activo y cambia entre Jónico, Dórico, Frigio y Lidio.
+        <strong>3) Afinar Voz, Bendings y Vientos:</strong> Escucha cómo desaparecen las oscilaciones (batimentos) al clavar la afinación justa.
+        <strong>4) Tensión Cinematográfica:</strong> Cambiar acordes arriba mientras el bajo se niega a moverse de Do acumula una energía magnética enorme.
+      </p>
+      <div class="js-pedal-live-degree" style="padding:6px 10px; background:rgba(0,0,0,0.35); border-radius:6px; color:#fde047; font-size:0.8rem;">
+        Activa <strong>🔊 Pedal Tónica</strong> y toca cualquier tecla o traste para ver aquí qué grado e impacto emocional produce contra el pedal.
       </div>
     </div>
 
@@ -1536,11 +1737,24 @@ function buildMultiInstrumentExplorer(
   const bassStyleSelect = container.querySelector<HTMLSelectElement>('.js-bass-style');
   const playMainBtn = container.querySelector<HTMLButtonElement>('.js-play-main')!;
   const droneBtn = container.querySelector<HTMLButtonElement>('.js-drone-btn')!;
+  const pedalExplainBtn = container.querySelector<HTMLButtonElement>('.js-pedal-explain-btn')!;
+  const pedalCoachBox = container.querySelector<HTMLElement>('.js-pedal-coach-box')!;
+  const pedalLiveDegree = container.querySelector<HTMLElement>('.js-pedal-live-degree')!;
   const stopBtn = container.querySelector<HTMLButtonElement>('.js-stop-btn')!;
   const formulaInfo = container.querySelector<HTMLElement>('.js-formula-info')!;
   const pianoContainer = container.querySelector<HTMLElement>('.js-piano-container');
   const fretboardContainer = container.querySelector<HTMLElement>('.js-fretboard-container')!;
   const neckTitle = container.querySelector<HTMLElement>('.js-neck-title')!;
+
+  const updatePedalDegreeReadout = (playedMidi: number): void => {
+    const pedalMidi = 36 + currentRoot;
+    const analysis = analyzePedalInterval(playedMidi, pedalMidi);
+    pedalLiveDegree.innerHTML = `
+      <strong>Sobre Pedal ${NOTE_NAMES[currentRoot]}:</strong> Nota tocada = <strong>${midiToNoteName(playedMidi)}</strong> →
+      Grado <strong>${analysis.degreeLabel}</strong> (${analysis.intervalName}) ·
+      <em>${analysis.consonanceLevel}</em> — ${analysis.modalFlavor}. ${analysis.coachingTip}
+    `;
+  };
 
   const getActiveIntervals = (): number[] => {
     if (isChordMode) {
@@ -1676,7 +1890,58 @@ function buildMultiInstrumentExplorer(
   droneBtn.addEventListener('click', () => {
     const active = audio.toggleDrone(36 + currentRoot);
     droneBtn.textContent = active ? `🔊 Pedal ${NOTE_NAMES[currentRoot]} (ACTIVO)` : '🔊 Pedal Tónica';
-    onStatus(active ? `Pedal de tónica ${NOTE_NAMES[currentRoot]} activado` : 'Pedal de tónica desactivado');
+    if (active) {
+      pedalCoachBox.style.display = 'block';
+    }
+    onStatus(active ? `Pedal de tónica ${NOTE_NAMES[currentRoot]} activado (escucha cómo cada nota cobra gravedad sobre la raíz)` : 'Pedal de tónica desactivado');
+  });
+
+  pedalExplainBtn.addEventListener('click', () => {
+    pedalCoachBox.style.display = pedalCoachBox.style.display === 'none' ? 'block' : 'none';
+  });
+
+  container.querySelector('.js-pedal-demo-modes')?.addEventListener('click', () => {
+    audio.stopAll(false);
+    if (!audio.isDroneActive()) {
+      audio.toggleDrone(36 + currentRoot);
+      droneBtn.textContent = `🔊 Pedal ${NOTE_NAMES[currentRoot]} (ACTIVO)`;
+    }
+    const base = 60 + currentRoot;
+    const demoSteps = [
+      { semi: 4, msg: '3ª Mayor (Modo Jónico: Luminoso y estable)' },
+      { semi: 3, msg: 'b3 Menor (Modo Eólico/Dórico: Melancólico e íntimo)' },
+      { semi: 6, msg: '#4 Aumentada (Modo Lidio: Asombro espacial e ingravidez)' },
+      { semi: 1, msg: 'b2 Menor (Modo Frigio: Tensión flamenca oscura)' },
+      { semi: 7, msg: '5ª Justa (Estabilidad y resolución sobre el Pedal)' },
+    ];
+    demoSteps.forEach((st, idx) => {
+      audio.schedule(() => {
+        const m = base + st.semi;
+        audio.playPluckedGuitar(m, 1.15, 0, 0.3, false);
+        updatePedalDegreeReadout(m);
+        onStatus(`Pedal ${NOTE_NAMES[currentRoot]} + ${st.msg}`);
+      }, idx * 1250);
+    });
+  });
+
+  container.querySelector('.js-pedal-demo-chords')?.addEventListener('click', () => {
+    audio.stopAll(false);
+    const pedal = 36 + currentRoot;
+    const r = 60 + currentRoot;
+    const chords = [
+      { notes: [pedal, r, r + 4, r + 7], name: `${NOTE_NAMES[currentRoot]} Mayor (Reposo)` },
+      { notes: [pedal, r + 2, r + 5, r + 9], name: `ii / ${NOTE_NAMES[currentRoot]} (Tensión Suave)` },
+      { notes: [pedal, r + 5, r + 8, r + 12], name: `ivm / ${NOTE_NAMES[currentRoot]} (Plagal Menor Cinematográfico)` },
+      { notes: [pedal, r + 5, r + 7, r + 11], name: `V7 / ${NOTE_NAMES[currentRoot]} (Máxima Tensión sobre Pedal)` },
+      { notes: [pedal, r, r + 4, r + 7, r + 12], name: `${NOTE_NAMES[currentRoot]} Mayor (Resolución Final)` },
+    ];
+    chords.forEach((ch, idx) => {
+      audio.schedule(() => {
+        audio.strumChord(ch.notes, 'piano', 0, false);
+        pedalLiveDegree.innerHTML = `<strong>Progresión sobre Bajo Pedal ${NOTE_NAMES[currentRoot]}:</strong> Sonando <strong>${ch.name}</strong> mientras el bajo permanece anclado en ${NOTE_NAMES[currentRoot]}2.`;
+        onStatus(`Bajo Pedal: ${ch.name}`);
+      }, idx * 1150);
+    });
   });
 
   stopBtn.addEventListener('click', () => {
@@ -1696,6 +1961,7 @@ function buildMultiInstrumentExplorer(
     } else {
       audio.playPluckedGuitar(midi, 1.3, 0, 0.3, true);
     }
+    updatePedalDegreeReadout(midi);
     onStatus(`Teclado: ${NOTE_NAMES[midi % 12]}${Math.floor(midi / 12) - 1} (${audio.midiToFreq(midi).toFixed(1)} Hz)`);
   });
 
@@ -1710,6 +1976,7 @@ function buildMultiInstrumentExplorer(
       audio.playPluckedGuitar(midi, 1.5, 0, 0.32, true);
       onStatus(`Guitarra 6 Cuerdas: ${NOTE_NAMES[midi % 12]}${Math.floor(midi / 12) - 1} (${audio.midiToFreq(midi).toFixed(1)} Hz)`);
     }
+    updatePedalDegreeReadout(midi);
   });
 }
 
@@ -2322,7 +2589,9 @@ function buildPolyrhythmLab(
       </div>
     </div>
     <div class="js-poly-desc" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">${currentRatio.desc}</div>
-    <div class="js-poly-grid" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <div style="overflow-x:auto; max-width:100%;">
+      <div class="js-poly-grid" style="display:flex; flex-direction:column; gap:8px; min-width:340px;"></div>
+    </div>
   `;
 
   const descEl = stage.querySelector<HTMLElement>('.js-poly-desc')!;
@@ -2425,9 +2694,137 @@ function buildPolyrhythmLab(
 }
 
 /**
- * SPECIALIZED LAB 5: Interactive Drum Rudiment & Sticking Trainer (drum-rudiment-lab, bateria-pads)
+ * Renders the compact, playable Top-View Ergonomic SVG Drum Kit (matching svg_drum_kit_topview)
  */
-function buildDrumRudimentAndPadsLab(
+export function renderPlayableTopViewDrumSvg(
+  title: string,
+  activePieces: DrumKitPieceCode[] = ['BD', 'SD', 'HH', 'HHP', 'T1', 'T2', 'FT', 'RD', 'CR'],
+  highlightedPiece: DrumKitPieceCode | null = null,
+  note = 'Haz clic o toca cualquier pieza (o usa las teclas B, S, H, W, T, Y, U, C, R) para tocar en tiempo real'
+): string {
+  const activeSet = new Set<DrumKitPieceCode>(activePieces);
+  const fillCol = (code: DrumKitPieceCode, base: string, active: string): string => {
+    if (highlightedPiece === code) return '#fef08a';
+    return activeSet.has(code) ? active : base;
+  };
+  const strokeCol = (code: DrumKitPieceCode): string => {
+    if (highlightedPiece === code) return '#f59e0b';
+    return activeSet.has(code) ? '#0f172a' : '#94a3b8';
+  };
+  const strokeWidth = (code: DrumKitPieceCode, def: string): string =>
+    highlightedPiece === code ? '3.6' : def;
+
+  const w = 680;
+  const h = 235;
+  return `
+    <figure class="svg-fig" style="margin:0 auto; max-width:680px; width:100%;">
+      <svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; display:block; user-select:none; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.35);">
+        <rect x="1" y="1" width="${w - 2}" height="${h - 2}" rx="6" fill="#fcfaf5" stroke="#cbd5e1"/>
+        <text x="${w / 2}" y="19" text-anchor="middle" font-size="11" font-weight="bold" fill="#0f172a">${title}</text>
+        <!-- Alfombra acústica -->
+        <rect x="115" y="28" width="450" height="182" rx="8" fill="#f1f5f9" stroke="#cbd5e1" stroke-dasharray="4,3"/>
+
+        <!-- Pedales (HHP y BD Pedal) -->
+        <g class="js-svg-drum-piece" data-piece="HHP" role="button" tabindex="0" aria-label="Pedal Hi-Hat (Tecla W)" style="cursor:pointer;">
+          <rect x="212" y="132" width="18" height="42" rx="3" fill="${fillCol('HHP', '#e2e8f0', '#fde68a')}" stroke="#475569" stroke-width="${strokeWidth('HHP', '1.5')}"/>
+          <text x="221" y="185" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#334155">Pedal HH [W]</text>
+        </g>
+
+        <g class="js-svg-drum-piece" data-piece="BD" role="button" tabindex="0" aria-label="Pedal Bombo (Tecla B)" style="cursor:pointer;">
+          <rect x="332" y="112" width="20" height="44" rx="3" fill="${fillCol('BD', '#e2e8f0', '#fca5a5')}" stroke="#475569" stroke-width="${strokeWidth('BD', '1.5')}"/>
+          <text x="342" y="167" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#334155">Pedal BD [B]</text>
+        </g>
+
+        <!-- Bombo (BD) visto desde arriba (cilindro horizontal) -->
+        <g class="js-svg-drum-piece" data-piece="BD" role="button" tabindex="0" aria-label="Bombo BD (Tecla B)" style="cursor:pointer;">
+          <rect x="295" y="42" width="94" height="66" rx="10" fill="${fillCol('BD', '#e2e8f0', '#ef4444')}" stroke="${strokeCol('BD')}" stroke-width="${strokeWidth('BD', '2.2')}"/>
+          <text x="342" y="79" text-anchor="middle" font-size="10" font-weight="bold" fill="${highlightedPiece === 'BD' ? '#0f172a' : '#ffffff'}">BOMBO (BD)</text>
+        </g>
+
+        <!-- Caja (SD) -->
+        <g class="js-svg-drum-piece" data-piece="SD" role="button" tabindex="0" aria-label="Caja Snare SD (Tecla S)" style="cursor:pointer;">
+          <circle cx="272" cy="138" r="34" fill="${fillCol('SD', '#f8fafc', '#3b82f6')}" stroke="${strokeCol('SD')}" stroke-width="${strokeWidth('SD', '2.2')}"/>
+          <circle cx="272" cy="138" r="24" fill="none" stroke="#dbeafe" stroke-dasharray="3,2"/>
+          <text x="272" y="141" text-anchor="middle" font-size="9.5" font-weight="bold" fill="${highlightedPiece === 'SD' ? '#0f172a' : activeSet.has('SD') ? '#ffffff' : '#334155'}">CAJA (SD)</text>
+        </g>
+
+        <!-- Tom 1 (T1) -->
+        <g class="js-svg-drum-piece" data-piece="T1" role="button" tabindex="0" aria-label="Tom 1 Agudo (Tecla T)" style="cursor:pointer;">
+          <circle cx="305" cy="76" r="24" fill="${fillCol('T1', '#f8fafc', '#60a5fa')}" stroke="${strokeCol('T1')}" stroke-width="${strokeWidth('T1', '2')}"/>
+          <text x="305" y="79" text-anchor="middle" font-size="8.5" font-weight="bold" fill="${highlightedPiece === 'T1' ? '#0f172a' : activeSet.has('T1') ? '#ffffff' : '#334155'}">TOM 1</text>
+        </g>
+
+        <!-- Tom 2 (T2) -->
+        <g class="js-svg-drum-piece" data-piece="T2" role="button" tabindex="0" aria-label="Tom 2 Medio (Tecla Y)" style="cursor:pointer;">
+          <circle cx="366" cy="76" r="26" fill="${fillCol('T2', '#f8fafc', '#2563eb')}" stroke="${strokeCol('T2')}" stroke-width="${strokeWidth('T2', '2')}"/>
+          <text x="366" y="79" text-anchor="middle" font-size="8.5" font-weight="bold" fill="${highlightedPiece === 'T2' ? '#0f172a' : activeSet.has('T2') ? '#ffffff' : '#334155'}">TOM 2</text>
+        </g>
+
+        <!-- Tom de Piso (FT) -->
+        <g class="js-svg-drum-piece" data-piece="FT" role="button" tabindex="0" aria-label="Floor Tom de Piso (Tecla U)" style="cursor:pointer;">
+          <circle cx="422" cy="136" r="35" fill="${fillCol('FT', '#f8fafc', '#1d4ed8')}" stroke="${strokeCol('FT')}" stroke-width="${strokeWidth('FT', '2.2')}"/>
+          <text x="422" y="139" text-anchor="middle" font-size="9" font-weight="bold" fill="${highlightedPiece === 'FT' ? '#0f172a' : activeSet.has('FT') ? '#ffffff' : '#334155'}">FLOOR TOM</text>
+        </g>
+
+        <!-- Hi-Hat (HH) -->
+        <g class="js-svg-drum-piece" data-piece="HH" role="button" tabindex="0" aria-label="Hi-Hat Charles (Tecla H)" style="cursor:pointer;">
+          <circle cx="195" cy="112" r="27" fill="${fillCol('HH', '#fef9c3', '#f59e0b')}" stroke="${strokeCol('HH')}" stroke-width="${strokeWidth('HH', '2')}"/>
+          <circle cx="195" cy="112" r="5" fill="#78350f"/>
+          <text x="195" y="102" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#0f172a">HI-HAT</text>
+        </g>
+
+        <!-- Crash (CR) -->
+        <g class="js-svg-drum-piece" data-piece="CR" role="button" tabindex="0" aria-label="Plato Crash (Tecla C)" style="cursor:pointer;">
+          <circle cx="235" cy="58" r="30" fill="${fillCol('CR', '#fef9c3', '#fbbf24')}" stroke="${strokeCol('CR')}" stroke-width="${strokeWidth('CR', '2')}" fill-opacity="0.88"/>
+          <circle cx="235" cy="58" r="5" fill="#78350f"/>
+          <text x="235" y="47" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#0f172a">CRASH</text>
+        </g>
+
+        <!-- Ride (RD) -->
+        <g class="js-svg-drum-piece" data-piece="RD" role="button" tabindex="0" aria-label="Plato Ride (Tecla R)" style="cursor:pointer;">
+          <circle cx="445" cy="74" r="36" fill="${fillCol('RD', '#fef9c3', '#d97706')}" stroke="${strokeCol('RD')}" stroke-width="${strokeWidth('RD', '2')}" fill-opacity="0.88"/>
+          <circle cx="445" cy="74" r="7" fill="#78350f"/>
+          <text x="445" y="61" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#0f172a">RIDE</text>
+        </g>
+
+        <!-- Sillín (Throne) -->
+        <circle cx="312" cy="190" r="20" fill="#334155" stroke="#0f172a" stroke-width="2"/>
+        <text x="312" y="193" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#ffffff">SILLÍN</text>
+
+        <!-- Leyenda lateral izquierda -->
+        <rect x="14" y="34" width="94" height="170" rx="5" fill="#ffffff" stroke="#cbd5e1"/>
+        <text x="61" y="49" text-anchor="middle" font-size="8" font-weight="bold" fill="#0f172a">Ergonomía Base</text>
+        <text x="20" y="66" font-size="7.2" fill="#334155">• Cadera &gt; Rodilla</text>
+        <text x="20" y="80" font-size="7.2" fill="#334155">• Ángulo muslo: 100°</text>
+        <text x="20" y="94" font-size="7.2" fill="#334155">• Caja al ombligo/cintura</text>
+        <text x="20" y="108" font-size="7.2" fill="#334155">• Pies en V natural</text>
+        <text x="20" y="122" font-size="7.2" fill="#334155">• Hombros sueltos</text>
+        <text x="20" y="136" font-size="7.2" fill="#334155">• Codos cerca al torso</text>
+        <text x="20" y="150" font-size="7.2" fill="#b45309" font-weight="bold">• Protección auditiva</text>
+        <text x="20" y="164" font-size="7.2" fill="#b45309">  obligatoria (-15/25dB)</text>
+
+        <!-- Leyenda lateral derecha -->
+        <rect x="572" y="34" width="94" height="170" rx="5" fill="#ffffff" stroke="#cbd5e1"/>
+        <text x="619" y="49" text-anchor="middle" font-size="8" font-weight="bold" fill="#0f172a">Código Color</text>
+        <rect x="580" y="60" width="10" height="10" fill="#f59e0b"/><text x="595" y="68" font-size="7.2" fill="#334155">Metales / Platos</text>
+        <rect x="580" y="78" width="10" height="10" fill="#3b82f6"/><text x="595" y="86" font-size="7.2" fill="#334155">Caja / Toms</text>
+        <rect x="580" y="96" width="10" height="10" fill="#ef4444"/><text x="595" y="104" font-size="7.2" fill="#334155">Bombo (Graves)</text>
+        <rect x="580" y="114" width="10" height="10" fill="#e2e8f0" stroke="#94a3b8"/><text x="595" y="122" font-size="7.2" fill="#334155">En silencio</text>
+        <text x="580" y="142" font-size="7" font-weight="bold" fill="#0f172a">Atajos Teclado:</text>
+        <text x="580" y="154" font-size="6.8" fill="#334155">B:Bombo | S:Caja</text>
+        <text x="580" y="165" font-size="6.8" fill="#334155">H:HiHat | W:PedalHH</text>
+        <text x="580" y="176" font-size="6.8" fill="#334155">T/Y/U:Toms | C/R:Platos</text>
+
+        <text x="${w / 2}" y="224" text-anchor="middle" font-size="8" fill="#475569">${note}</text>
+      </svg>
+    </figure>
+  `;
+}
+
+/**
+ * SPECIALIZED LAB 5: Interactive Top-View SVG Drum Kit + Rudiment & Sticking Trainer (drum-rudiment-lab, bateria-pads)
+ */
+export function buildDrumRudimentAndPadsLab(
   stage: HTMLElement,
   audio: MusicAudioEngine,
   onStatus: (msg: string) => void
@@ -2436,109 +2833,235 @@ function buildDrumRudimentAndPadsLab(
     {
       name: '1. Single Paradiddle (R L R R - L R L L)',
       sticking: ['>R', 'L', 'R', 'R', '>L', 'R', 'L', 'L'],
-      drums: ['snare', 'ghost', 'hihat', 'hihat', 'snare', 'ghost', 'kick', 'kick'] as const,
+      pieces: ['SD', 'HH', 'HH', 'HH', 'SD', 'HH', 'BD', 'BD'] as DrumKitPieceCode[],
       desc: 'El golpe doble final invierte automáticamente la mano líder. Al orquestar R en Hi-Hat y >L en Caja nace el groove funk lineal.',
     },
     {
-      name: '2. Double Stroke Roll / Mamacita-Papacito (R R L L - R R L L)',
-      sticking: ['>R', 'R', '>L', 'L', '>R', 'R', '>L', 'L'],
-      drums: ['snare', 'ghost', 'snare', 'ghost', 'tom', 'tom', 'kick', 'kick'] as const,
-      desc: 'Aprovecha el rebote natural de la baqueta para tocar el segundo golpe con los dedos.',
+      name: '2. Fill Descendente por Toms (SD → T1 → T2 → FT → CR+BD)',
+      sticking: ['>R', 'L', '>R', 'L', '>R', 'L', '>R', '💥'],
+      pieces: ['SD', 'SD', 'T1', 'T1', 'T2', 'T2', 'FT', 'CR'] as DrumKitPieceCode[],
+      desc: 'Recorrido ergonómico en sentido horario alrededor de la batería cenital, cerrando en el pulso 1 con Crash + Bombo.',
     },
     {
-      name: '3. Six-Stroke Roll (R l l r r L - R l l r r L)',
-      sticking: ['>R', 'l', 'l', 'r', 'r', '>L', '>R', '>L'],
-      drums: ['kick', 'ghost', 'ghost', 'hihat', 'hihat', 'snare', 'tom', 'crash'] as const,
+      name: '3. Groove Jazz Swing en Ride + Pedal HH en 2 y 4',
+      sticking: ['RD', 'RD+HHP', 'RD', 'RD', 'RD+HHP', 'RD', 'BD', 'SD'],
+      pieces: ['RD', 'HHP', 'RD', 'RD', 'HHP', 'RD', 'BD', 'SD'] as DrumKitPieceCode[],
+      desc: 'El plato Ride lleva el patrón de swing mientras el pie izquierdo cierra el Pedal HH (HHP) con precisión en los tiempos 2 y 4.',
+    },
+    {
+      name: '4. Six-Stroke Roll (R l l r r L - R l l r r L)',
+      sticking: ['>R', 'l', 'l', 'r', 'r', '>L', 'T1', 'CR'],
+      pieces: ['BD', 'SD', 'SD', 'HH', 'HH', 'SD', 'T1', 'CR'] as DrumKitPieceCode[],
       desc: 'Dos golpes simples acentuados enmarcando dos dobles fantasma: el fill favorito del rock, gospel y jazz fusión.',
     },
   ];
 
+  const pieceMeta: Record<DrumKitPieceCode, { label: string; key: string; freqInfo: string }> = {
+    BD: { label: 'Bombo (BD)', key: 'B', freqInfo: 'Subgrave 50–90 Hz (Pie Derecho)' },
+    SD: { label: 'Caja / Snare (SD)', key: 'S', freqInfo: 'Cuerpo 180 Hz + Bordona (Mano Izq)' },
+    HH: { label: 'Hi-Hat (HH)', key: 'H', freqInfo: 'Subdivisión Metálica (Mano Der)' },
+    HHP: { label: 'Pedal Hi-Hat (HHP)', key: 'W', freqInfo: 'Chick de Pie Izquierdo en 2 y 4' },
+    T1: { label: 'Tom 1 Agudo (T1)', key: 'T', freqInfo: 'Tom Aéreo 10"/12" (225 Hz)' },
+    T2: { label: 'Tom 2 Medio (T2)', key: 'Y', freqInfo: 'Tom Aéreo 12"/13" (168 Hz)' },
+    FT: { label: 'Floor Tom (FT)', key: 'U', freqInfo: 'Tom de Piso 16" Profundo (115 Hz)' },
+    CR: { label: 'Plato Crash (CR)', key: 'C', freqInfo: 'Explosión de Acento Climático' },
+    RD: { label: 'Plato Ride (RD)', key: 'R', freqInfo: 'Campana y Cuerpo Cristalino' },
+  };
+
   let rIdx = 0;
+  let activeHighlight: DrumKitPieceCode | null = null;
 
   stage.innerHTML = `
     <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
-      <select class="js-rud-sel">
+      <select class="js-rud-sel" aria-label="Seleccionar patrón o rudimento de batería" style="max-width:100%;">
         ${rudiments.map((r, i) => `<option value="${i}">${r.name}</option>`).join('')}
       </select>
-      <div style="display:flex; gap:8px;">
-        <button type="button" class="btn btn-primary js-rud-play">▶ Practicar Baquetación en Vivo</button>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary js-rud-play">▶ Reproducir Patrón</button>
+        <button type="button" class="btn js-rud-challenge" style="background:rgba(16,185,129,0.18); color:#34d399; border:1px solid rgba(16,185,129,0.4);">🎯 Reto: Repite el Ritmo</button>
         <button type="button" class="btn js-rud-stop" style="background:rgba(244,63,94,0.2); color:#fb7185;">⏹ Detener</button>
       </div>
     </div>
 
     <div class="js-rud-desc" style="font-size:0.84rem; color:var(--text-muted); margin-bottom:10px;"></div>
-    <div class="js-rud-steps" style="display:grid; grid-template-columns:repeat(8, 1fr); gap:6px; margin-bottom:16px;"></div>
 
-    <div style="font-size:0.82rem; font-weight:700; color:var(--accent-cyan); margin-bottom:8px;">🥁 Pads de Estudio Interactivos (Haz clic para tocar en directo):</div>
-    <div class="drum-pads">
-      <div class="drum-pad" data-drum="kick">🥁 Bombo (Kick)<br><small style="color:var(--text-muted);">Sub 50–90 Hz</small></div>
-      <div class="drum-pad" data-drum="snare">🥁 Caja (Snare)<br><small style="color:var(--text-muted);">Backbeat Fuerte</small></div>
-      <div class="drum-pad" data-drum="ghost">🥁 Nota Fantasma (g)<br><small style="color:var(--text-muted);">Caja Suave</small></div>
-      <div class="drum-pad" data-drum="hihat">📀 Hi-Hat Cerrado<br><small style="color:var(--text-muted);">Chick Metálico</small></div>
-      <div class="drum-pad" data-drum="openhat">📀 Hi-Hat Abierto<br><small style="color:var(--text-muted);">Sustain Abierto</small></div>
-      <div class="drum-pad" data-drum="tom">🥁 Tom de Piso<br><small style="color:var(--text-muted);">Fills y Cortes</small></div>
-      <div class="drum-pad" data-drum="crash">💥 Plato Crash<br><small style="color:var(--text-muted);">Acento Climático</small></div>
-      <div class="drum-pad" data-drum="clap">🥢 Rimshot / Clave<br><small style="color:var(--text-muted);">Ataque de Aro</small></div>
+    <!-- Interactive Top-View SVG Drum Kit -->
+    <div class="js-topview-drum-host" style="margin-bottom:12px;"></div>
+
+    <!-- Quick Interactive Piece Buttons for Mobile & Accessibility -->
+    <div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:12px;">
+      ${(Object.keys(pieceMeta) as DrumKitPieceCode[])
+        .map(
+          (code) => `
+        <button type="button" class="btn js-drum-piece-btn" data-piece="${code}" style="font-size:0.74rem; padding:5px 9px; background:rgba(30,41,59,0.9); border:1px solid rgba(56,189,248,0.4); color:#f8fafc;">
+          🥁 ${pieceMeta[code].label} <span style="color:#fbbf24; font-family:monospace;">[${pieceMeta[code].key}]</span>
+        </button>
+      `
+        )
+        .join('')}
+    </div>
+
+    <div style="overflow-x:auto; max-width:100%;">
+      <div class="js-rud-steps" style="display:grid; grid-template-columns:repeat(8, minmax(34px, 1fr)); gap:6px; min-width:300px;"></div>
     </div>
   `;
 
   const sel = stage.querySelector<HTMLSelectElement>('.js-rud-sel')!;
   const descEl = stage.querySelector<HTMLElement>('.js-rud-desc')!;
+  const svgHost = stage.querySelector<HTMLElement>('.js-topview-drum-host')!;
   const stepsEl = stage.querySelector<HTMLElement>('.js-rud-steps')!;
 
-  const renderSticking = (activeStep = -1): void => {
+  let challengeSeq: DrumKitPieceCode[] = [];
+  let userStep = 0;
+  let challengeActive = false;
+
+  const renderKitAndSticking = (activeStep = -1, noteMsg?: string): void => {
     const r = rudiments[rIdx];
-    descEl.textContent = r.desc;
+    if (!challengeActive) {
+      descEl.textContent = r.desc;
+    }
+    svgHost.innerHTML = renderPlayableTopViewDrumSvg(
+      'Batería Acústica Interactiva — Vista Cenital Ergonómica (Haz clic en cada pieza o usa teclado B, S, H, W, T, Y, U, C, R)',
+      ['BD', 'SD', 'HH', 'HHP', 'T1', 'T2', 'FT', 'RD', 'CR'],
+      activeHighlight,
+      noteMsg || 'Toca directamente sobre el Bombo, Caja, Toms, Platos o Pedales en el diagrama SVG'
+    );
+
     stepsEl.innerHTML = r.sticking
       .map((st, idx) => {
-        const isRight = st.toUpperCase().includes('R');
-        const isAccent = st.startsWith('>');
         const isCurrent = idx === activeStep;
+        const piece = r.pieces[idx];
         return `
-          <div style="padding:10px 4px; text-align:center; border-radius:8px; border:1px solid ${isRight ? 'rgba(245,158,11,0.5)' : 'rgba(56,189,248,0.5)'}; background:${isCurrent ? '#f59e0b' : isAccent ? 'rgba(245,158,11,0.18)' : 'rgba(15,23,42,0.85)'}; color:${isCurrent ? '#090d16' : '#f8fafc'};">
-            <div style="font-size:1.05rem; font-weight:900;">${st}</div>
-            <div style="font-size:0.68rem; color:${isCurrent ? '#090d16' : 'var(--text-muted)'};">${r.drums[idx].toUpperCase()}</div>
+          <div style="padding:8px 4px; text-align:center; border-radius:8px; border:1px solid ${isCurrent ? '#fef08a' : 'rgba(56,189,248,0.4)'}; background:${isCurrent ? '#f59e0b' : 'rgba(15,23,42,0.85)'}; color:${isCurrent ? '#090d16' : '#f8fafc'};">
+            <div style="font-size:0.9rem; font-weight:900;">${st}</div>
+            <div style="font-size:0.65rem; color:${isCurrent ? '#090d16' : 'var(--accent-cyan)'}; font-weight:700;">${piece}</div>
           </div>
         `;
       })
       .join('');
   };
 
-  renderSticking();
+  const triggerPiece = (code: DrumKitPieceCode, isUser = true): void => {
+    audio.playDrumPiece(code);
+    activeHighlight = code;
+    const meta = pieceMeta[code];
+
+    if (isUser && challengeActive && challengeSeq.length > 0) {
+      const expected = challengeSeq[userStep];
+      if (code === expected) {
+        userStep++;
+        if (userStep >= challengeSeq.length) {
+          challengeActive = false;
+          descEl.textContent = `✅ ¡Excelente ritmo! Completaste la secuencia (${challengeSeq.join(' → ')}). Pulsa "🎯 Reto" para otro.`;
+        } else {
+          descEl.textContent = `👍 Bien (${userStep}/${challengeSeq.length})... sigue con la pieza #${userStep + 1}`;
+        }
+      } else {
+        challengeActive = false;
+        descEl.textContent = `❌ Tocaste ${code}, pero seguía ${expected}. Pulsa "🎯 Reto: Repite el Ritmo" para reintentar.`;
+      }
+    }
+
+    renderKitAndSticking(-1, `Sonando: ${meta.label} — ${meta.freqInfo}`);
+    onStatus(`Batería Cenital: ${meta.label} (${meta.freqInfo})`);
+  };
+
+  renderKitAndSticking();
+
+  const keyMap: Record<string, DrumKitPieceCode> = {
+    b: 'BD',
+    s: 'SD',
+    h: 'HH',
+    w: 'HHP',
+    t: 'T1',
+    y: 'T2',
+    u: 'FT',
+    c: 'CR',
+    r: 'RD',
+  };
+
+  if (typeof window !== 'undefined' && stage.dataset['keyBound'] !== '1') {
+    stage.dataset['keyBound'] = '1';
+    window.addEventListener('keydown', (ev: KeyboardEvent) => {
+      const tag = (ev.target as HTMLElement | null)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      const mapped = keyMap[ev.key.toLowerCase()];
+      if (mapped && document.body.contains(stage)) {
+        triggerPiece(mapped, true);
+      }
+    });
+  }
 
   sel.addEventListener('change', () => {
     rIdx = parseInt(sel.value, 10);
     audio.stopAll();
-    renderSticking();
+    challengeActive = false;
+    activeHighlight = null;
+    renderKitAndSticking();
   });
 
   stage.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
-    const pad = target.closest<HTMLElement>('.drum-pad');
-    if (pad) {
-      const type = pad.getAttribute('data-drum') as 'kick' | 'snare' | 'ghost' | 'hihat' | 'openhat' | 'crash' | 'tom' | 'clap';
-      audio.playDrumHit(type);
-      onStatus(`Percusión en directo: ${type.toUpperCase()}`);
+    const svgPiece = target.closest<HTMLElement>('.js-svg-drum-piece');
+    if (svgPiece) {
+      const code = svgPiece.getAttribute('data-piece') as DrumKitPieceCode;
+      if (code) triggerPiece(code, true);
+      return;
+    }
+
+    const btnPiece = target.closest<HTMLElement>('.js-drum-piece-btn');
+    if (btnPiece) {
+      const code = btnPiece.getAttribute('data-piece') as DrumKitPieceCode;
+      if (code) triggerPiece(code, true);
       return;
     }
 
     if (target.closest('.js-rud-stop')) {
       audio.stopAll();
-      renderSticking();
+      challengeActive = false;
+      activeHighlight = null;
+      renderKitAndSticking();
+      return;
+    }
+
+    if (target.closest('.js-rud-challenge')) {
+      audio.stopAll();
+      const pool: DrumKitPieceCode[] = ['BD', 'SD', 'HH', 'T1', 'T2', 'FT', 'CR'];
+      challengeSeq = Array.from({ length: 4 }, () => pool[Math.floor(Math.random() * pool.length)]);
+      userStep = 0;
+      challengeActive = true;
+      descEl.textContent = '👂 Escucha y observa las 4 piezas que se iluminan en la batería...';
+      challengeSeq.forEach((piece, idx) => {
+        audio.schedule(() => {
+          activeHighlight = piece;
+          audio.playDrumPiece(piece);
+          renderKitAndSticking(-1, `Reto Paso ${idx + 1}/4: ${pieceMeta[piece].label}`);
+          if (idx === challengeSeq.length - 1) {
+            audio.schedule(() => {
+              activeHighlight = null;
+              renderKitAndSticking(-1, '🥁 ¡Tu turno! Haz clic en las 4 piezas del SVG en el mismo orden.');
+              descEl.textContent = '🥁 ¡Tu turno! Toca las 4 piezas en el mismo orden.';
+            }, 340);
+          }
+        }, idx * 520);
+      });
       return;
     }
 
     if (target.closest('.js-rud-play')) {
       audio.stopAll();
+      challengeActive = false;
       const r = rudiments[rIdx];
       for (let bar = 0; bar < 2; bar++) {
-        r.drums.forEach((d, idx) => {
+        r.pieces.forEach((piece, idx) => {
           const total = bar * 8 + idx;
           audio.schedule(() => {
-            renderSticking(idx);
-            audio.playDrumHit(d);
-            onStatus(`Rudimento: ${r.sticking[idx]} (${d})`);
-          }, total * 190);
+            activeHighlight = piece;
+            audio.playDrumPiece(piece);
+            if (piece === 'CR') audio.playDrumPiece('BD');
+            renderKitAndSticking(idx, `Paso ${idx + 1}/8: ${r.sticking[idx]} → ${pieceMeta[piece].label}`);
+            onStatus(`Batería: ${r.sticking[idx]} (${pieceMeta[piece].label})`);
+          }, total * 200);
         });
       }
     }
@@ -2546,7 +3069,7 @@ function buildDrumRudimentAndPadsLab(
 }
 
 /**
- * SPECIALIZED LAB 6: Ear Training & Sight-Reading Quiz (ear-lab, reading-lab)
+ * SPECIALIZED LAB 6: Upgraded Ear Training, Pitch Acuity (Semitone/Tone/Microtone) & Sight-Reading Quiz (ear-lab, reading-lab)
  */
 function buildEarAndReadingTrainerLab(
   stage: HTMLElement,
@@ -2554,6 +3077,7 @@ function buildEarAndReadingTrainerLab(
   onStatus: (msg: string) => void,
   isReadingMode: boolean
 ): void {
+  let subMode: 'degrees' | 'acuity' | 'micro' = 'degrees';
   const items = [
     { name: 'Do4 (C4) - Tónica (1)', midi: 60, staffY: 110, ledger: true },
     { name: 'Re4 (D4) - Segunda Mayor (2)', midi: 62, staffY: 102, ledger: false },
@@ -2567,76 +3091,157 @@ function buildEarAndReadingTrainerLab(
 
   let targetIdx = 4; // G4 default
   let score = 0;
+  let acuitySeed = 1;
+  let currentAcuity = createPitchAcuityRound('basic', acuitySeed);
 
-  const renderStaff = (feedback = 'Pulsa cualquier botón para escuchar y entrenar tu reconocimiento.'): void => {
+  const acuityChoices: { id: typeof currentAcuity.correctCategory; label: string }[] = [
+    { id: 'same', label: '🎯 Misma Altura Exacta (Unísono · 0 ST)' },
+    { id: 'semitone_up', label: '⬆ Semitono Más Agudo (+1 ST)' },
+    { id: 'semitone_down', label: '⬇ Semitono Más Grave (-1 ST)' },
+    { id: 'tone_up', label: '⏫ Tono Completo Más Agudo (+2 ST)' },
+    { id: 'tone_down', label: '⏬ Tono Completo Más Grave (-2 ST)' },
+  ];
+
+  const microChoices: { id: typeof currentAcuity.correctCategory; label: string }[] = [
+    { id: 'same', label: '🎯 Afinación Exacta (0 cents · Unísono)' },
+    { id: 'micro_sharp', label: '📈 Microtono Alto (+25 cents · 1/4 de tono arriba)' },
+    { id: 'micro_flat', label: '📉 Microtono Bajo (-25 cents · 1/4 de tono abajo)' },
+    { id: 'semitone_up', label: '⬆ Semitono Completo Arriba (+100 cents)' },
+    { id: 'semitone_down', label: '⬇ Semitono Completo Abajo (-100 cents)' },
+  ];
+
+  const renderStaff = (feedback = 'Selecciona un modo de entrenamiento y pulsa Escuchar.'): void => {
     const it = items[targetIdx];
     stage.innerHTML = `
       <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
         <div>
-          <strong style="color:var(--accent-gold);">${isReadingMode ? '🎼 Entrenador de Lectura en Pentagrama (Clave de Sol) y Mástil' : '👂 Gimnasio de Entrenamiento Auditivo Activo (Grados e Intervalos)'}</strong>
+          <strong style="color:var(--accent-gold);">${isReadingMode ? '🎼 Entrenador de Lectura en Pentagrama (Clave de Sol) y Mástil' : '👂 Gimnasio de Entrenamiento Auditivo y Agudeza Interválica'}</strong>
           <div style="font-size:0.8rem; color:var(--accent-cyan);">Aciertos acumulados: <strong>${score}</strong></div>
         </div>
-        <div style="display:flex; gap:8px;">
-          <button type="button" class="btn btn-primary js-quiz-new">🎲 Nuevo Reto</button>
-          <button type="button" class="btn js-quiz-replay" style="background:rgba(56,189,248,0.18); color:#38bdf8;">🔊 Escuchar Referencia (C4 → Nota)</button>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="btn js-ear-mode" data-m="degrees" style="font-size:0.75rem; background:${subMode === 'degrees' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.08)'}; color:${subMode === 'degrees' ? '#090d16' : '#f8fafc'};">1. Grados y Lectura</button>
+          <button type="button" class="btn js-ear-mode" data-m="acuity" style="font-size:0.75rem; background:${subMode === 'acuity' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.08)'}; color:${subMode === 'acuity' ? '#090d16' : '#f8fafc'};">2. Agudeza: Unísono vs Semitono vs Tono</button>
+          <button type="button" class="btn js-ear-mode" data-m="micro" style="font-size:0.75rem; background:${subMode === 'micro' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.08)'}; color:${subMode === 'micro' ? '#090d16' : '#f8fafc'};">3. Micro-Afinación (±25 Cents)</button>
         </div>
       </div>
 
-      <div style="background:#070a12; border:1px solid rgba(56,189,248,0.3); border-radius:8px; padding:10px; margin-bottom:12px; display:flex; align-items:center; justify-content:center;">
-        <svg viewBox="0 0 420 135" width="420" height="135">
-          <!-- 5 Staff lines (y = 30, 46, 62, 78, 94) -->
-          ${[30, 46, 62, 78, 94].map((y) => `<line x1="30" y1="${y}" x2="390" y2="${y}" stroke="#475569" stroke-width="1.5"/>`).join('')}
-          <text x="42" y="84" fill="#f59e0b" font-size="52" font-family="serif">𝄞</text>
-          ${
-            isReadingMode
-              ? `
-            ${it.ledger ? `<line x1="192" y1="110" x2="228" y2="110" stroke="#94a3b8" stroke-width="2"/>` : ''}
-            <ellipse cx="210" cy="${it.staffY}" rx="10" ry="7.5" fill="#38bdf8" transform="rotate(-15 210 ${it.staffY})"/>
-            <line x1="219" y1="${it.staffY}" x2="219" y2="${it.staffY - 38}" stroke="#38bdf8" stroke-width="2"/>
-          `
-              : `<text x="210" y="70" text-anchor="middle" fill="#38bdf8" font-size="16" font-weight="800">🔊 Escucha e identifica el grado / intervalo</text>`
-          }
-        </svg>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+        <button type="button" class="btn btn-primary js-quiz-new">🎲 Nuevo Reto Auditivo</button>
+        <button type="button" class="btn js-quiz-replay" style="background:rgba(56,189,248,0.18); color:#38bdf8;">🔊 Escuchar Secuencia (Nota A → Nota B)</button>
+        ${
+          subMode !== 'degrees'
+            ? `<button type="button" class="btn js-quiz-together" style="background:rgba(167,139,250,0.2); color:#c4b5fd;">🔊 Escuchar Juntas (Oír Batimentos)</button>`
+            : ''
+        }
       </div>
+
+      ${
+        subMode === 'degrees'
+          ? `
+        <div style="background:#070a12; border:1px solid rgba(56,189,248,0.3); border-radius:8px; padding:10px; margin-bottom:12px; display:flex; align-items:center; justify-content:center;">
+          <svg viewBox="0 0 420 135" width="420" height="135" style="max-width:100%; height:auto;">
+            ${[30, 46, 62, 78, 94].map((y) => `<line x1="30" y1="${y}" x2="390" y2="${y}" stroke="#475569" stroke-width="1.5"/>`).join('')}
+            <text x="42" y="84" fill="#f59e0b" font-size="52" font-family="serif">𝄞</text>
+            ${
+              isReadingMode
+                ? `
+              ${it.ledger ? `<line x1="192" y1="110" x2="228" y2="110" stroke="#94a3b8" stroke-width="2"/>` : ''}
+              <ellipse cx="210" cy="${it.staffY}" rx="10" ry="7.5" fill="#38bdf8" transform="rotate(-15 210 ${it.staffY})"/>
+              <line x1="219" y1="${it.staffY}" x2="219" y2="${it.staffY - 38}" stroke="#38bdf8" stroke-width="2"/>
+            `
+                : `<text x="210" y="70" text-anchor="middle" fill="#38bdf8" font-size="15" font-weight="800">🔊 Escucha C4 (Referencia) → Identifica el Grado</text>`
+            }
+          </svg>
+        </div>
+      `
+          : `
+        <div style="background:#070a12; border:1px solid rgba(245,158,11,0.35); border-radius:8px; padding:12px; margin-bottom:12px; font-size:0.84rem; color:#cbd5e1;">
+          <strong>Test de Agudeza Auditiva (${subMode === 'micro' ? 'Nivel Afinador Microtonal ±25 cents' : 'Unísono vs Semitono vs Tono'}):</strong>
+          Escucha la <strong>Nota A (${midiToNoteName(currentAcuity.baseMidi)} = ${currentAcuity.baseHz.toFixed(1)} Hz)</strong> seguida de la <strong>Nota B</strong>. ¿Tienen la misma altura o cómo varía la segunda nota?
+        </div>
+      `
+      }
 
       <div style="font-size:0.85rem; color:#f8fafc; margin-bottom:10px; padding:8px 12px; background:rgba(56,189,248,0.12); border-radius:6px;">
         ${feedback}
       </div>
 
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px;">
-        ${items
-          .map(
-            (opt, idx) => `
-          <button type="button" class="btn js-quiz-ans" data-idx="${idx}" style="background:rgba(30,41,59,0.9); border:1px solid rgba(56,189,248,0.35); color:#f8fafc; padding:10px; text-align:left; font-size:0.8rem;">
-            ${opt.name}
-          </button>
-        `
-          )
-          .join('')}
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:8px;">
+        ${
+          subMode === 'degrees'
+            ? items
+                .map(
+                  (opt, idx) => `
+              <button type="button" class="btn js-quiz-ans" data-idx="${idx}" style="background:rgba(30,41,59,0.9); border:1px solid rgba(56,189,248,0.35); color:#f8fafc; padding:10px; text-align:left; font-size:0.8rem;">
+                ${opt.name}
+              </button>
+            `
+                )
+                .join('')
+            : (subMode === 'micro' ? microChoices : acuityChoices)
+                .map(
+                  (ch) => `
+              <button type="button" class="btn js-acuity-ans" data-cat="${ch.id}" style="background:rgba(30,41,59,0.9); border:1px solid rgba(245,158,11,0.4); color:#f8fafc; padding:10px; text-align:left; font-size:0.8rem;">
+                ${ch.label}
+              </button>
+            `
+                )
+                .join('')
+        }
       </div>
     `;
   };
 
-  renderStaff();
-
   const playCurrentPrompt = (): void => {
     audio.stopAll();
-    audio.playAcousticPiano(60, 0.65, 0, 0.25, false);
-    audio.playPluckedGuitar(items[targetIdx].midi, 1.1, 0.55, 0.3, false);
+    if (subMode === 'degrees') {
+      audio.playAcousticPiano(60, 0.65, 0, 0.25, false);
+      audio.playPluckedGuitar(items[targetIdx].midi, 1.1, 0.55, 0.3, false);
+    } else {
+      audio.playFreqTone(currentAcuity.baseHz, 0.85, 0, 0.28, false);
+      audio.playFreqTone(currentAcuity.secondHz, 0.95, 0.72, 0.28, false);
+    }
   };
+
+  renderStaff();
 
   stage.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
-    if (target.closest('.js-quiz-new')) {
-      targetIdx = Math.floor(Math.random() * items.length);
-      renderStaff('🎯 ¡Nuevo reto generado! Escucha e identifica la nota.');
+    const modeBtn = target.closest<HTMLElement>('.js-ear-mode');
+    if (modeBtn) {
+      subMode = modeBtn.getAttribute('data-m') as 'degrees' | 'acuity' | 'micro';
+      acuitySeed++;
+      currentAcuity = createPitchAcuityRound(subMode === 'micro' ? 'microtonal' : 'basic', acuitySeed);
+      renderStaff('Modo cambiado. Pulsa Escuchar Secuencia para comparar las dos notas.');
       playCurrentPrompt();
       return;
     }
+
+    if (target.closest('.js-quiz-new')) {
+      if (subMode === 'degrees') {
+        targetIdx = (targetIdx + Math.floor(Math.random() * (items.length - 1)) + 1) % items.length;
+      } else {
+        acuitySeed += Math.floor(Math.random() * 4) + 1;
+        currentAcuity = createPitchAcuityRound(subMode === 'micro' ? 'microtonal' : 'basic', acuitySeed);
+      }
+      renderStaff('🎯 ¡Nuevo reto generado! Escucha con atención.');
+      playCurrentPrompt();
+      return;
+    }
+
     if (target.closest('.js-quiz-replay')) {
       playCurrentPrompt();
       return;
     }
+
+    if (target.closest('.js-quiz-together')) {
+      audio.stopAll();
+      audio.playFreqTone(currentAcuity.baseHz, 1.5, 0, 0.24, false);
+      audio.playFreqTone(currentAcuity.secondHz, 1.5, 0, 0.24, false);
+      onStatus('Escuchando Nota A y Nota B simultáneamente (observa si hay batimentos)');
+      return;
+    }
+
     const ans = target.closest<HTMLElement>('.js-quiz-ans');
     if (ans) {
       const chosen = parseInt(ans.getAttribute('data-idx')!, 10);
@@ -2646,7 +3251,24 @@ function buildEarAndReadingTrainerLab(
         renderStaff(`✅ ¡Correcto! Era ${items[targetIdx].name} (${audio.midiToFreq(items[targetIdx].midi).toFixed(1)} Hz).`);
         onStatus(`¡Acierto! ${items[targetIdx].name}`);
       } else {
-        renderStaff(`❌ Seleccionaste ${items[chosen].name}. Escucha de nuevo la referencia para encontrar la respuesta.`);
+        renderStaff(`❌ Seleccionaste ${items[chosen].name}. Escucha de nuevo la referencia para comparar.`);
+      }
+      return;
+    }
+
+    const acAns = target.closest<HTMLElement>('.js-acuity-ans');
+    if (acAns) {
+      const cat = acAns.getAttribute('data-cat');
+      if (cat === currentAcuity.correctCategory) {
+        score++;
+        renderStaff(
+          `✅ ¡Oído de precisión! Nota A = ${currentAcuity.baseHz.toFixed(1)} Hz → Nota B = ${currentAcuity.secondHz.toFixed(1)} Hz (${currentAcuity.label}).`
+        );
+        onStatus(`¡Acierto de Agudeza Auditiva! ${currentAcuity.label}`);
+      } else {
+        renderStaff(
+          `❌ No exactamente. La relación real era: ${currentAcuity.label} (${currentAcuity.baseHz.toFixed(1)} Hz → ${currentAcuity.secondHz.toFixed(1)} Hz). Pulsa Escuchar de nuevo.`
+        );
       }
     }
   });
@@ -3436,9 +4058,9 @@ function buildDataLabStage(
 }
 
 /**
- * NEW LAB 8: Personal Vocal Range Detector ("Descubre tu Tesitura") with Real Microphone + Manual Piano Selector
+ * NEW LAB 8: Personal Vocal Range & Extended Tessitura Detector ("Descubre tu Tesitura: E2–D5 Baritenor y SATB")
  */
-function buildVocalPitchDetectorLab(
+export function buildVocalPitchDetectorLab(
   stage: HTMLElement,
   audio: MusicAudioEngine,
   onStatus: (msg: string) => void
@@ -3447,53 +4069,67 @@ function buildVocalPitchDetectorLab(
   let micCtx: AudioContext | null = null;
   let rafId = 0;
   let currentDetectedMidi = 60;
-  let lowestMidi: number | null = 45; // A2 default
-  let highestMidi: number | null = 69; // A4 default
+  let lowestMidi = 40; // E2 default (per user's E2 to D5 question!)
+  let highestMidi = 74; // D5 default
+  let comfortZone: 'low' | 'mid' | 'high' = 'mid';
 
   const midiToName = (m: number): string => `${NOTE_NAMES[m % 12]}${Math.floor(m / 12) - 1}`;
 
   stage.innerHTML = `
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px; margin-bottom:14px;">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(270px, 1fr)); gap:14px; margin-bottom:14px;">
       <!-- Live Mic Panel -->
       <div style="background:rgba(15,23,42,0.92); border:1px solid rgba(56,189,248,0.4); border-radius:10px; padding:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <strong style="color:var(--accent-cyan); font-size:0.92rem;">1. Captura por Micrófono en Vivo</strong>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+          <strong style="color:var(--accent-cyan); font-size:0.92rem;">1. Captura por Micrófono o Presets Reales</strong>
           <button type="button" class="btn btn-primary js-mic-toggle" style="font-size:0.78rem; padding:5px 12px;">🎙️ Activar Micrófono</button>
         </div>
-        <div class="js-mic-readout" style="text-align:center; padding:14px 10px; background:#070a12; border-radius:8px; border:1px solid rgba(255,255,255,0.1); margin-bottom:10px;">
-          <div style="font-size:1.75rem; font-weight:900; color:var(--accent-gold);" class="js-pitch-note">C4 (Do4)</div>
-          <div style="font-size:0.84rem; color:#38bdf8;" class="js-pitch-hz">261.6 Hz · Listo para medir</div>
+        <div class="js-mic-readout" style="text-align:center; padding:12px 10px; background:#070a12; border-radius:8px; border:1px solid rgba(255,255,255,0.1); margin-bottom:10px;">
+          <div style="font-size:1.65rem; font-weight:900; color:var(--accent-gold);" class="js-pitch-note">E2 → D5</div>
+          <div style="font-size:0.82rem; color:#38bdf8;" class="js-pitch-hz">82.4 Hz a 587.3 Hz · 34 Semitonos (2.8 Octavas)</div>
         </div>
-        <div style="display:flex; gap:8px;">
-          <button type="button" class="btn js-save-low" style="flex:1; font-size:0.76rem; background:rgba(56,189,248,0.18); color:#38bdf8; border:1px solid rgba(56,189,248,0.4);">⬇ Guardar como Mi Nota Grave</button>
-          <button type="button" class="btn js-save-high" style="flex:1; font-size:0.76rem; background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid rgba(245,158,11,0.4);">⬆ Guardar como Mi Nota Aguda</button>
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <button type="button" class="btn js-save-low" style="flex:1; font-size:0.74rem; background:rgba(56,189,248,0.18); color:#38bdf8; border:1px solid rgba(56,189,248,0.4);">⬇ Guardar Nota Grave</button>
+          <button type="button" class="btn js-save-high" style="flex:1; font-size:0.74rem; background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid rgba(245,158,11,0.4);">⬆ Guardar Nota Aguda</button>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <button type="button" class="btn js-vpreset-e2d5" style="font-size:0.73rem; background:rgba(16,185,129,0.2); color:#34d399; border:1px solid rgba(16,185,129,0.4);">🎯 Caso E2 a D5 (Baritenor / 3 Octavas)</button>
+          <button type="button" class="btn js-vpreset-play-span" style="font-size:0.73rem; background:rgba(167,139,250,0.2); color:#c4b5fd; border:1px solid rgba(167,139,250,0.4);">🔊 Escuchar E2 → C3 → G4 → D5</button>
         </div>
       </div>
 
-      <!-- Manual / Ear Test Fallback & Diagnosis Panel -->
+      <!-- Manual / Ear Test Fallback & Extended Range Diagnosis Panel -->
       <div style="background:rgba(15,23,42,0.92); border:1px solid rgba(245,158,11,0.4); border-radius:10px; padding:14px;">
-        <strong style="color:var(--accent-gold); font-size:0.92rem;">2. Diagnóstico Automático de Tesitura y Passaggio</strong>
+        <strong style="color:var(--accent-gold); font-size:0.92rem;">2. Diagnóstico Multirregistro (SATB + Rangos Amplios / Baritenor)</strong>
         <div style="display:flex; gap:10px; margin:10px 0; align-items:center; flex-wrap:wrap;">
-          <div style="font-size:0.8rem;">
-            Grave:
+          <label style="font-size:0.78rem;">
+            Nota Más Grave:
             <select class="js-manual-low" style="background:#070a12; color:#38bdf8; border:1px solid #334155; border-radius:4px; padding:3px 6px;">
-              ${Array.from({ length: 28 }, (_, i) => 38 + i)
+              ${Array.from({ length: 28 }, (_, i) => 36 + i)
                 .map((m) => `<option value="${m}" ${m === lowestMidi ? 'selected' : ''}>${midiToName(m)} (${audio.midiToFreq(m).toFixed(0)} Hz)</option>`)
                 .join('')}
             </select>
-          </div>
-          <div style="font-size:0.8rem;">
-            Aguda:
+          </label>
+          <label style="font-size:0.78rem;">
+            Nota Más Aguda:
             <select class="js-manual-high" style="background:#070a12; color:#fbbf24; border:1px solid #334155; border-radius:4px; padding:3px 6px;">
               ${Array.from({ length: 34 }, (_, i) => 55 + i)
                 .map((m) => `<option value="${m}" ${m === highestMidi ? 'selected' : ''}>${midiToName(m)} (${audio.midiToFreq(m).toFixed(0)} Hz)</option>`)
                 .join('')}
             </select>
-          </div>
+          </label>
+          <label style="font-size:0.78rem;">
+            Zona Más Cómoda (Voz Hablada):
+            <select class="js-comfort-zone" style="background:#070a12; color:#34d399; border:1px solid #334155; border-radius:4px; padding:3px 6px;">
+              <option value="mid" selected>Centro Medio (A2–G4 · Baritenor)</option>
+              <option value="low">Centro Grave/Cálido (G2–E4 · Barítono con Mix)</option>
+              <option value="high">Centro Agudo/Ligero (C3–A4 · Tenor con Graves)</option>
+            </select>
+          </label>
         </div>
-        <div class="js-range-diagnosis" style="font-size:0.82rem; background:rgba(0,0,0,0.35); padding:10px; border-radius:6px; line-height:1.5;"></div>
+        <div class="js-range-diagnosis" style="font-size:0.81rem; background:rgba(0,0,0,0.38); padding:10px 12px; border-radius:6px; line-height:1.55;"></div>
       </div>
     </div>
+    <div class="js-register-zones" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:8px;"></div>
   `;
 
   const micToggleBtn = stage.querySelector<HTMLButtonElement>('.js-mic-toggle')!;
@@ -3501,47 +4137,35 @@ function buildVocalPitchDetectorLab(
   const hzEl = stage.querySelector<HTMLElement>('.js-pitch-hz')!;
   const lowSel = stage.querySelector<HTMLSelectElement>('.js-manual-low')!;
   const highSel = stage.querySelector<HTMLSelectElement>('.js-manual-high')!;
+  const comfortSel = stage.querySelector<HTMLSelectElement>('.js-comfort-zone')!;
   const diagEl = stage.querySelector<HTMLElement>('.js-range-diagnosis')!;
+  const zonesEl = stage.querySelector<HTMLElement>('.js-register-zones')!;
 
   const updateDiagnosis = (): void => {
-    const low = lowestMidi ?? 45;
-    const high = Math.max(low + 5, highestMidi ?? 69);
-    const spanSemis = high - low;
-    const octaves = (spanSemis / 12).toFixed(1);
-    const center = Math.round((low + high) / 2);
-
-    let voiceType = 'Barítono / Voz Media';
-    let passInfo = 'B3 – E4';
-    if (low <= 42 && high <= 65) {
-      voiceType = 'Bajo (Voz Grave Masculina)';
-      passInfo = 'A3 – D4';
-    } else if (low <= 46 && high <= 70) {
-      voiceType = 'Barítono (Voz Media Masculina)';
-      passInfo = 'B3 – E4';
-    } else if (low <= 51 && high <= 75) {
-      voiceType = 'Tenor (Voz Aguda Masculina)';
-      passInfo = 'D4 – G4';
-    } else if (low <= 55 && high <= 78) {
-      voiceType = 'Contralto (Voz Grave Femenina)';
-      passInfo = 'C4 (1º) → C5–D5 (2º)';
-    } else if (low <= 58 && high <= 82) {
-      voiceType = 'Mezzosoprano (Voz Media Femenina)';
-      passInfo = 'D4 (1º) → D5–E5 (2º)';
-    } else {
-      voiceType = 'Soprano (Voz Aguda Femenina)';
-      passInfo = 'Eb4 (1º) → E5–F#5 (2º)';
-    }
-
+    const diag = classifyVocalRangeDetailed(lowestMidi, highestMidi, comfortZone);
     diagEl.innerHTML = `
-      <div><strong>Rango Medido:</strong> <span style="color:var(--accent-gold); font-weight:800;">${midiToName(low)} a ${midiToName(high)}</span> (${spanSemis} semitonos · ${octaves} octavas)</div>
-      <div><strong>Clasificación Orientativa:</strong> <span style="color:var(--accent-cyan); font-weight:800;">${voiceType}</span></div>
-      <div><strong>Tu Centro Cómodo para Calentar:</strong> <strong>${midiToName(center - 3)} – ${midiToName(center)}</strong> | <strong>Tu Zona de Passaggio:</strong> ${passInfo}</div>
+      <div style="margin-bottom:4px;"><strong>Rango Total Medido:</strong> <span style="color:var(--accent-gold); font-weight:800;">${diag.lowName} a ${diag.highName}</span> (${diag.semitones} semitonos · <strong>${diag.octaves} octavas</strong>)</div>
+      <div style="margin-bottom:4px;"><strong>Clasificación Principal:</strong> <span style="color:#34d399; font-weight:800; font-size:0.9rem;">${diag.primaryClassification}</span></div>
+      <div style="margin-bottom:4px;"><strong>Perfiles Compatibles:</strong> <span style="color:#38bdf8;">${diag.secondaryPossibilities.join(' · ')}</span></div>
+      <div style="margin-bottom:6px; color:#cbd5e1;">${diag.whyExplanation}</div>
+      <div style="color:#fde047;"><strong>Tesitura Cómoda Recomendada:</strong> ${diag.comfortableCenter} | <strong>Puentes:</strong> ${diag.passaggioInfo}</div>
     `;
+
+    zonesEl.innerHTML = diag.zones
+      .map(
+        (z) => `
+      <div style="background:rgba(15,23,42,0.9); border:1px solid ${z.color}66; border-radius:8px; padding:10px;">
+        <div style="font-size:0.78rem; font-weight:800; color:${z.color};">${z.label}</div>
+        <div style="font-size:0.9rem; font-weight:900; color:#fff; margin:2px 0;">${z.rangeText}</div>
+        <div style="font-size:0.74rem; color:#94a3b8;">${z.mechanism}</div>
+      </div>
+    `
+      )
+      .join('');
   };
 
   updateDiagnosis();
 
-  // Simple time-domain autocorrelation pitch detector
   const autoCorrelate = (buf: Float32Array, sampleRate: number): number => {
     let rms = 0;
     for (const val of buf) rms += val * val;
@@ -3632,7 +4256,7 @@ function buildVocalPitchDetectorLab(
       };
       loop();
     } catch {
-      hzEl.textContent = 'Sin acceso al micrófono — Usa los selectores manuales con referencia de piano a la derecha.';
+      hzEl.textContent = 'Sin acceso al micrófono — Usa los selectores manuales a la derecha.';
     }
   });
 
@@ -3650,6 +4274,27 @@ function buildVocalPitchDetectorLab(
     onStatus(`Nota más aguda registrada: ${midiToName(highestMidi)}`);
   });
 
+  stage.querySelector('.js-vpreset-e2d5')?.addEventListener('click', () => {
+    lowestMidi = 40; // E2
+    highestMidi = 74; // D5
+    lowSel.value = '40';
+    highSel.value = '74';
+    noteEl.textContent = 'E2 → D5';
+    hzEl.textContent = '82.4 Hz a 587.3 Hz · 34 Semitonos (2.8 Octavas)';
+    updateDiagnosis();
+    onStatus('Cargado perfil E2 a D5: Rango Extendido Polirregistral (Baritenor / 3 Octavas)');
+  });
+
+  stage.querySelector('.js-vpreset-play-span')?.addEventListener('click', () => {
+    audio.stopAll();
+    const spanNotes = [lowestMidi, Math.round((lowestMidi + highestMidi) / 2) - 3, Math.round((lowestMidi + highestMidi) / 2) + 4, highestMidi];
+    spanNotes.forEach((m, i) => {
+      audio.playAcousticPiano(m, 0.85, i * 0.6, 0.2, false);
+      audio.playVocalFormant(m, 0.85, i * 0.6, 0.26, i < 2 ? 'o' : 'a', false);
+    });
+    onStatus(`Escuchando recorrido de registros: ${midiToName(lowestMidi)} → ${midiToName(highestMidi)}`);
+  });
+
   lowSel.addEventListener('change', () => {
     lowestMidi = parseInt(lowSel.value, 10);
     audio.playVocalFormant(lowestMidi, 1.0, 0, 0.28, 'a', true);
@@ -3659,6 +4304,11 @@ function buildVocalPitchDetectorLab(
   highSel.addEventListener('change', () => {
     highestMidi = parseInt(highSel.value, 10);
     audio.playVocalFormant(highestMidi, 1.0, 0, 0.28, 'a', true);
+    updateDiagnosis();
+  });
+
+  comfortSel.addEventListener('change', () => {
+    comfortZone = comfortSel.value as 'low' | 'mid' | 'high';
     updateDiagnosis();
   });
 }
@@ -3899,9 +4549,9 @@ function buildQuenaVisualLab(
           .join('')}
       </div>
 
-      <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:center; background:rgba(15,23,42,0.9); border:1px solid rgba(245,158,11,0.4); border-radius:10px; padding:16px;">
+      <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:center; background:rgba(15,23,42,0.9); border:1px solid rgba(245,158,11,0.4); border-radius:10px; padding:16px; max-width:100%;">
         <!-- Visual Bamboo Flute Tube -->
-        <div style="flex:1; min-width:280px; background:linear-gradient(180deg, #92400e, #b45309, #78350f); border:2px solid #f59e0b; border-radius:24px; padding:14px 22px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div style="flex:1 1 260px; min-width:0; max-width:100%; overflow-x:auto; background:linear-gradient(180deg, #92400e, #b45309, #78350f); border:2px solid #f59e0b; border-radius:24px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
           <div style="color:#fef3c7; font-weight:900; font-size:0.8rem; border-right:3px solid #451a03; padding-right:10px;">BISEL 吹</div>
           ${['P (Pulgar)', '1 (Índ. Izq)', '2 (Med. Izq)', '3 (Anu. Izq)', '4 (Índ. Der)', '5 (Med. Der)', '6 (Anu. Der)']
             .map((label, hIdx) => {
@@ -4223,7 +4873,9 @@ function buildFolkloreRhythmLab(
         <button type="button" class="btn js-folk-stop" style="background:rgba(244,63,94,0.2); color:#fb7185;">⏹ Detener</button>
       </div>
     </div>
-    <div class="js-folk-grid"></div>
+    <div style="overflow-x:auto; max-width:100%;">
+      <div class="js-folk-grid" style="min-width:520px;"></div>
+    </div>
   `;
 
   const sel = stage.querySelector<HTMLSelectElement>('.js-folk-sel')!;
@@ -4317,7 +4969,9 @@ function buildDrumIndependenceLab(
         <button type="button" class="btn js-di-stop" style="background:rgba(244,63,94,0.2); color:#fb7185;">⏹ Detener</button>
       </div>
     </div>
-    <div class="js-di-grid"></div>
+    <div style="overflow-x:auto; max-width:100%;">
+      <div class="js-di-grid" style="min-width:500px;"></div>
+    </div>
   `;
 
   const fSel = stage.querySelector<HTMLSelectElement>('.js-di-feet')!;

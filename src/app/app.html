@@ -1,74 +1,140 @@
 <div class="min-h-screen flex flex-col bg-[#0b0f19] text-slate-100">
-  <!-- Clean Top Header Bar (Single Menu Architecture + Quick Tools) -->
-  <header class="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-2.5 bg-[#0f172a]/95 backdrop-blur border-b border-slate-800">
-    <div class="flex items-center gap-3 min-w-0">
-      <a
-        href="#intro"
-        (click)="$event.preventDefault(); loadCategory(categories[0])"
-        class="text-base sm:text-lg font-extrabold tracking-tight text-white whitespace-nowrap shrink-0">
-        🎼 Enciclopedia Interactiva de Música
-      </a>
-      <span class="hidden xl:inline-block text-xs text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-0.5 rounded font-semibold truncate max-w-md">
-        {{ activeNoteLabel() }}
-      </span>
-    </div>
+  <!-- Clean Responsive Top Header with Integrated Search -->
+  <header class="sticky top-0 z-30 bg-[#0f172a]/95 backdrop-blur border-b border-slate-800 px-3 sm:px-6 py-2.5">
+    <div class="max-w-[1480px] mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
+      <!-- Top Row: Mobile Drawer Button, Title & Essential Controls -->
+      <div class="flex items-center justify-between gap-2 min-w-0">
+        <div class="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            (click)="toggleMobileMenu()"
+            aria-label="Abrir índice de módulos"
+            class="lg:hidden px-2.5 py-1.5 text-xs font-bold text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-lg hover:bg-amber-500/25 shrink-0 cursor-pointer">
+            @if (mobileMenuOpen()) {
+              ✕ Cerrar
+            } @else {
+              ☰ Módulos
+            }
+          </button>
 
-    <div class="flex flex-wrap items-center gap-2 shrink-0">
-      <button
-        type="button"
-        (click)="openQuickLab('canto', 'v-detector-tesitura')"
-        class="px-2.5 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 rounded-lg hover:bg-emerald-500/25 transition-colors whitespace-nowrap cursor-pointer">
-        🎤 Detector de Tesitura
-      </button>
+          <a
+            href="#intro"
+            (click)="$event.preventDefault(); loadCategory(categories[0])"
+            class="text-sm sm:text-base lg:text-lg font-extrabold tracking-tight text-white truncate">
+            🎼 <span class="sm:hidden">Enciclopedia</span><span class="hidden sm:inline">Enciclopedia Musical</span>
+          </a>
+        </div>
 
-      <button
-        type="button"
-        (click)="openQuickLab('guitarra-ac', 'ga-diccionario-inverso')"
-        class="px-2.5 py-1.5 text-xs font-semibold text-sky-300 bg-sky-500/15 border border-sky-500/40 rounded-lg hover:bg-sky-500/25 transition-colors whitespace-nowrap cursor-pointer">
-        🎸 ¿Qué Acorde Piso?
-      </button>
+        <div class="flex items-center gap-1.5 shrink-0 md:hidden">
+          <button
+            type="button"
+            (click)="toggleGlossary()"
+            class="px-2.5 py-1.5 text-xs font-semibold text-purple-300 bg-purple-500/15 border border-purple-500/40 rounded-lg hover:bg-purple-500/25 whitespace-nowrap cursor-pointer">
+            📖 Glosario
+          </button>
+          <button
+            type="button"
+            (click)="stopAllAudio()"
+            aria-label="Detener audio"
+            class="px-2.5 py-1.5 text-xs font-semibold text-rose-300 bg-rose-500/15 border border-rose-500/40 rounded-lg hover:bg-rose-500/25 whitespace-nowrap cursor-pointer">
+            ⏹ Stop
+          </button>
+        </div>
+      </div>
 
-      <button
-        type="button"
-        (click)="toggleGlossary()"
-        class="px-2.5 py-1.5 text-xs font-semibold text-purple-300 bg-purple-500/15 border border-purple-500/40 rounded-lg hover:bg-purple-500/25 transition-colors whitespace-nowrap cursor-pointer">
-        📖 Glosario Musical
-      </button>
+      <!-- Responsive Global Instant Search + Desktop Essential Controls -->
+      <div class="flex items-center gap-2 w-full md:w-auto md:flex-1 md:justify-end min-w-0">
+        <div class="relative w-full md:max-w-sm lg:max-w-md min-w-0">
+          <label for="globalEncyclopediaSearch" class="sr-only">Buscar capítulos, juegos o conceptos musicales</label>
+          <input
+            id="globalEncyclopediaSearch"
+            type="text"
+            inputmode="search"
+            enterkeyhint="search"
+            [value]="searchQuery()"
+            (input)="onSearchInput($event)"
+            placeholder="🔍 Buscar capítulo, juego, acorde, batería, letra..."
+            class="w-full pl-3 pr-8 py-1.5 text-xs sm:text-sm bg-[#0b0f19] border border-slate-700 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:border-sky-400" />
+          @if (searchQuery().length > 0) {
+            <button
+              type="button"
+              (click)="clearSearch()"
+              aria-label="Limpiar búsqueda"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white px-1 cursor-pointer">
+              ✕
+            </button>
+          }
 
-      <button
-        type="button"
-        (click)="stopAllAudio()"
-        class="px-2.5 py-1.5 text-xs font-semibold text-rose-300 bg-rose-500/15 border border-rose-500/40 rounded-lg hover:bg-rose-500/25 transition-colors whitespace-nowrap cursor-pointer">
-        ⏹ Detener
-      </button>
+          @if (searchQuery().trim().length >= 2) {
+            <div class="absolute left-0 right-0 md:left-auto md:right-0 md:w-[440px] mt-1.5 bg-[#0b0f19] border border-sky-500/50 rounded-xl shadow-2xl p-2 max-h-[65vh] overflow-y-auto space-y-1.5 z-50">
+              <div class="flex items-center justify-between px-1.5 py-0.5 text-[11px] font-semibold text-slate-400">
+                <span>Resultados encontrados ({{ searchResults().length }})</span>
+                <button
+                  type="button"
+                  (click)="clearSearch()"
+                  class="text-sky-400 hover:text-sky-300 cursor-pointer">
+                  Cerrar
+                </button>
+              </div>
+              @if (searchResults().length === 0) {
+                <div class="text-xs text-slate-400 p-2">
+                  No se encontraron resultados para "{{ searchQuery() }}".
+                </div>
+              }
+              @for (res of searchResults(); track res.sectionId + '-' + res.sectionTitle) {
+                <button
+                  type="button"
+                  (click)="jumpToSearchResult(res)"
+                  class="w-full text-left p-2 rounded-lg bg-slate-900/95 hover:bg-sky-500/15 border border-slate-800 hover:border-sky-500/40 transition-colors cursor-pointer block">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-bold text-amber-300 truncate">{{ res.sectionTitle }}</span>
+                    <span class="text-[10px] font-mono text-sky-400 shrink-0">N{{ res.nivel }}</span>
+                  </div>
+                  <div class="text-[10px] text-sky-300/90 font-semibold truncate">{{ res.catLabel }}</div>
+                  <p class="text-[11px] text-slate-400 line-clamp-2 mt-0.5">{{ res.snippet }}</p>
+                </button>
+              }
+            </div>
+          }
+        </div>
 
-      <button
-        type="button"
-        (click)="toggleInstrument()"
-        class="px-2.5 py-1.5 text-xs font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-lg hover:bg-amber-500/25 transition-colors whitespace-nowrap cursor-pointer">
-        @if (currentInstrument() === 'guitar') {
-          🎸 Timbre: Guitarra (6c)
-        } @else if (currentInstrument() === 'bass') {
-          🎸 Timbre: Bajo (4c)
-        } @else {
-          🎹 Timbre: Piano Acústico
-        }
-      </button>
+        <div class="hidden md:flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            (click)="toggleGlossary()"
+            class="px-2.5 py-1.5 text-xs font-semibold text-purple-300 bg-purple-500/15 border border-purple-500/40 rounded-lg hover:bg-purple-500/25 transition-colors whitespace-nowrap cursor-pointer">
+            📖 Glosario
+          </button>
 
-      <button
-        type="button"
-        (click)="playMidiNote(69, 1.3)"
-        class="px-3 py-1.5 text-xs font-semibold text-slate-950 bg-sky-400 rounded-lg hover:bg-sky-300 transition-colors whitespace-nowrap shrink-0 cursor-pointer">
-        🔊 A4 (440 Hz)
-      </button>
+          <button
+            type="button"
+            (click)="toggleInstrument()"
+            class="px-2.5 py-1.5 text-xs font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-lg hover:bg-amber-500/25 transition-colors whitespace-nowrap cursor-pointer">
+            @if (currentInstrument() === 'guitar') {
+              🎸 Guitarra
+            } @else if (currentInstrument() === 'bass') {
+              🎸 Bajo 4c
+            } @else {
+              🎹 Piano
+            }
+          </button>
+
+          <button
+            type="button"
+            (click)="stopAllAudio()"
+            class="px-2.5 py-1.5 text-xs font-semibold text-rose-300 bg-rose-500/15 border border-rose-500/40 rounded-lg hover:bg-rose-500/25 transition-colors whitespace-nowrap cursor-pointer">
+            ⏹ Stop
+          </button>
+        </div>
+      </div>
     </div>
   </header>
 
   <!-- Floating Interactive Glossary Modal/Drawer -->
   @if (showGlossary()) {
-    <div class="fixed inset-0 z-50 flex items-start justify-end bg-black/60 backdrop-blur-xs p-4 sm:p-6">
+    <div class="fixed inset-0 z-50 flex items-start justify-end bg-black/60 backdrop-blur-xs p-3 sm:p-6">
       <div class="w-full max-w-xl bg-[#111827] border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
-        <div class="flex items-center justify-between px-5 py-4 bg-slate-900 border-b border-slate-800">
+        <div class="flex items-center justify-between px-4 sm:px-5 py-3.5 bg-slate-900 border-b border-slate-800">
           <div>
             <h2 class="text-base font-extrabold text-amber-400">📖 Glosario Musical Interactivo</h2>
             <p class="text-xs text-slate-400">Consulta definiciones técnicas, escucha ejemplos en vivo o salta al capítulo exacto.</p>
@@ -81,16 +147,16 @@
           </button>
         </div>
 
-        <div class="p-4 border-b border-slate-800 bg-slate-900/50">
+        <div class="p-3.5 border-b border-slate-800 bg-slate-900/50">
           <input
             type="search"
             [value]="glossaryFilter()"
             (input)="onGlossaryInput($event)"
-            placeholder="Filtrar término (ej. Appoggio, Passaggio, SOVT, Arka, Sesquiáltera, Drop 2)..."
+            placeholder="Filtrar término (ej. Appoggio, Passaggio, SOVT, Arka, Drop 2)..."
             class="w-full px-3.5 py-2 text-sm bg-[#0b0f19] border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-400" />
         </div>
 
-        <div class="p-4 overflow-y-auto space-y-3">
+        <div class="p-3.5 overflow-y-auto space-y-3">
           @for (item of filteredGlossary(); track item.term) {
             <div class="p-3.5 rounded-xl bg-[#0b0f19] border border-slate-800 hover:border-slate-700 transition-colors">
               <div class="flex items-center justify-between gap-2 mb-1.5">
@@ -123,65 +189,36 @@
     </div>
   }
 
+  <!-- Mobile Drawer Backdrop -->
+  @if (mobileMenuOpen()) {
+    <div
+      (click)="closeMobileMenu()"
+      class="fixed inset-0 z-40 bg-black/65 backdrop-blur-xs lg:hidden"
+      aria-hidden="true">
+    </div>
+  }
+
   <!-- Main Workspace -->
-  <div class="flex-1 max-w-[1480px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 sm:px-6 py-6">
-    <!-- Single Unified Hierarchical Sidebar Menu + Instant Global Search -->
-    <aside class="lg:col-span-3">
+  <div class="flex-1 max-w-[1480px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 px-3 sm:px-6 py-4 sm:py-6">
+    <!-- Hierarchical Sidebar Menu (Slide-over Drawer on Mobile/Tablet, Sticky Column on Desktop) -->
+    <aside
+      [class]="mobileMenuOpen()
+        ? 'fixed inset-y-0 left-0 z-50 w-[85vw] max-w-xs bg-[#0f172a] border-r border-slate-800 p-3 overflow-y-auto lg:static lg:z-auto lg:w-auto lg:max-w-none lg:col-span-3 lg:block lg:bg-transparent lg:border-0 lg:p-0 lg:overflow-visible'
+        : 'hidden lg:block lg:col-span-3'">
       <nav
         aria-label="Índice general de la enciclopedia"
-        class="bg-[#111827] border border-slate-800 rounded-xl p-4 sticky top-16 max-h-[calc(100vh-5rem)] overflow-y-auto">
-        <!-- Global Instant Search Box -->
-        <div class="mb-4">
-          <label for="globalEncyclopediaSearch" class="block text-[11px] font-bold uppercase tracking-wider text-sky-400 mb-1.5">
-            🔍 Buscador Global (74 Capítulos)
-          </label>
-          <div class="relative">
-            <input
-              id="globalEncyclopediaSearch"
-              type="search"
-              [value]="searchQuery()"
-              (input)="onSearchInput($event)"
-              placeholder="Ej: Lidio, Passaggio, Quena, Slap, Chacarera..."
-              class="w-full px-3 py-2 text-xs bg-[#0b0f19] border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-400" />
-            @if (searchQuery().length > 0) {
-              <button
-                type="button"
-                (click)="clearSearch()"
-                class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white px-1 cursor-pointer">
-                ✕
-              </button>
-            }
+        class="bg-[#111827] border border-slate-800 rounded-xl p-3.5 sm:p-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] overflow-y-auto">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <div class="text-xs font-bold uppercase tracking-wider text-amber-400">
+            Índice General (11 Módulos)
           </div>
-
-          @if (searchQuery().trim().length >= 2) {
-            <div class="mt-2 bg-[#0b0f19] border border-sky-500/40 rounded-lg p-2 max-h-80 overflow-y-auto space-y-1.5">
-              <div class="text-[11px] font-semibold text-slate-400 px-1">
-                Resultados encontrados ({{ searchResults().length }}):
-              </div>
-              @if (searchResults().length === 0) {
-                <div class="text-xs text-slate-400 p-2">
-                  No se encontraron capítulos para "{{ searchQuery() }}".
-                </div>
-              }
-              @for (res of searchResults(); track res.sectionId) {
-                <button
-                  type="button"
-                  (click)="jumpToSearchResult(res)"
-                  class="w-full text-left p-2 rounded-lg bg-slate-900/90 hover:bg-sky-500/15 border border-slate-800 hover:border-sky-500/40 transition-colors cursor-pointer block">
-                  <div class="flex items-center justify-between gap-1">
-                    <span class="text-xs font-bold text-amber-300 truncate">{{ res.sectionTitle }}</span>
-                    <span class="text-[10px] font-mono text-sky-400 shrink-0">N{{ res.nivel }}</span>
-                  </div>
-                  <div class="text-[10px] text-sky-300/90 font-semibold truncate">{{ res.catLabel }}</div>
-                  <p class="text-[11px] text-slate-400 line-clamp-2 mt-0.5">{{ res.snippet }}</p>
-                </button>
-              }
-            </div>
-          }
-        </div>
-
-        <div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2.5">
-          Índice de la Enciclopedia (11 Módulos)
+          <button
+            type="button"
+            (click)="closeMobileMenu()"
+            aria-label="Cerrar menú de módulos"
+            class="lg:hidden px-2 py-1 text-xs font-bold text-slate-300 bg-slate-800 rounded hover:bg-slate-700 cursor-pointer">
+            ✕
+          </button>
         </div>
 
         <div class="space-y-1.5">
@@ -190,7 +227,7 @@
               <button
                 type="button"
                 (click)="loadCategory(cat)"
-                class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-between cursor-pointer"
+                class="w-full text-left px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors flex items-center justify-between cursor-pointer"
                 [class.bg-sky-500/20]="activeCat().id === cat.id"
                 [class.text-sky-300]="activeCat().id === cat.id"
                 [class.border]="activeCat().id === cat.id"
@@ -220,8 +257,13 @@
       </nav>
     </aside>
 
-    <!-- Main Encyclopedia Content Area -->
+    <!-- Main Encyclopedia & Embedded Labs Content Area -->
     <main class="lg:col-span-9 min-w-0">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-lg bg-[#111827] border border-slate-800/90 text-xs">
+        <span class="font-semibold text-amber-300 truncate">{{ activeCat().label }}</span>
+        <span class="text-slate-400 truncate max-w-full sm:max-w-md">{{ activeNoteLabel() }}</span>
+      </div>
+
       @if (loading()) {
         <div class="bg-[#111827] border border-slate-800 rounded-xl p-12 text-center text-slate-300">
           Cargando {{ activeCat().label }}...
