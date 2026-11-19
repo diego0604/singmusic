@@ -1,5 +1,3 @@
-import { MusicAudioEngine } from './lab-engine';
-
 export interface TreatiseSearchMeta {
   catId: string;
   catLabel: string;
@@ -119,6 +117,69 @@ export const TREATISE_ENRICHMENT_SEARCH_META: TreatiseSearchMeta[] = [
     keywords: 'arreglos ilustrados colchon a prueba de balas 4 voces power rangers cmaj6 vs cmaj7 dividir dominante g g7 linea de accion embudo 3+1',
     snippet: 'Por qué Cmaj6 supera a Cmaj7 en un colchón coral, cómo dividir G → G7 al estilo Bach y la apertura en embudo al 70% de la obra.',
   },
+  {
+    catId: 'teoria',
+    catLabel: '1. Teoría y Acústica',
+    sectionId: 't-notas',
+    sectionTitle: '🌱 Conceptos Desde Cero: Semitono, Tono, Sostenido (#), Bemol (♭), Diatónico vs. Cromático',
+    nivel: '1',
+    keywords: 'desde cero que es semitono tono sostenido bemol becuadro diatonico cromatico conceptos basicos',
+    snippet: 'Explicación paso a paso desde cero de qué es un semitono, un tono, para qué sirven # y ♭, y la diferencia entre diatónico y cromático.',
+  },
+  {
+    catId: 'teoria',
+    catLabel: '1. Teoría y Acústica',
+    sectionId: 't-intervalos',
+    sectionTitle: '🌱 Conceptos Desde Cero: ¿Qué es un Intervalo, una Tercera y una Quinta Justa, Disminuida o Aumentada?',
+    nivel: '1',
+    keywords: 'que es un intervalo para que sirve tercera mayor menor quinta justa quinta disminuida tritono quinta aumentada',
+    snippet: 'Cómo medir distancias entre notas, por qué existen intervalos Justos vs. Mayores/Menores y cómo suenan las terceras y las quintas.',
+  },
+  {
+    catId: 'armonia',
+    catLabel: '2. Armonía Práctica',
+    sectionId: 'h-triadas',
+    sectionTitle: '🌱 Conceptos Desde Cero: Cómo Nace un Acorde Apilando Terceras (Mayor, Menor, Disminuido ° y Aumentado +)',
+    nivel: '1',
+    keywords: 'como nace un acorde triadas desde cero mayor menor disminuido aumentado apilar terceras musica tonal vs modal',
+    snippet: 'La receta de los 2 pisos de terceras para entender y escuchar por qué un acorde es Mayor, Menor, Disminuido o Aumentado.',
+  },
+  {
+    catId: 'teoria',
+    catLabel: '1. Teoría y Acústica',
+    sectionId: 't-visualizador-9nintervalos',
+    sectionTitle: '📐 Visualizador de Intervalos y 9nas (Simples y Compuestos: 1ª a 9ª, 11ª y 13ª) en Mástil y Teclado',
+    nivel: '1-3',
+    keywords: 'visualizador de 9nintervalos intervalos novenas 9nas b9 #9 11 #11 13 simples compuestos regla del 9 mastil guitarra bajo',
+    snippet: 'Explora los 19 intervalos simples y compuestos (incluyendo ♭9, 9, #9, 11, #11, ♭13, 13) con diagramas SVG de guitarra (6c) y bajo (4c).',
+  },
+  {
+    catId: 'armonia',
+    catLabel: '2. Armonía Práctica',
+    sectionId: 'h-visualizador-poliacordes',
+    sectionTitle: '🏛️ Poliacordes (X | Y) y Upper Structure Triads: Visualizador Bicolor en el Mástil',
+    nivel: '3-4',
+    keywords: 'polyacodes poliacordes polychords upper structures D|C Bm|C F#|C7 A|C7 Ab|C7 triada superior sobre acorde base',
+    snippet: 'Superposición de dos acordes independientes (Superior | Base) con diagramas SVG individuales y combinados para guitarra y bajo.',
+  },
+  {
+    catId: 'armonia',
+    catLabel: '2. Armonía Práctica',
+    sectionId: 'h-acordes-vecinos',
+    sectionTitle: '🧭 Acordes Vecinos (Neighbor Chords), Bordaduras Cromáticas (±1 Traste), Diatónicas y Disminuidas',
+    nivel: '2-4',
+    keywords: 'acordes vecinos neighbor chords bordadura cromatica planing sideslip disminuido auxiliar aproximacion conduccion de voces mastil',
+    snippet: 'Cómo rodear y ornamentar cualquier acorde objetivo mediante acordes vecinos a ±1 semitono, sobre bajo pedal o con disminuidos auxiliares.',
+  },
+  {
+    catId: 'armonia',
+    catLabel: '2. Armonía Práctica',
+    sectionId: 'h-triadas-mastil',
+    sectionTitle: '🎸 Tríadas en el Mástil: Estado Fundamental, 1ª y 2ª Inversión por Grupos de 3 Cuerdas y Spread Triads',
+    nivel: '2-3',
+    keywords: 'triadas en el mastil inversiones estado fundamental primera segunda inversion sets de 3 cuerdas spread triads triangulo gancho ala',
+    snippet: 'Mapa interactivo de las 3 inversiones de cualquier tríada (Mayor, Menor, Disminuida, Aumentada, Sus2, Sus4) por grupos de 3 cuerdas en guitarra y bajo.',
+  },
 ];
 
 function appendInsideSection(html: string, sectionId: string, blockHtml: string): string {
@@ -134,24 +195,67 @@ function appendInsideSection(html: string, sectionId: string, blockHtml: string)
   return html.slice(0, closeIndex) + '\n' + blockHtml + '\n' + html.slice(closeIndex);
 }
 
+function insertAfterSection(html: string, sectionId: string, newSectionHtml: string): string {
+  const sectionStartRegex = new RegExp(`<section\\s+id="${sectionId}"[^>]*>`, 'i');
+  const startMatch = sectionStartRegex.exec(html);
+  if (!startMatch) return html;
+
+  const startIndex = startMatch.index;
+  const closeTag = '</section>';
+  const closeIndex = html.indexOf(closeTag, startIndex);
+  if (closeIndex === -1) return html;
+
+  const insertPos = closeIndex + closeTag.length;
+  return html.slice(0, insertPos) + '\n\n' + newSectionHtml + '\n' + html.slice(insertPos);
+}
+
+function prependAfterSectionHeader(html: string, sectionId: string, blockHtml: string): string {
+  const sectionStartRegex = new RegExp(`<section\\s+id="${sectionId}"[^>]*>`, 'i');
+  const startMatch = sectionStartRegex.exec(html);
+  if (!startMatch) return html;
+
+  const startIndex = startMatch.index;
+  const closeSectionIndex = html.indexOf('</section>', startIndex);
+  if (closeSectionIndex === -1) return html;
+
+  const h2CloseIndex = html.indexOf('</h2>', startIndex);
+  if (h2CloseIndex !== -1 && h2CloseIndex < closeSectionIndex) {
+    const insertPos = h2CloseIndex + '</h2>'.length;
+    return html.slice(0, insertPos) + '\n' + blockHtml + '\n' + html.slice(insertPos);
+  }
+
+  const tagEndIndex = startIndex + startMatch[0].length;
+  return html.slice(0, tagEndIndex) + '\n' + blockHtml + '\n' + html.slice(tagEndIndex);
+}
+
 export function injectTreatiseEnrichmentIntoCategoryHtml(catId: string, html: string): string {
   let out = html;
 
   if (catId === 'teoria' || catId === 'all') {
+    out = prependAfterSectionHeader(out, 't-notas', buildZeroToHeroNotesAndAccidentalsHtml());
+    out = prependAfterSectionHeader(out, 't-intervalos', buildZeroToHeroIntervalsThirdsAndFifthsHtml());
+    out = insertAfterSection(out, 't-intervalos', buildInterval9thVisualizerSectionHtml());
+    out = prependAfterSectionHeader(out, 't-modos', buildZeroToHeroTonalVsModalPrimerHtml());
     out = appendInsideSection(out, 't-escalas', buildScalesSkeletonAndAtlasHtml());
     out = appendInsideSection(out, 't-modos', buildModosIlustradosCartographyHtml());
+    out = appendInsideSection(out, 't-tonalidades', buildCircleOfFifthsDeepGuideHtml());
     out = appendInsideSection(out, 't-ritmo', buildKonnakolAndClaveHtml());
   }
 
   if (catId === 'armonia' || catId === 'all') {
+    out = prependAfterSectionHeader(out, 'h-triadas', buildZeroToHeroChordBuildingHtml());
+    out = insertAfterSection(out, 'h-triadas', buildFretboardTriadsSectionHtml('h-triadas-mastil', 'armonia', '1B. Tríadas en el Mástil (Inversiones y Sets de 3 Cuerdas)'));
     out = appendInsideSection(out, 'h-extensiones', buildTensionesIlustradasRescueAndGlueHtml());
     out = appendInsideSection(out, 'h-poli-hibridos', buildPolychordVsHybridMatrixHtml());
+    out = insertAfterSection(out, 'h-poli-hibridos', buildPolychordVisualizerSectionHtml());
     out = appendInsideSection(out, 'h-ii-v-i', buildPachelbelAndStaircasesHtml());
     out = appendInsideSection(out, 'h-neoriemann', buildArmoniaIlustradaAdvancedSystemsHtml());
+    out = insertAfterSection(out, 'h-neoriemann', buildNeighborChordsSectionHtml());
   }
 
   if (catId === 'guitarra-ac' || catId === 'all') {
     out = appendInsideSection(out, 'ga-acordes', buildGuitarKuleshovCagedAndColombianHtml());
+    out = insertAfterSection(out, 'ga-acordes', buildFretboardTriadsSectionHtml('ga-triadas-mastil', 'guitarra-ac', '2B. Tríadas en el Mástil (Inversiones y Sets de 3 Cuerdas)'));
   }
 
   if (catId === 'guitarra-el' || catId === 'all') {
@@ -170,55 +274,276 @@ export function injectTreatiseEnrichmentIntoCategoryHtml(catId: string, html: st
   return out;
 }
 
-export function hydrateTreatiseEnrichment(
-  root: HTMLElement,
-  audio: MusicAudioEngine,
-  onStatus: (msg: string) => void
-): void {
-  root.querySelectorAll<HTMLButtonElement>('.js-treatise-chord').forEach((btn) => {
-    if (btn.dataset['bound'] === '1') return;
-    btn.dataset['bound'] = '1';
+function buildZeroToHeroNotesAndAccidentalsHtml(): string {
+  return `
+  <div class="callout-box mb-5" style="border-left: 4px solid #38bdf8;">
+    <h3>🌱 Paso 0 (Desde Cero): ¿Qué es un Semitono, un Tono, un Sostenido (<code>#</code>), un Bemol (<code>♭</code>) y qué significa "Diatónico"?</h3>
+    <p class="text-sm mb-3">
+      Antes de hablar de escalas o acordes, imagina la música como una <strong>escalera de 12 escalones</strong> que se repite hacia arriba y hacia abajo. Si entiendes estos 4 conceptos básicos, todo el resto de la teoría encaja como piezas de LEGO:
+    </p>
+    <div class="grid-cards mb-4">
+      <div class="card">
+        <h4>1. El Semitono (<code>1 st</code>) y el Tono (<code>2 st</code>)</h4>
+        <p class="text-xs">
+          • <strong>Semitono (<code>S</code> o <code>1 st</code>):</strong> Es el <strong>paso más pequeño posible</strong> entre dos notas en nuestra música. En la guitarra equivale a moverte <strong>1 solo traste</strong> al lado; en el piano, pasar a la tecla inmediatamente pegada (blanca o negra).<br>
+          • <strong>Tono (<code>T</code> o <code>2 st</code>):</strong> Equivale exactamente a <strong>sumar 2 semitonos</strong> (saltar 2 trastes en la guitarra, por ejemplo de <code>Do</code> a <code>Re</code>).
+        </p>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button type="button" class="btn-audio js-treatise-chord" data-mode="seq" data-notes="60,61" data-label="1 Semitono (Do → Do#): El paso más pequeño (tensión de Tiburón/Jaws)">🔊 Escuchar 1 Semitono</button>
+          <button type="button" class="btn-audio js-treatise-chord" data-mode="seq" data-notes="60,62" data-label="1 Tono = 2 Semitonos (Do → Re): Paso abierto y natural">🔊 Escuchar 1 Tono (2 st)</button>
+        </div>
+      </div>
+      <div class="card">
+        <h4>2. ¿Qué hacen el Sostenido (<code>#</code>) y el Bemol (<code>♭</code>)?</h4>
+        <p class="text-xs">
+          Entre dos notas separadas por 1 Tono (como <code>Do</code> y <code>Re</code>) hay un escalón intermedio. Para nombrarlo usamos las <strong>alteraciones</strong>:<br>
+          • <strong>Sostenido (<code>#</code>):</strong> Sube la nota <strong>medio tono (+1 semitono / +1 traste)</strong>. Ej.: <code>Do → Do#</code>.<br>
+          • <strong>Bemol (<code>♭</code>):</strong> Baja la nota <strong>medio tono (-1 semitono / -1 traste)</strong>. Ej.: <code>Re → Re♭</code>.<br>
+          • <strong>Enarmonía:</strong> ¡<code>Do#</code> y <code>Re♭</code> son exactamente el mismo sonido físico (el mismo traste), solo cambia el nombre según la dirección!
+        </p>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button type="button" class="btn-audio js-treatise-chord" data-mode="seq" data-notes="60,61,62" data-label="Subiendo con Sostenido: Do (60) → Do# (61) → Re (62)">🔊 Do → Do# → Re</button>
+          <button type="button" class="btn-audio js-treatise-chord" data-mode="seq" data-notes="62,61,60" data-label="Bajando con Bemol: Re (62) → Re♭ (61) → Do (60)">🔊 Re → Re♭ → Do</button>
+        </div>
+      </div>
+      <div class="card">
+        <h4>3. ¿Qué significa "Diatónico" vs. "Cromático"?</h4>
+        <p class="text-xs">
+          • <strong>Diatónico ("De la familia"):</strong> Cuando de los 12 semitonos elegimos solo las <strong>7 notas naturales de una escala</strong> (usando la receta <code>T–T–S–T–T–T–S</code>, como las teclas blancas <code>Do–Re–Mi–Fa–Sol–La–Si</code>). Todo lo que construyas solo con esas 7 notas se llama <em>diatónico</em>.<br>
+          • <strong>Cromático ("Con todos los colores"):</strong> Cuando metes cualquiera de las <strong>5 notas alteradas restantes</strong> para crear sorpresa, tensión o deslizar una nota paso a paso por semitonos.
+        </p>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button type="button" class="btn-audio js-treatise-chord" data-mode="seq" data-notes="60,62,64,65,67,69,71,72" data-label="Escala Diatónica de Do Mayor (7 notas de la familia)">🔊 7 Notas Diatónicas</button>
+          <button type="button" class="btn-audio js-treatise-chord" data-mode="seq" data-notes="60,61,62,63,64,65,66,67" data-label="Paso Cromático (Todos los semitonos seguidos uno por uno)">🔊 Paso Cromático</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
+}
 
-    btn.addEventListener('click', () => {
-      const notesRaw = btn.dataset['notes'] || '';
-      const label = btn.dataset['label'] || 'Ejemplo Armónico';
-      const mode = btn.dataset['mode'] || 'chord';
-      const timb = (btn.dataset['inst'] as 'piano' | 'guitar') || 'piano';
-      const midis = notesRaw
-        .split(',')
-        .map((n) => parseInt(n.trim(), 10))
-        .filter((n) => !Number.isNaN(n));
+function buildZeroToHeroIntervalsThirdsAndFifthsHtml(): string {
+  return `
+  <div class="callout-box mb-5" style="border-left: 4px solid #f59e0b;">
+    <h3>🌱 Paso 0 (Desde Cero): ¿Qué es un Intervalo, Cómo se Forma y qué son las Terceras y Quintas (Justa, Disminuida, Aumentada)?</h3>
+    <p class="text-sm mb-3">
+      Si tocas una sola nota aislada (por ejemplo, <code>Do</code>), todavía no hay emoción: no sabes si la canción es alegre, triste, heroica o de terror. La emoción aparece en el instante en que tocas una <strong>segunda nota</strong>. La <strong>distancia sonora entre dos notas se llama INTERVALO</strong> y es el ladrillo fundamental de la música porque <strong>todos los acordes y escalas son simplemente intervalos combinados</strong>.
+    </p>
+    <div class="card mb-4" style="border-left: 3px solid #38bdf8;">
+      <h4>🛠️ ¿Cómo se forma y nombra exactamente cualquier Intervalo? (Fórmula en 3 Pasos)</h4>
+      <p class="text-xs">
+        <strong>Paso 1 — Cuenta el número de letras (Grado Diatónico):</strong> Cuenta inclusivamente desde la nota base hasta la nota superior siguiendo el orden <code>Do–Re–Mi–Fa–Sol–La–Si</code>. Ejemplo: de <code>Do</code> a <code>Fa#</code> hay 4 letras (<code>Do-Re-Mi-Fa</code> = es una <strong>4ª</strong>). De <code>Do</code> a <code>Sol♭</code> hay 5 letras (<code>Do-Re-Mi-Fa-Sol</code> = es una <strong>5ª</strong>). ¡Aunque suenen en el mismo traste (6 semitonos), su función armónica cambia según el nombre!<br>
+        <strong>Paso 2 — Mide los semitonos exactos (Trastes / Teclas):</strong> Compara esos semitonos contra la escala Mayor de referencia:<br>
+        • Si el intervalo <strong>Justo</strong> (<code>4ªJ=5 st</code>, <code>5ªJ=7 st</code>) gana <code>+1 st</code> → se vuelve <strong>Aumentado (<code>#4</code>, <code>#5</code>)</strong>; si pierde <code>-1 st</code> → <strong>Disminuido (<code>♭5</code>)</strong>.<br>
+        • Si el intervalo <strong>Mayor</strong> (<code>2ªM=2</code>, <code>3ªM=4</code>, <code>6ªM=9</code>, <code>7ªM=11</code>) baja <code>-1 st</code> → se vuelve <strong>Menor</strong>; si baja <code>-2 st</code> → <strong>Disminuido</strong>.<br>
+        <strong>Paso 3 — La Regla del 9 (Inversión de Intervalos):</strong> Si inviertes un intervalo (pones la nota grave una octava arriba), el número nuevo siempre suma <strong>9</strong> y la cualidad se invierte (<code>Mayor ↔ Menor</code>, <code>Aum ↔ Dism</code>, <code>Justo ↔ Justo</code>). Ej.: una <strong>3ª Mayor</strong> (<code>Do → Mi</code>) invertida se vuelve una <strong>6ª Menor</strong> (<code>Mi → Do</code>, porque <code>3 + 6 = 9</code>).
+      </p>
+    </div>
+    <div class="grid-cards mb-4">
+      <div class="card">
+        <h4>1. ¿Por qué unos intervalos se llaman "Justos" y otros "Mayores o Menores"?</h4>
+        <p class="text-xs">
+          Al dividir una cuerda en proporciones matemáticas simples nacen dos grupos con funciones distintas:<br>
+          • <strong>Los Intervalos JUSTOS (Unísono <code>1J</code>, Cuarta <code>4J</code>, Quinta <code>5J</code> y Octava <code>8J</code>):</strong> Son las <strong>columnas de cemento</strong> del sonido. Suenan puros, estables y abiertos, pero son emocionalmente neutros (no dicen si el acorde es mayor o menor).<br>
+          • <strong>Los Intervalos MAYORES o MENORES (<code>2ª</code>, <code>3ª</code>, <code>6ª</code> y <code>7ª</code>):</strong> Son la <strong>pintura emocional</strong>. Cada uno tiene una versión <strong>Mayor</strong> (más amplia y luminosa) y una versión <strong>Menor</strong> (1 semitono más pequeña, íntima y melancólica).
+        </p>
+      </div>
+      <div class="card">
+        <h4>2. Las Terceras (<code>3m</code> vs. <code>3M</code>): El Interruptor de Alegría o Melancolía</h4>
+        <p class="text-xs">
+          La <strong>Tercera</strong> es la distancia desde la 1ª hasta la 3ª nota de una escala (por ejemplo, de <code>Do</code> a <code>Mi</code>):<br>
+          • <strong>Tercera Mayor (<code>4 semitonos</code> = 2 tonos, <code>Do → Mi</code>):</strong> Define al mundo <strong>Mayor</strong> (luminoso, estable, alegre).<br>
+          • <strong>Tercera Menor (<code>3 semitonos</code> = 1 tono y medio, <code>Do → Mi♭</code>):</strong> Solo baja 1 traste respecto a la mayor, ¡pero cambia instantáneamente el clima a <strong>Menor</strong> (serio, nostálgico, íntimo)!
+        </p>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button type="button" class="btn-audio js-treatise-chord" data-notes="60,64" data-label="Tercera Mayor (Do + Mi = 4 semitonos): Luminosa y alegre">🔊 3ª Mayor (Do–Mi, 4 st)</button>
+          <button type="button" class="btn-audio js-treatise-chord" data-notes="60,63" data-label="Tercera Menor (Do + Mi♭ = 3 semitonos): Íntima y melancólica">🔊 3ª Menor (Do–Mi♭, 3 st)</button>
+        </div>
+      </div>
+      <div class="card">
+        <h4>3. Las 3 Quintas: Justa (<code>7 st</code>), Disminuida (<code>6 st</code>) y Aumentada (<code>8 st</code>)</h4>
+        <p class="text-xs">
+          La <strong>Quinta</strong> (de <code>Do</code> a <code>Sol</code>) es el marco externo de todo acorde. Según cuántos semitonos mida, tiene 3 personalidades:<br>
+          • <strong>Quinta Justa (<code>7 semitonos</code>, <code>Do → Sol</code>):</strong> Fuerza, reposo y firmeza total (el famoso <em>Power Chord</em> del Rock).<br>
+          • <strong>Quinta Disminuida o Tritono (<code>6 semitonos</code>, <code>Do → Sol♭</code>):</strong> La quinta justa encogida 1 semitono. Suena inquieta, peligrosa y pide resolver.<br>
+          • <strong>Quinta Aumentada (<code>8 semitonos</code>, <code>Do → Sol#</code>):</strong> La quinta justa estirada 1 semitono. Suena flotante, mágica y en suspenso.
+        </p>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button type="button" class="btn-audio js-treatise-chord" data-notes="60,67" data-label="Quinta Justa (Do + Sol = 7 semitonos): Estable y potente">🔊 5ª Justa (7 st)</button>
+          <button type="button" class="btn-audio js-treatise-chord" data-notes="60,66" data-label="Quinta Disminuida / Tritono (Do + Sol♭ = 6 semitonos): Máxima tensión">🔊 5ª Disminuida (6 st)</button>
+          <button type="button" class="btn-audio js-treatise-chord" data-notes="60,68" data-label="Quinta Aumentada (Do + Sol# = 8 semitonos): Misterio flotante">🔊 5ª Aumentada (8 st)</button>
+        </div>
+      </div>
+    </div>
 
-      if (midis.length === 0) return;
-      audio.stopAll();
-      onStatus(`🔊 ${label}`);
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Intervalo (Desde Do)</th>
+            <th>Semitonos (Trastes)</th>
+            <th>Ejemplo de Notas</th>
+            <th>¿Para qué sirve en la práctica?</th>
+            <th>Escuchar</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>2ª Menor (Semitono)</strong></td>
+            <td><code>1 st</code></td>
+            <td><code>Do → Re♭</code></td>
+            <td>Crea roce dramático, suspenso cinematográfico y sabor Frigio/Flamenco.</td>
+            <td><button type="button" class="btn-audio js-treatise-chord" data-notes="60,61" data-label="Segunda Menor (1 semitono: Do - Re♭)">🔊 2ª Menor</button></td>
+          </tr>
+          <tr>
+            <td><strong>2ª Mayor (Tono)</strong></td>
+            <td><code>2 st</code></td>
+            <td><code>Do → Re</code></td>
+            <td>Paso melódico natural; una octava más arriba se convierte en la <strong>Novena (<code>9</code>)</strong>.</td>
+            <td><button type="button" class="btn-audio js-treatise-chord" data-notes="60,62" data-label="Segunda Mayor (2 semitonos: Do - Re)">🔊 2ª Mayor</button></td>
+          </tr>
+          <tr>
+            <td><strong>3ª Menor (<code>♭3</code>)</strong></td>
+            <td><code>3 st</code></td>
+            <td><code>Do → Mi♭</code></td>
+            <td>Construye todos los <strong>acordes y escalas Menores y Disminuidos</strong>.</td>
+            <td><button type="button" class="btn-audio js-treatise-chord" data-notes="60,63" data-label="Tercera Menor (3 semitonos: Do - Mi♭)">🔊 3ª Menor</button></td>
+          </tr>
+          <tr>
+            <td><strong>3ª Mayor (<code>3</code>)</strong></td>
+            <td><code>4 st</code></td>
+            <td><code>Do → Mi</code></td>
+            <td>Construye todos los <strong>acordes Mayores, Dominantes y Aumentados</strong>.</td>
+            <td><button type="button" class="btn-audio js-treatise-chord" data-notes="60,64" data-label="Tercera Mayor (4 semitonos: Do - Mi)">🔊 3ª Mayor</button></td>
+          </tr>
+          <tr>
+            <td><strong>4ª Justa (<code>4J</code>)</strong></td>
+            <td><code>5 st</code></td>
+            <td><code>Do → Fa</code></td>
+            <td>Crea los acordes suspendidos (<code>Csus4</code>) y la afinación por cuartas de la guitarra y el bajo.</td>
+            <td><button type="button" class="btn-audio js-treatise-chord" data-notes="60,65" data-label="Cuarta Justa (5 semitonos: Do - Fa)">🔊 4ª Justa</button></td>
+          </tr>
+          <tr>
+            <td><strong>5ª Disminuida / Tritono (<code>♭5 / #4</code>)</strong></td>
+            <td><code>6 st</code> (3 tonos)</td>
+            <td><code>Do → Sol♭ (Fa#)</code></td>
+            <td>Divide la octava exactamente por la mitad. Motor de tensión del acorde <code>V7</code> y del disminuido <code>°</code>.</td>
+            <td><button type="button" class="btn-audio js-treatise-chord" data-notes="60,66" data-label="Quinta Disminuida o Tritono (6 semitonos: Do - Sol♭)">🔊 Tritono (5°)</button></td>
+          </tr>
+          <tr>
+            <td><strong>5ª Justa (<code>5J</code>)</strong></td>
+            <td><code>7 st</code></td>
+            <td><code>Do → Sol</code></td>
+            <td>Columna vertebral de estabilidad de todo acorde Mayor o Menor y eje del Círculo de Quintas.</td>
+            <td><button type="button" class="btn-audio js-treatise-chord" data-notes="60,67" data-label="Quinta Justa (7 semitonos: Do - Sol)">🔊 5ª Justa</button></td>
+          </tr>
+          <tr>
+            <td><strong>8ª Justa (Octava)</strong></td>
+            <td><code>12 st</code></td>
+            <td><code>Do4 → Do5</code></td>
+            <td>La misma nota con el doble exacto de frecuencia (Hz): refuerza melodías y bajos sin cambiar la armonía.</td>
+            <td><button type="button" class="btn-audio js-treatise-chord" data-notes="60,72" data-label="Octava Justa (12 semitonos: Do4 - Do5)">🔊 Octava (8J)</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  `;
+}
 
-      if (mode === 'seq') {
-        midis.forEach((m, i) => {
-          if (timb === 'guitar') {
-            audio.playPluckedGuitar(m, 0.55, i * 0.28, 0.28, false);
-          } else {
-            audio.playAcousticPiano(m, 0.55, i * 0.28, 0.25, false);
-          }
-        });
-      } else if (mode === 'prog') {
-        const groups = (btn.dataset['groups'] || '')
-          .split('|')
-          .map((g) =>
-            g
-              .split(',')
-              .map((n) => parseInt(n.trim(), 10))
-              .filter((n) => !Number.isNaN(n))
-          )
-          .filter((g) => g.length > 0);
-        groups.forEach((chord, idx) => {
-          audio.strumChord(chord, timb, idx * 0.85, false);
-        });
-      } else {
-        audio.strumChord(midis, timb, 0, false);
-      }
-    });
-  });
+function buildZeroToHeroTonalVsModalPrimerHtml(): string {
+  return `
+  <div class="callout-box mb-5" style="border-left: 4px solid #10b981;">
+    <h3>🌱 Paso 0 (Desde Cero): ¿Qué es la Música Tonal vs. la Música Modal y qué son los Modos?</h3>
+    <p class="text-sm mb-3">
+      Mucha gente memoriza nombres griegos (<em>Jónico, Dórico, Frigio, Lidio, Mixolidio, Eólico, Locrio</em>) sin entender para qué existen. Aquí tienes la diferencia real en lenguaje humano:
+    </p>
+    <div class="grid-cards mb-3">
+      <div class="card">
+        <h4>🧲 1. ¿Qué es la Música TONAL? (Viaje con Gravedad)</h4>
+        <p class="text-xs">
+          En la música tonal hay un centro de gravedad absoluto llamado <strong>Tónica (Grado I, ej. Do Mayor)</strong>. Los demás acordes se alejan (Subdominante <code>IV = Fa</code>), acumulan tensión máxima en el <strong>Dominante (<code>V7 = Sol7</code>)</strong> y resuelven de vuelta a casa (<code>G7 → C</code>). Es como lanzar una pelota al aire y verla caer al suelo.
+        </p>
+        <button type="button" class="btn-audio js-treatise-chord mt-2" data-mode="prog" data-groups="48,55,60,64|41,53,57,60|43,53,59,62|48,55,60,64" data-label="Música Tonal: C (Casa) → F (Viaje) → G7 (Tensión Tritono) → C (Resolución)">🔊 Escuchar Gravedad Tonal (I–IV–V7–I)</button>
+      </div>
+      <div class="card">
+        <h4>🎨 2. ¿Qué es la Música MODAL? (Habitar un Paisaje)</h4>
+        <p class="text-xs">
+          En la música modal <strong>apagamos el imán del <code>V7</code></strong> para que no nos arrastre a la escala mayor tradicional, y en su lugar nos quedamos <strong>flotando dentro de un clima emocional específico</strong> definido por <strong>1 sola nota característica</strong> (el "ingrediente secreto" de cada modo).
+        </p>
+        <button type="button" class="btn-audio js-treatise-chord mt-2" data-mode="prog" data-groups="48,55,60,63|41,53,57,60|48,55,60,63|41,53,57,60" data-label="Música Modal (Do Dórico): Cm ↔ F Mayor (La nota La natural ilumina el acorde menor)">🔊 Escuchar Clima Modal (Cm ↔ F Dórico)</button>
+      </div>
+      <div class="card">
+        <h4>💡 3. Cómo Entender los 7 Modos en 10 Segundos</h4>
+        <p class="text-xs">
+          En vez de pensar "Dórico empieza en Re", compáralos todos <strong>desde la misma nota Do</strong>:<br>
+          • <strong>3 Modos Mayores (tienen 3ª Mayor <code>Mi</code>):</strong> <strong>Jónico</strong> (Mayor normal), <strong>Lidio</strong> (Mayor + <code>#4</code> mágica) y <strong>Mixolidio</strong> (Mayor + <code>♭7</code> rockera).<br>
+          • <strong>3 Modos Menores (tienen 3ª Menor <code>Mi♭</code>):</strong> <strong>Eólico</strong> (Menor normal), <strong>Dórico</strong> (Menor + <code>6ª natural</code> luminosa) y <strong>Frigio</strong> (Menor + <code>♭2</code> flamenca).<br>
+          • <strong>1 Modo Disminuido:</strong> <strong>Locrio</strong> (tiene <code>♭2</code> y <code>♭5</code> disminuida).
+        </p>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+function buildZeroToHeroChordBuildingHtml(): string {
+  return `
+  <div class="callout-box mb-5" style="border-left: 4px solid #a855f7;">
+    <h3>🌱 Paso 0 (Desde Cero): ¿Cómo Nace un Acorde? La Regla de Apilar Dos Terceras (Mayor, Menor, Disminuido y Aumentado)</h3>
+    <p class="text-sm mb-3">
+      Un acorde básico de 3 notas se llama <strong>Tríada</strong> y funciona exactamente como un <strong>edificio de 2 pisos construido apilando Terceras</strong>: el <strong>Piso 1</strong> va de la Fundamental (<code>1</code>) a la Tercera (<code>3</code>), y el <strong>Piso 2</strong> va de la Tercera (<code>3</code>) a la Quinta (<code>5</code>). Combinando Terceras Mayores (<code>4 semitonos</code>) y Terceras Menores (<code>3 semitonos</code>) nacen las <strong>4 familias universales de acordes</strong>:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Familia de Acorde</th>
+            <th>Piso 1 (1ª → 3ª)</th>
+            <th>Piso 2 (3ª → 5ª)</th>
+            <th>Quinta Resultante (1ª → 5ª)</th>
+            <th>Fórmula y Notas en Do</th>
+            <th>Emoción y Audio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Tríada MAYOR (<code>C</code>)</strong></td>
+            <td><strong>3ª Mayor</strong> (<code>4 st</code>)</td>
+            <td><strong>3ª Menor</strong> (<code>3 st</code>)</td>
+            <td><strong>Quinta Justa</strong> (<code>4 + 3 = 7 st</code>)</td>
+            <td><code>1 – 3 – 5</code> (<code>Do – Mi – Sol</code>)</td>
+            <td><button type="button" class="btn-audio js-treatise-chord" data-notes="48,60,64,67" data-label="Acorde Do Mayor (C = Do - Mi - Sol): 3ª Mayor (4 st) + 3ª Menor (3 st) = Quinta Justa">🔊 Do Mayor (Luminoso)</button></td>
+          </tr>
+          <tr>
+            <td><strong>2. Tríada MENOR (<code>Cm</code>)</strong></td>
+            <td><strong>3ª Menor</strong> (<code>3 st</code>)</td>
+            <td><strong>3ª Mayor</strong> (<code>4 st</code>)</td>
+            <td><strong>Quinta Justa</strong> (<code>3 + 4 = 7 st</code>)</td>
+            <td><code>1 – ♭3 – 5</code> (<code>Do – Mi♭ – Sol</code>)</td>
+            <td><button type="button" class="btn-audio js-treatise-chord" data-notes="48,60,63,67" data-label="Acorde Do Menor (Cm = Do - Mi♭ - Sol): 3ª Menor (3 st) + 3ª Mayor (4 st) = Quinta Justa">🔊 Do Menor (Melancólico)</button></td>
+          </tr>
+          <tr>
+            <td><strong>3. Tríada DISMINUIDA (<code>C°</code>)</strong></td>
+            <td><strong>3ª Menor</strong> (<code>3 st</code>)</td>
+            <td><strong>3ª Menor</strong> (<code>3 st</code>)</td>
+            <td><strong>Quinta Disminuida</strong> (<code>3 + 3 = 6 st</code>)</td>
+            <td><code>1 – ♭3 – ♭5</code> (<code>Do – Mi♭ – Sol♭</code>)</td>
+            <td><button type="button" class="btn-audio js-treatise-chord" data-notes="48,60,63,66" data-label="Acorde Do Disminuido (C° = Do - Mi♭ - Sol♭): Dos 3ª Menores (3+3 = Quinta Disminuida)">🔊 Do Disminuido (Tenso)</button></td>
+          </tr>
+          <tr>
+            <td><strong>4. Tríada AUMENTADA (<code>C+</code>)</strong></td>
+            <td><strong>3ª Mayor</strong> (<code>4 st</code>)</td>
+            <td><strong>3ª Mayor</strong> (<code>4 st</code>)</td>
+            <td><strong>Quinta Aumentada</strong> (<code>4 + 4 = 8 st</code>)</td>
+            <td><code>1 – 3 – #5</code> (<code>Do – Mi – Sol#</code>)</td>
+            <td><button type="button" class="btn-audio js-treatise-chord" data-notes="48,60,64,68" data-label="Acorde Do Aumentado (C+ = Do - Mi - Sol#): Dos 3ª Mayores (4+4 = Quinta Aumentada)">🔊 Do Aumentado (Onírico)</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  `;
 }
 
 function buildScalesSkeletonAndAtlasHtml(): string {
@@ -462,6 +787,64 @@ function buildModosIlustradosCartographyHtml(): string {
         </tbody>
       </table>
     </div>
+
+    <div class="card mb-4" style="border-left: 3px solid #f472b6;">
+      <h4>🔗 ¿Cómo se conecta un Modo a otro? (La Regla de 1 Solo Semitono)</h4>
+      <p class="text-xs">
+        Todos los modos del universo están conectados en una misma red continua de brillo → oscuridad. Para viajar desde un modo hasta su vecino inmediato <strong>solo necesitas mover UNA nota un semitono (1 traste)</strong>:<br>
+        • <strong>Lidio → Jónico</strong>: baja el <code>#4</code> a <code>4J</code> (<code>F# → F</code>).<br>
+        • <strong>Jónico → Mixolidio</strong>: baja la <code>7M</code> a <code>♭7</code> (<code>B → Bb</code>).<br>
+        • <strong>Mixolidio → Dórico</strong>: baja la <code>3M</code> a <code>♭3</code> (<code>E → Eb</code>).<br>
+        • <strong>Dórico → Eólico</strong>: baja la <code>6♮</code> a <code>♭6</code> (<code>A → Ab</code>).<br>
+        • <strong>Eólico → Frigio</strong>: baja la <code>2M</code> a <code>♭2</code> (<code>D → Db</code>).<br>
+        Toca cualquier nodo del siguiente diagrama interactivo para escuchar cómo suena cada modo y ver qué nota exacta cambia con sus vecinos:
+      </p>
+    </div>
+
+    <article class="interactive-widget mt-5" id="lab-modos-red-14" data-lab="modes-network-14" data-nivel="3">
+      <div class="widget-header">
+        <span class="widget-tag">Mapa Interactivo · 14 Modos Conectados por 1 Semitono</span>
+        <h3>🕸️ Red Interactiva de los 14 Modos (Mayor, Menor Melódica y Armónica)</h3>
+        <p class="text-sm">Cambia la tónica, haz clic en cualquier nodo del mapa para escuchar su acorde y su escala característica, y navega entre modos vecinos moviendo <strong>un solo semitono</strong> con diagrama en Guitarra (6c) y Bajo (4c).</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </div>
+  `;
+}
+
+function buildCircleOfFifthsDeepGuideHtml(): string {
+  return `
+  <div class="callout-box mt-6" style="border-left: 4px solid #fbbf24;">
+    <h3>🧭 Anatomía Profunda del Círculo de Quintas: Construcción desde Cero, Relativos, Tritonos Opuestos (180°) y Cadena <code>6 – 2 – 5 – 1</code></h3>
+    <div class="grid-cards mb-3">
+      <div class="card">
+        <h4>1. ¿Cómo se crea el Círculo de Quintas desde cero?</h4>
+        <p class="text-xs">
+          Empieza arriba a las 12 en punto con <strong>Do Mayor (<code>C</code>, 0 alteraciones)</strong>:<br>
+          • <strong>Sentido Horario (+7 semitonos = Subir por Quintas Justas):</strong> Cada paso suma <strong>1 sostenido (<code>#</code>)</strong> siguiendo el orden <code>Fa – Do – Sol – Re – La – Mi – Si</code>: <code>C (0#) → G (1#: F#) → D (2#) → A (3#) → E (4#) → B (5#) → F# (6#)</code>.<br>
+          • <strong>Sentido Antihorario (+5 semitonos = Subir por Cuartas Justas / Bajar por Quintas):</strong> Cada paso suma <strong>1 bemol (<code>♭</code>)</strong> en orden inverso (<code>Si – Mi – La – Re – Sol – Do – Fa</code>): <code>C (0♭) → F (1♭: Bb) → Bb (2♭) → Eb (3♭) → Ab (4♭) → Db (5♭) → Gb (6♭)</code>.
+        </p>
+      </div>
+      <div class="card">
+        <h4>2. ¿Por qué los Tritonos están diametralmente opuestos (180°)?</h4>
+        <p class="text-xs">
+          En el círculo hay <strong>12 horas</strong> y cada paso por quinta suma <code>7 semitonos</code>. Si das exactamente <strong>6 pasos</strong> hasta el lado opuesto del reloj (180°):<br>
+          <code>6 × 7 semitonos = 42 semitonos</code> → al quitar las octavas completas (<code>42 − 36 = 6 semitonos</code>), ¡quedan exactamente <strong>6 semitonos = 1 TRITONO</strong>! Por eso <strong><code>C ↔ F#/Gb</code></strong> y <strong><code>G7 ↔ Db7</code></strong> están frente a frente a 180°: comparten exactamente las mismas dos notas guías (<code>B–F</code>) invertidas y son <strong>Sustitutos Tritonales</strong> intercambiables.
+        </p>
+      </div>
+      <div class="card">
+        <h4>3. ¿Qué es un Relativo (Mayor/Menor) y cómo se relaciona el <code>6 – 2 – 5 – 1</code>?</h4>
+        <p class="text-xs">
+          • <strong>Tonalidad Relativa:</strong> Son dos escalas (una Mayor y otra Menor) que <strong>usan exactamente las mismas 7 notas y la misma armadura</strong>. Para hallar el Relativo Menor de cualquier nota Mayor, solo baja <strong>3 semitonos</strong> (una 3ª menor, el 6º grado): <code>C Mayor → Am</code>, <code>G Mayor → Em</code>, <code>F Mayor → Dm</code>.<br>
+          • <strong>La Cadena <code>6 – 2 – 5 – 1</code>:</strong> Observa las ramas del círculo superior (<code>Am [vi] → Dm [ii] → G7 [V7] → C [I]</code>): ¡es un deslizamiento continuo hacia la izquierda (en sentido antihorario) bajando por quintas justas hasta aterrizar en el centro <code>I</code>!
+        </p>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="btn-audio js-treatise-chord" data-mode="prog" data-groups="45,57,60,64|50,57,60,65|43,53,59,62|48,55,60,64" data-label="Cadena 6 - 2 - 5 - 1 en Do: Am7 (vi) → Dm7 (ii) → G7 (V7) → C (I)">🔊 Escuchar 6 → 2 → 5 → 1 (Am → Dm → G7 → C)</button>
+      <button type="button" class="btn-audio js-treatise-chord" data-mode="prog" data-groups="50,57,60,65|43,53,59,65|49,53,59,65|48,52,55,59" data-label="Comparación Polo 180°: Dm7 → G7 → Cmaj7 vs. Dm7 → Db7 (Sustituto a 180°) → Cmaj7">🔊 Comparar G7 vs. Sustituto Tritonal Db7 (180°)</button>
+    </div>
   </div>
   `;
 }
@@ -619,10 +1002,19 @@ function buildTensionesIlustradasRescueAndGlueHtml(): string {
     <p class="text-sm mb-2">
       En <em>"Feliz Cumpleaños"</em> (en Do Mayor), el clímax melódico ocurre exactamente al <strong>70% de la canción</strong> (el salto de octava <code>Sol4 → Sol5</code> en <em>"¡Que los cumplas fe-LIZ!"</em> antes del final). En vez de armonizar ese pico con un simple <code>C</code> o <code>F</code>, puedes graduar la emoción colocando una <strong><code>#11</code> luminosa</strong> bajo la nota cumbre <code>C5/E5</code>:
     </p>
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap gap-2 mb-5">
       <button type="button" class="btn-audio js-treatise-chord" data-mode="prog" data-groups="48,55,60,64|43,55,59,65|48,55,60,64|41,53,57,60|48,52,55,60|43,53,59,62|48,52,55,60" data-label="Feliz Cumpleaños Nivel 1: Armonía Básica (C - G7 - C - F - C - G7 - C)">🔊 Nivel 1: Básico (C – G7 – F)</button>
       <button type="button" class="btn-audio js-treatise-chord" data-mode="prog" data-groups="48,55,62,64|43,53,57,59,64|48,52,58,62|54,60,64,69|41,53,56,60,62|43,53,56,59,64|48,55,62,64,66" data-label="Feliz Cumpleaños Nivel Jazz/Cine: Cadd9 → G13 → C9 → F#m7b5 (Pico #11) → Fm6 → G7(b9,13) → Cmaj9(#11)">🔊 Nivel 2: Clímax con #11, IVm6 y Tensiones Glue</button>
     </div>
+
+    <article class="interactive-widget mt-5" id="lab-piramide-tensiones" data-lab="tension-pyramid-visualizer" data-nivel="3">
+      <div class="widget-header">
+        <span class="widget-tag">Mapa Interactivo · 9 + 11 + 13 + Modulación Melódica</span>
+        <h3>🔺 Pirámide Interactiva de Tensiones Disponibles (<code>9 + 11 + 13</code>)</h3>
+        <p class="text-sm">Cuando una melodía sostiene la nota raíz (<strong>Línea Rosa</strong>), la 5ª (<strong>Línea Dorada</strong>) o la 3ª (<strong>Línea Cian</strong>), puedes rearmonizarla con cualquiera de los acordes de abajo sin perder el hilo melódico. Haz clic en cualquier círculo de la pirámide para escucharlo.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
   </div>
   `;
 }
@@ -765,6 +1157,18 @@ function buildArmoniaIlustradaAdvancedSystemsHtml(): string {
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="card mb-2" style="border-left: 3px solid #ec4899;">
+      <h4>🌳 ¿Qué son las Transformaciones Triádicas Neo-Riemannianas (<code>P, L, R, Slide</code>) y el Árbol Fractal?</h4>
+      <p class="text-xs">
+        En lugar de analizar acordes por función tonal (<code>I – IV – V</code>), la teoría Neo-Riemanniana mueve <strong>una sola nota</strong> de una tríada manteniendo las otras 2 fijas (<strong><em>Glue 2/3</em></strong>) para enlazar acordes aparentemente lejanos sin perder suavidad:<br>
+        • <strong><code>P</code> (Paralela):</strong> Mantiene 1ª y 5ª fijas; mueve la 3ª <code>±1 semitono</code> (<code>C [C-E-G] ↔ Cm [C-Eb-G]</code>).<br>
+        • <strong><code>L</code> (Leading-Tone Exchange):</strong> Mantiene 3ª y 5ª fijas; mueve la tónica <code>-1 semitono</code> (<code>C [C-E-G] ↔ Em [B-E-G]</code>).<br>
+        • <strong><code>R</code> (Relativa):</strong> Mantiene 1ª y 3ª fijas; mueve la 5ª <code>+2 semitonos</code> (<code>C [C-E-G] ↔ Am [C-E-A]</code>).<br>
+        • <strong><code>Slide</code> (Deslizamiento):</strong> Mantiene la 3ª fija en el centro (<code>E/Eb</code>) y mueve la 1ª y la 5ª <code>±1 st</code> (<code>C ↔ C#m</code>).<br>
+        Explora justo arriba en el <strong>Laboratorio Tonnetz y Árboles Neo-Riemannianos</strong> tanto el <em>Árbol Genealógico de 3 Generaciones</em> como el <em>Árbol Radial Fractal 360°</em>: ¡haz clic en cualquier nodo para escuchar cada rama al instante!
+      </p>
     </div>
   </div>
   `;
@@ -1072,3 +1476,327 @@ function buildArreglosIlustradosBulletproofPadHtml(): string {
   </div>
   `;
 }
+
+function buildInterval9thVisualizerSectionHtml(): string {
+  return `
+  <section id="t-visualizador-9nintervalos" class="module-section" data-cat="teoria" data-nivel="1-3" data-menu="3B. Visualizador de Intervalos y 9nas (1ª a 13ª) en Mástil">
+    <div class="section-header">
+      <span class="badge-level">Niveles 1–3 · Geometría Interválica y Tensiones</span>
+      <h2>3B. Visualizador de Intervalos y 9nas en el Mástil (Simples y Compuestos: 1ª a 9ª, 11ª y 13ª)</h2>
+      <p>
+        Todo acorde extendido nace de comprender cómo se proyectan los <strong>intervalos simples</strong> (dentro de una octava: <code>2ª</code>, <code>3ª</code>, <code>4ª</code>, <code>5ª</code>, <code>6ª</code>, <code>7ª</code>) y cómo se transforman en <strong>intervalos compuestos o tensiones</strong> al cruzar la barrera de los 12 semitonos (<strong>La Regla del +7</strong>: <code>2ª + 7 = 9ª</code>, <code>4ª + 7 = 11ª</code>, <code>6ª + 7 = 13ª</code>).
+      </p>
+    </div>
+
+    <div class="callout-box mt-4" style="border-left: 4px solid #6366f1;">
+      <h3>📐 La Ley de la Octava (+7 Grados / +12 Semitonos): ¿Por qué una 2ª no suena igual que una 9ª?</h3>
+      <p class="text-sm mb-3">
+        Aunque la nota <code>Re</code> sobre una tónica <code>Do</code> es la misma clase de altura (<em>Pitch Class</em>), su comportamiento acústico cambia radicalmente según la octava en la que la coloques:
+      </p>
+      <div class="table-wrap mb-3">
+        <table>
+          <thead>
+            <tr>
+              <th>Intervalo Simple (Dentro de 1 Octava)</th>
+              <th>Intervalo Compuesto (+1 Octava = +12 st)</th>
+              <th>Efecto Acústico y Armónico</th>
+              <th>Escuchar Comparación</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>2ª Mayor (<code>2 st</code>)</strong> · Ej. <code>Do4–Re4</code></td>
+              <td><strong>9ª Mayor (<code>14 st</code>)</strong> · Ej. <code>Do3–Re4</code></td>
+              <td>En <code>2ª</code> cerrada crea un roce<em> cluster</em> íntimo; en <strong><code>9ª</code> abierta</strong> respira por encima de la 3ª y la 7ª dando amplitud cinematográfica.</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="prog" data-groups="60,62,64,67|48,55,64,71,74" data-label="Comparación: 2ª cerrada (Cluster C-D-E) vs. 9ª abierta (Cmaj9)">🔊 2ª Cerrada vs. 9ª Abierta</button></td>
+            </tr>
+            <tr>
+              <td><strong>2ª Menor (<code>1 st</code>) vs. ♭9 (<code>13 st</code>)</strong></td>
+              <td><strong>9ª Menor <code>♭9</code> (<code>13 st</code>)</strong> · Ej. <code>Sol3–La♭4</code></td>
+              <td>Sobre un acorde dominante (<code>V7(♭9)</code>), la <code>♭9</code> forma un acorde disminuido superior que empuja con dramatismo hacia la tónica menor o mayor.</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="prog" data-groups="55,59,62,65,68|48,55,63,67" data-label="G7(b9) resolviendo a Cm">🔊 G7(♭9) → Cm</button></td>
+            </tr>
+            <tr>
+              <td><strong>2ª Aumentada (<code>3 st</code>) vs. #9 (<code>15 st</code>)</strong></td>
+              <td><strong>9ª Aumentada <code>#9</code> (<code>15 st</code>)</strong> · Ej. <code>Mi3–Sol#3–Re4–Sol4</code></td>
+              <td>El famoso <em>Acorde Hendrix</em> (<code>E7#9</code>): conviven la <strong>3ª Mayor en el grave</strong> y la <strong>#9 (3ª menor enarmónica) en el agudo</strong> sin chocar gracias a la separación de octava.</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="Simul" data-notes="40,56,62,67" data-label="E7(#9) — El Acorde Hendrix (convivencia 3M + #9)">🔊 E7(#9) Hendrix</button></td>
+            </tr>
+            <tr>
+              <td><strong>4ª Justa/Aum (<code>5/6 st</code>) → 11ª / #11</strong></td>
+              <td><strong>11ª Justa (<code>17 st</code>) y <code>#11</code> (<code>18 st</code>)</strong></td>
+              <td>En acordes menores la <code>11ª justa</code> suena modal y abierta (Dórico); en acordes mayores o dominantes usamos la <strong><code>#11</code> Lidia</strong> para evitar el choque con la 3ª mayor.</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="prog" data-groups="50,57,60,65,67|48,55,64,71,78" data-label="Dm11 (11ª Justa) → Cmaj7(#11) (#11 Lidia)">🔊 Dm11 → Cmaj7(#11)</button></td>
+            </tr>
+            <tr>
+              <td><strong>6ª Mayor/Menor (<code>8/9 st</code>) → ♭13 / 13ª</strong></td>
+              <td><strong>13ª Menor <code>♭13</code> (<code>20 st</code>) y 13ª Mayor (<code>21 st</code>)</strong></td>
+              <td>La <code>13ª Mayor</code> corona al dominante de Jazz/Soul (<code>G13</code>), mientras que la <code>♭13</code> anticipa la caída a una tónica menor.</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="prog" data-groups="43,53,59,64,69|43,53,59,64,68|48,55,60,63,67" data-label="G13 → G7(b13) → Cm9">🔊 G13 → G7(♭13) → Cm9</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <article class="interactive-widget mt-6" id="lab-visualizador-9nintervalos" data-lab="interval-9th-visualizer" data-nivel="2">
+      <div class="widget-header">
+        <span class="widget-tag">Laboratorio Interactivo · Mástil 6c / 4c</span>
+        <h3>📐 Visualizador de Intervalos y 9nas (Simples y Compuestos: 1ª a 9ª, 11ª y 13ª)</h3>
+        <p class="text-sm">Elige la nota raíz, selecciona cualquier intervalo simple o tensión compuesta (<code>♭9</code>, <code>9</code>, <code>#9</code>, <code>11</code>, <code>#11</code>, <code>♭13</code>, <code>13</code>), alterna entre <strong>Guitarra (6c)</strong> y <strong>Bajo (4c)</strong> y escucha el intervalo solo o dentro de un acorde con novena.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </section>
+  `;
+}
+
+function buildFretboardTriadsSectionHtml(sectionId: string, catId: string, menuTitle: string): string {
+  return `
+  <section id="${sectionId}" class="module-section" data-cat="${catId}" data-nivel="2-3" data-menu="${menuTitle}">
+    <div class="section-header">
+      <span class="badge-level">Niveles 2–3 · Arquitectura del Mástil</span>
+      <h2>${menuTitle}</h2>
+      <p>
+        Dominar el mástil de punta a punta no consiste en memorizar acordes gigantes de 6 cuerdas con cejilla, sino en controlar las <strong>tríadas cerradas por grupos de 3 cuerdas adyacentes</strong> (Sets <code>1-2-3</code>, <code>2-3-4</code>, <code>3-4-5</code> y <code>4-5-6</code>) en sus <strong>3 estados de inversión</strong>, y las <strong>Tríadas Abiertas (Spread Triads / Drop 2)</strong> que saltean una cuerda intermedia.
+      </p>
+    </div>
+
+    <div class="callout-box mt-4" style="border-left: 4px solid #f59e0b;">
+      <h3>🎸 Las 3 Inversiones Horizontales y el Conector de <em>Voice Leading</em> en la Misma Zona</h3>
+      <p class="text-sm mb-3">
+        En cualquier grupo de 3 cuerdas (por ejemplo, las cuerdas agudas <code>3ª Sol – 2ª Si – 1ª Mi</code>), una misma tríada aparece <strong>3 veces a lo largo de los 12 trastes</strong> permutando el orden vertical de sus factores (<code>1–3–5</code>, <code>3–5–1</code>, <code>5–1–3</code>):
+      </p>
+      <div class="table-wrap mb-3">
+        <table>
+          <thead>
+            <tr>
+              <th>Inversión</th>
+              <th>Orden Vertical (Grave → Agudo)</th>
+              <th>Nota en el Bajo y en la Cima (Melodía)</th>
+              <th>Carácter Sonoro y Uso Práctico</th>
+              <th>Escuchar en Do Mayor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Estado Fundamental</strong></td>
+              <td><code>1 – 3 – 5</code> (Do – Mi – Sol)</td>
+              <td>Bajo: <strong>Fundamental (1)</strong> · Cima: <strong>5ª Justa (5)</strong></td>
+              <td>Estable, afirmativo y centrado. Ideal para abrir o cerrar frases.</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="Simul" data-notes="60,64,67" data-label="C Mayor en Estado Fundamental (Do4-Mi4-Sol4)">🔊 Fundamental (1-3-5)</button></td>
+            </tr>
+            <tr>
+              <td><strong>1ª Inversión</strong></td>
+              <td><code>3 – 5 – 1</code> (Mi – Sol – Do)</td>
+              <td>Bajo: <strong>3ª (3)</strong> · Cima: <strong>Fundamental (1)</strong></td>
+              <td>Luminoso y melódico (la tónica brilla en la cuerda más aguda). Perfecto para enlazar bajos por grado conjunto.</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="Simul" data-notes="64,67,72" data-label="C Mayor en 1ª Inversión (Mi4-Sol4-Do5)">🔊 1ª Inversión (3-5-1)</button></td>
+            </tr>
+            <tr>
+              <td><strong>2ª Inversión</strong></td>
+              <td><code>5 – 1 – 3</code> (Sol – Do – Mi)</td>
+              <td>Bajo: <strong>5ª (5)</strong> · Cima: <strong>3ª (3)</strong></td>
+              <td>Expresivo y cantabile (la 3ª, que define el modo mayor/menor, queda expuesta en la cima).</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="Simul" data-notes="67,72,76" data-label="C Mayor en 2ª Inversión (Sol4-Do5-Mi5)">🔊 2ª Inversión (5-1-3)</button></td>
+            </tr>
+            <tr>
+              <td><strong>Tríada Abierta (<em>Spread Triad</em>)</strong></td>
+              <td><code>1 – 5 – 3</code> (+1 octava)</td>
+              <td>Bajo en 5ª/6ª cuerda · 5ª en 4ª cuerda · <strong>3ª en 2ª cuerda</strong> (saltea la 3ª cuerda)</td>
+              <td>El sonido clásico de Eric Johnson, Andy Summers y John Petrucci: intervalos de 5ª y 6ª que abren el registro como un piano.</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="Simul" data-notes="48,55,64" data-label="Spread Triad de Do Mayor (Do3 - Sol3 - Mi4)">🔊 Spread Triad (1-5-10)</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <article class="interactive-widget mt-6" id="lab-${sectionId}" data-lab="fretboard-triads-visualizer" data-nivel="2">
+      <div class="widget-header">
+        <span class="widget-tag">Laboratorio Interactivo · Sets de 3 Cuerdas + Spread Triads</span>
+        <h3>🎸 Visualizador de Tríadas en el Mástil (Estado Fundamental, 1ª y 2ª Inversión)</h3>
+        <p class="text-sm">Selecciona la tónica, la cualidad (Mayor, Menor, Disminuida, Aumentada, Sus2, Sus4), el grupo de 3 cuerdas o <em>Spread Triad</em>, y alterna entre <strong>Guitarra (6c)</strong> y <strong>Bajo (4c)</strong> para visualizar y escuchar las 3 inversiones a lo largo del diapasón.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </section>
+  `;
+}
+
+function buildPolychordVisualizerSectionHtml(): string {
+  return `
+  <section id="h-visualizador-poliacordes" class="module-section" data-cat="armonia" data-nivel="3-4" data-menu="7B. Poliacordes (X | Y) y Upper Structures en el Mástil">
+    <div class="section-header">
+      <span class="badge-level">Niveles 3–4 · Armonía Extendida y Upper Structures</span>
+      <h2>7B. Visualizador de Poliacordes (<code>Acorde Superior | Acorde Base</code>) y Tríadas de Estructura Superior (UST)</h2>
+      <p>
+        Un <strong>Poliacorde</strong> (escrito <code>Superior | Base</code>) consiste en tocar <strong>dos acordes independientes al mismo tiempo</strong>, apilados en dos pisos claros: un <strong>Acorde Base</strong> en el registro grave (ej. <code>C</code> o cascarón <code>C7</code>) y una <strong>Tríada Superior (<em>Upper Structure Triad</em>)</strong> en el registro agudo (ej. tríada de <code>D</code> o <code>F#</code>).
+      </p>
+      <div class="card mb-4" style="border-left: 3px solid #a855f7;">
+        <h4>📐 ¿Cómo se forma un Poliacorde en 3 Pasos y en qué se diferencia de un Híbrido o Slash Chord?</h4>
+        <p class="text-xs">
+          1️⃣ <strong>Elige la Base Grave:</strong> Toca una tríada o cascarón (<code>1–3–7</code>) en el registro medio-grave respetando el <em>Low Interval Limit</em> (evita poner 3ª o 2ª muy cerradas debajo de Do3 para no enturbiar el sonido).<br>
+          2️⃣ <strong>Elige una Tríada Superior según el color deseado:</strong> Si quieres color <strong>Lidio (<code>9, #11, 13</code>)</strong> sobre <code>C</code>, toca la tríada mayor que está a 1 tono arriba (<code>D = D–F#–A</code>). Si quieres un dominante simétrico explosivo sobre <code>C7</code>, toca la tríada a distancia de tritono (<code>F# | C7</code>).<br>
+          3️⃣ <strong>Diferencia clave:</strong> En un <em>Slash Chord</em> (<code>C/E</code>) solo cambia la nota del bajo; en un <em>Acorde Híbrido</em> (<code>F/G</code>) el bajo es una nota suelta y se omite la 3ª del bajo; en un <strong>Poliacorde (<code>D | C</code>) ambos bloques mantienen su identidad completa como dos acordes simultáneos</strong>.
+        </p>
+      </div>
+    </div>
+
+    <div class="callout-box mt-4" style="border-left: 4px solid #a855f7;">
+      <h3>🏛️ Las 6 Tríadas de Estructura Superior (<em>Upper Structure Triads</em>) más Poderosas</h3>
+      <p class="text-sm mb-3">
+        Cuando el acorde base es un <strong>Cascarón Dominante o Cuatríada</strong> en el registro grave (ej. <code>C7</code> = <code>Do–Mi–Si♭</code>) y superpones una tríada mayor o menor en las 3 cuerdas agudas, cada grado de la tríada superior activa automáticamente un paquete de tensiones:
+      </p>
+      <div class="table-wrap mb-3">
+        <table>
+          <thead>
+            <tr>
+              <th>Notación Poliacorde (<code>UST | Base</code>)</th>
+              <th>Fórmula sobre el Bajo</th>
+              <th>Tensiones Resultantes</th>
+              <th>Escala / Color Asociado</th>
+              <th>Escuchar Poliacorde</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong><code>D | C</code> o <code>D | Cmaj7</code></strong></td>
+              <td>Tríada Mayor un tono arriba (<code>II | I</code>)</td>
+              <td><strong><code>9ª</code>, <code>#11</code>, <code>13ª</code></strong></td>
+              <td><strong>Lidio Cinematográfico</strong> (John Williams, Pat Metheny)</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="Simul" data-notes="48,52,55,62,66,69" data-label="Poliacorde D | C (Cmaj13#11 Lidio)">🔊 D | C (Lidio #11)</button></td>
+            </tr>
+            <tr>
+              <td><strong><code>D | C7</code> (UST II)</strong></td>
+              <td>Tríada Mayor sobre el II de un Dominante</td>
+              <td><strong><code>9ª</code>, <code>#11</code>, <code>13ª</code> sobre <code>♭7</code></strong></td>
+              <td><strong>Lidio ♭7 (Overtone Scale)</strong> · Dominante brillante sin resolver</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="Simul" data-notes="48,52,58,62,66,69" data-label="Poliacorde D | C7 (C13#11 Lidio b7)">🔊 D | C7 (UST II)</button></td>
+            </tr>
+            <tr>
+              <td><strong><code>F# | C7</code> (UST ♯IV)</strong></td>
+              <td>Tríada Mayor a distancia de Tritono (Polo de Bartók)</td>
+              <td><strong><code>#11</code>, <code>♭7</code>, <code>♭9</code></strong></td>
+              <td><strong>Simétrica Disminuida (Semitono-Tono)</strong> · El "Acorde de Petrushka" (Stravinsky)</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="Simul" data-notes="48,52,58,66,70,73" data-label="Poliacorde F# | C7 (C7b9#11 — Petrushka / Disminuida)">🔊 F# | C7 (UST ♯IV)</button></td>
+            </tr>
+            <tr>
+              <td><strong><code>Ab | C7</code> (UST ♭VI)</strong></td>
+              <td>Tríada Mayor sobre la 6ª menor del Dominante</td>
+              <td><strong><code>♭13</code>, <code>1</code>, <code>#9</code></strong></td>
+              <td><strong>Escala Alterada (Superlocria)</strong> · Tensión máxima hacia tónica menor</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="Simul" data-notes="48,52,58,68,72,75" data-label="Poliacorde Ab | C7 (C7#9b13 Alterado)">🔊 Ab | C7 (UST ♭VI)</button></td>
+            </tr>
+            <tr>
+              <td><strong><code>Eb | C7</code> (UST ♭III)</strong></td>
+              <td>Tríada Mayor sobre la 3ª menor del Dominante</td>
+              <td><strong><code>#9</code>, <code>5ª</code>, <code>♭7</code></strong></td>
+              <td><strong>Blues / Jazz-Rock</strong> · Convivencia feroz entre 3ª Mayor y #9</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="Simul" data-notes="48,52,58,63,67,70" data-label="Poliacorde Eb | C7 (C7#9)">🔊 Eb | C7 (UST ♭III)</button></td>
+            </tr>
+            <tr>
+              <td><strong><code>G | Cm7</code></strong></td>
+              <td>Tríada Mayor del V sobre tónica menor</td>
+              <td><strong><code>5ª</code>, <code>7ª Mayor</code>, <code>9ª</code></strong></td>
+              <td><strong>Menor Melódica / Cine Noir</strong> (<code>Cm(maj9)</code>)</td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="Simul" data-notes="48,51,55,67,71,74" data-label="Poliacorde G | Cm (Cm(maj9) Noir)">🔊 G | Cm (Noir)</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <article class="interactive-widget mt-6" id="lab-visualizador-poliacordes" data-lab="polychord-visualizer" data-nivel="4">
+      <div class="widget-header">
+        <span class="widget-tag">Laboratorio Interactivo · Upper Structures + Mástil</span>
+        <h3>🏛️ Visualizador de Poliacordes (<code>X | Y</code>) y Upper Structures</h3>
+        <p class="text-sm">Combina cualquier <strong>Acorde Base (Graves)</strong> con cualquier <strong>Tríada de Estructura Superior (Agudos)</strong> o elige un preset de Jazz/Cine para analizar las tensiones resultantes (<code>9, #9, #11, ♭13, 13</code>) y ver el voicing separado por registros en el mástil.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </section>
+  `;
+}
+
+function buildNeighborChordsSectionHtml(): string {
+  return `
+  <section id="h-acordes-vecinos" class="module-section" data-cat="armonia" data-nivel="2-4" data-menu="8B. Acordes Vecinos (Neighbor Chords) y Bordaduras en Mástil">
+    <div class="section-header">
+      <span class="badge-level">Niveles 2–4 · Conducción de Voces y Movimiento en el Mástil</span>
+      <h2>8B. Visualizador de Acordes Vecinos (<em>Neighbor Chords</em>) y Bordaduras Armónicas</h2>
+      <p>
+        Cuando una canción permanece varios compases sobre un mismo acorde (por ejemplo, 2 o 4 compases estáticos en <code>C Mayor</code> o <code>Am7</code>), tocar el mismo bloque rítmico cansa al oído. Un <strong>Acorde Vecino (<em>Neighbor Chord</em> o Bordadura Armónica)</strong> sale del acorde objetivo por <strong>grado conjunto (1 o 2 trastes)</strong> y regresa inmediatamente a él (<code>Acorde Objetivo → Vecino → Acorde Objetivo</code>), dando respiración y movimiento sin perder la estabilidad tonal.
+      </p>
+      <div class="card mb-4" style="border-left: 3px solid #38bdf8;">
+        <h4>🧭 ¿Cómo sé si un acorde es Vecino y cómo se arma en 3 pasos?</h4>
+        <p class="text-xs">
+          <strong>¿Cómo identificarlo?</strong> Un acorde es <em>vecino</em> respecto a otro cuando sus notas están a una distancia mínima de <strong>1 o 2 semitonos</strong> de las notas del acorde central (o comparten un bajo pedal / 2 notas en común como en <code>P, L, R</code>) y su función no es iniciar una nueva progresión lejana, sino <strong>ornamentar al acorde principal y volver a él</strong>.<br>
+          <strong>¿Cómo se arma? (3 métodos infalibles):</strong><br>
+          1. <em>Deslizamiento paralelo (Side-Slipping):</em> Mueve tu postura completa <strong><code>+1</code> o <code>-1</code> traste</strong> en un tiempo débil y vuelve al acorde real en el tiempo fuerte (<code>Cm9 → C#m9 → Cm9</code>).<br>
+          2. <em>Sobre Bajo Pedal:</em> Deja la raíz fija en el bajo y sube o baja las voces agudas un grado de la escala (<code>C → F/C → C</code>).<br>
+          3. <em>Bordadura Disminuida o Neo-Riemanniana:</em> Mueve 1 sola voz por semitono (<code>C → Em → C</code>) o mete un disminuido auxiliar (<code>Cmaj7 → C°7 → Cmaj7</code>).
+        </p>
+      </div>
+    </div>
+
+    <div class="callout-box mt-4" style="border-left: 4px solid #38bdf8;">
+      <h3>🧭 Las 5 Familias de Acordes Vecinos para Darle Vida a un Acorde Estático</h3>
+      <div class="table-wrap mb-3">
+        <table>
+          <thead>
+            <tr>
+              <th>Familia de Acorde Vecino</th>
+              <th>Mecánica de Voces / Trastes</th>
+              <th>Ejemplo en Tónica <code>C</code> o <code>Cm7</code></th>
+              <th>Escuchar Bordadura (Ida y Vuelta)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Vecino Diatónico Superior (<code>IV/I</code> o <code>ii/I</code>)</strong></td>
+              <td>Las voces superiores suben un grado diatónico mientras el bajo mantiene un <strong>Pedal de Tónica</strong>.</td>
+              <td><code>C → F/C → C</code> o <code>C → Dm7/C → C</code></td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="prog" data-groups="48,55,60,64|48,57,60,65|48,55,60,64" data-label="Bordadura Diatónica sobre Pedal: C → F/C → C">🔊 C → F/C → C</button></td>
+            </tr>
+            <tr>
+              <td><strong>2. Vecino Disminuido Auxiliar (<code>♯I°7</code> o <code>°7</code> con Fundamental Común)</strong></td>
+              <td>Tres voces se mueven por semitono hacia el acorde disminuido vecino y regresan a la tríada o maj7.</td>
+              <td><code>Cmaj7 → C°7 → Cmaj7</code> o <code>C → B°7/C → C</code></td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="prog" data-groups="48,55,59,64|48,54,57,63|48,55,59,64" data-label="Bordadura Disminuida: Cmaj7 → C°7 → Cmaj7">🔊 Cmaj7 → C°7 → Cmaj7</button></td>
+            </tr>
+            <tr>
+              <td><strong>3. Vecino Cromático Paralelo (<em>Side-Slipping</em> <code>+1</code> o <code>-1</code> Traste)</strong></td>
+              <td>Desliza <strong>exactamente el mismo molde de dedos 1 traste arriba o 1 traste abajo</strong> en tiempo débil y vuelve al traste original en tiempo fuerte.</td>
+              <td><code>Cm7 (tr.3) → C#m7 (tr.4) → Cm7 (tr.3)</code></td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="prog" data-groups="48,55,58,63,67|49,56,59,64,68|48,55,58,63,67" data-label="Side-Slipping Cromático (+1 traste): Cm9 → C#m9 → Cm9">🔊 Cm9 → C#m9 → Cm9</button></td>
+            </tr>
+            <tr>
+              <td><strong>4. Vecinos Neo-Riemannianos (<code>P</code>, <code>L</code>, <code>R</code>)</strong></td>
+              <td>Mueve una sola voz de la tríada por 1 o 2 semitonos manteniendo <strong>2 notas en común (Glue 2/3)</strong>.</td>
+              <td><code>C → Em → C</code> (Cambio L: Do baja a Si) o <code>C → Ab → C</code></td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="prog" data-groups="48,55,60,64|52,55,59,64|48,55,60,64" data-label="Vecino Neo-Riemanniano L: C → Em → C">🔊 C → Em → C (L)</button></td>
+            </tr>
+            <tr>
+              <td><strong>5. Doble Bordadura Cromática (<em>Enclosure Armónico</em> <code>+1 → -1 → 0</code>)</strong></td>
+              <td>Rodea al acorde objetivo primero 1 traste por encima, luego 1 traste por debajo y aterriza en el centro.</td>
+              <td><code>Cm7 → Db7 → Bmaj7 → Cm7</code></td>
+              <td><button type="button" class="btn-audio js-treatise-chord" data-mode="prog" data-groups="48,55,58,63|49,56,59,65|47,54,58,63|48,55,58,63" data-label="Enclosure Armónico: Cm7 → Db7 → Bmaj7 → Cm7">🔊 Enclosure Armónico</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <article class="interactive-widget mt-6" id="lab-acordes-vecinos" data-lab="neighbor-chords-visualizer" data-nivel="3">
+      <div class="widget-header">
+        <span class="widget-tag">Laboratorio Interactivo · Bordaduras + Side-Slipping en Mástil</span>
+        <h3>🧭 Visualizador de Acordes Vecinos (<em>Neighbor Chords</em>) en el Mástil</h3>
+        <p class="text-sm">Selecciona el acorde objetivo, elige entre las 5 familias de acordes vecinos, escucha la bordadura completa (<code>Objetivo → Vecino → Objetivo</code>) y compara los diagramas del mástil en <strong>Guitarra (6c)</strong> o <strong>Bajo (4c)</strong>.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </section>
+  `;
+}
+

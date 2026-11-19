@@ -25,7 +25,6 @@ import {
 } from './interactive-arcade';
 import {
   TREATISE_ENRICHMENT_SEARCH_META,
-  hydrateTreatiseEnrichment,
   injectTreatiseEnrichmentIntoCategoryHtml,
 } from './treatise-enrichment';
 
@@ -74,10 +73,10 @@ export class App implements OnInit {
   readonly contentHost = viewChild<ElementRef<HTMLElement>>('contentHost');
 
   readonly categories: CategoryPart[] = [
-    { id: 'teoria', label: '1. Teoría y Acústica', count: 10 },
-    { id: 'armonia', label: '2. Armonía Práctica', count: 14 },
+    { id: 'teoria', label: '1. Teoría y Acústica', count: 11 },
+    { id: 'armonia', label: '2. Armonía Práctica', count: 17 },
     { id: 'composicion', label: '3. Composición y Letras', count: 9 },
-    { id: 'guitarra-ac', label: '4. Guitarra Acústica', count: 6 },
+    { id: 'guitarra-ac', label: '4. Guitarra Acústica', count: 7 },
     { id: 'guitarra-el', label: '5. Guitarra Eléctrica', count: 6 },
     { id: 'bajo', label: '6. Bajo Eléctrico (4 Cuerdas)', count: 6 },
     { id: 'bateria', label: '7. Batería y Percusión', count: 6 },
@@ -85,7 +84,7 @@ export class App implements OnInit {
     { id: 'folclore', label: '9. Vientos Andinos y Folclore', count: 4 },
     { id: 'arreglos', label: '10. Arreglos y Orquestación', count: 4 },
     { id: 'produccion', label: '11. Producción y Proyectos', count: 3 },
-    { id: 'all', label: '📚 Toda la Enciclopedia Completa', count: 74 },
+    { id: 'all', label: '📚 Toda la Enciclopedia Completa', count: 79 },
   ];
 
   readonly activeCat = signal<CategoryPart>(this.categories[0]);
@@ -116,6 +115,55 @@ export class App implements OnInit {
   readonly glossaryFilter = signal<string>('');
 
   readonly glossaryEntries: GlossaryEntry[] = [
+    {
+      term: 'Semitono y Tono (Unidad de Medida)',
+      category: 'Concepto Base',
+      definition:
+        'El Semitono (1 st) es la distancia más pequeña entre dos notas en la música occidental (1 traste en la guitarra o 1 tecla contigua en el piano). Un Tono (2 st) equivale exactamente a la suma de 2 semitonos.',
+      sectionId: 't-notas',
+    },
+    {
+      term: 'Sostenido (#), Bemol (♭) y Becuadro (♮)',
+      category: 'Concepto Base',
+      definition:
+        'El Sostenido (#) sube la altura de una nota 1 semitono (+1 traste). El Bemol (♭) baja la nota 1 semitono (-1 traste). El Becuadro (♮) cancela cualquier alteración previa.',
+      sectionId: 't-notas',
+    },
+    {
+      term: 'Intervalo Musical (¿Qué es y para qué sirve?)',
+      category: 'Concepto Base',
+      definition:
+        'Es la distancia acústica entre dos notas medida en semitonos. Es el ladrillo con el que se construyen todas las escalas, melodías y acordes. Los intervalos 1ª, 4ª, 5ª y 8ª se llaman Justos; los intervalos 2ª, 3ª, 6ª y 7ª son Mayores o Menores.',
+      sectionId: 't-intervalos',
+    },
+    {
+      term: 'Tercera Mayor (4 st) vs. Tercera Menor (3 st)',
+      category: 'Concepto Base',
+      definition:
+        'El intervalo que define el estado emocional de un acorde: la 3ª Mayor (4 semitonos, ej. Do→Mi) suena luminosa y alegre; la 3ª Menor (3 semitonos, ej. Do→Mi♭) suena íntima y melancólica.',
+      sectionId: 't-intervalos',
+    },
+    {
+      term: 'Quinta Justa (7 st), Disminuida (6 st) y Aumentada (8 st)',
+      category: 'Concepto Base',
+      definition:
+        'La Quinta Justa (7 semitonos, Do→Sol) da estabilidad y potencia (Power Chord). Si se achica 1 semitono es Quinta Disminuida o Tritono (6 st, Do→Sol♭, máxima tensión). Si se agranda 1 semitono es Quinta Aumentada (8 st, Do→Sol#, flotante y misteriosa).',
+      sectionId: 't-intervalos',
+    },
+    {
+      term: 'Diatónico vs. Cromático',
+      category: 'Concepto Base',
+      definition:
+        'Diatónico significa que usa únicamente las 7 notas que pertenecen de forma natural a una escala o tonalidad. Cromático significa que incluye cualquiera de las 5 notas alteradas intermedias (los 12 semitonos) para crear color o tensión.',
+      sectionId: 't-notas',
+    },
+    {
+      term: 'Música Tonal vs. Música Modal',
+      category: 'Concepto Base',
+      definition:
+        'La Música Tonal funciona por gravedad: el acorde dominante (V7) crea tensión que exige resolver a la casa o Tónica (I). La Música Modal habita un paisaje o color estático (Dórico, Lidio, Frigio) sin que el V7 lo arrastre a la escala mayor.',
+      sectionId: 't-modos',
+    },
     {
       term: 'Appoggio (Apoyo Vocal)',
       category: 'Canto',
@@ -368,7 +416,6 @@ export class App implements OnInit {
         if (hostEl) {
           hydrateAllLabs(hostEl, this.audio, (msg) => this.activeNoteLabel.set(msg));
           hydrateInteractiveArcade(hostEl, this.audio, (msg) => this.activeNoteLabel.set(msg));
-          hydrateTreatiseEnrichment(hostEl, this.audio, (msg) => this.activeNoteLabel.set(msg));
         }
       }, 20);
     }
@@ -420,8 +467,69 @@ export class App implements OnInit {
     const target = event.target as HTMLElement | null;
     if (!target) return;
 
+    const treatiseBtn = target.closest('button.js-treatise-chord') as HTMLElement | null;
+    if (treatiseBtn) {
+      const notesRaw = treatiseBtn.getAttribute('data-notes') || '';
+      const groupsRaw = treatiseBtn.getAttribute('data-groups') || '';
+      const label = treatiseBtn.getAttribute('data-label') || 'Ejemplo Armónico';
+      const mode = treatiseBtn.getAttribute('data-mode') || 'chord';
+      const timb = (treatiseBtn.getAttribute('data-inst') as 'piano' | 'guitar') || 'piano';
+
+      if (mode === 'prog' && groupsRaw) {
+        const groups = groupsRaw
+          .split('|')
+          .map((g) =>
+            g
+              .split(',')
+              .map((n) => parseInt(n.trim(), 10))
+              .filter((n) => !Number.isNaN(n))
+          )
+          .filter((g) => g.length > 0);
+        if (groups.length === 0) return;
+        this.audio.stopAll();
+        this.activeNoteLabel.set(`🔊 ${label} (${groups.length} acordes)`);
+        groups.forEach((chord, idx) => {
+          this.audio.schedule(() => {
+            this.audio.strumChord(chord, timb, 0, false);
+            const bassMidi = chord[0] >= 48 ? chord[0] - 12 : chord[0];
+            this.audio.playElectricBass(bassMidi, 0.78, 0, 0.28, 'finger', false);
+            this.activeNoteLabel.set(`🔊 ${label} [Paso ${idx + 1}/${groups.length}]`);
+          }, idx * 820);
+        });
+        return;
+      }
+
+      const midis = notesRaw
+        .split(',')
+        .map((n) => parseInt(n.trim(), 10))
+        .filter((n) => !Number.isNaN(n));
+      if (midis.length === 0) return;
+
+      this.audio.stopAll();
+      this.activeNoteLabel.set(`🔊 ${label}`);
+      if (mode === 'seq') {
+        midis.forEach((m, i) => {
+          this.audio.schedule(() => {
+            if (timb === 'guitar') {
+              this.audio.playPluckedGuitar(m, 0.55, 0, 0.28, false);
+            } else {
+              this.audio.playAcousticPiano(m, 0.55, 0, 0.25, false);
+            }
+          }, i * 270);
+        });
+      } else {
+        this.audio.strumChord(midis, timb, 0, false);
+      }
+      return;
+    }
+
     const btn = target.closest('button.btn-audio') as HTMLElement | null;
-    if (btn && !btn.classList.contains('js-h-single')) {
+    if (
+      btn &&
+      !btn.classList.contains('js-h-single') &&
+      !btn.classList.contains('js-treatise-chord') &&
+      !btn.classList.contains('js-concept-demo')
+    ) {
       const noteAttr = btn.getAttribute('data-play-note');
       const intervalAttr = btn.getAttribute('data-play-interval');
       const runAttr = btn.getAttribute('data-run');

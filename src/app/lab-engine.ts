@@ -3283,36 +3283,53 @@ function buildCircleOfFifthsWidget(
   onStatus: (msg: string) => void
 ): void {
   const keys = [
-    { maj: 'C', min: 'Am', root: 0, sharps: '0 alteraciones', iv: 'F', v: 'G7', ii: 'Dm7', iii: 'Em7', vi: 'Am7', vii: 'Bm7b5' },
-    { maj: 'G', min: 'Em', root: 7, sharps: '1 sostenido (F#)', iv: 'C', v: 'D7', ii: 'Am7', iii: 'Bm7', vi: 'Em7', vii: 'F#m7b5' },
-    { maj: 'D', min: 'Bm', root: 2, sharps: '2 sostenidos (F#, C#)', iv: 'G', v: 'A7', ii: 'Em7', iii: 'F#m7', vi: 'Bm7', vii: 'C#m7b5' },
-    { maj: 'A', min: 'F#m', root: 9, sharps: '3 sostenidos (F#, C#, G#)', iv: 'D', v: 'E7', ii: 'Bm7', iii: 'C#m7', vi: 'F#m7', vii: 'G#m7b5' },
-    { maj: 'E', min: 'C#m', root: 4, sharps: '4 sostenidos (F#, C#, G#, D#)', iv: 'A', v: 'B7', ii: 'F#m7', iii: 'G#m7', vi: 'C#m7', vii: 'D#m7b5' },
-    { maj: 'B', min: 'G#m', root: 11, sharps: '5 sostenidos', iv: 'E', v: 'F#7', ii: 'C#m7', iii: 'D#m7', vi: 'G#m7', vii: 'A#m7b5' },
-    { maj: 'F# / Gb', min: 'D#m / Ebm', root: 6, sharps: '6 sostenidos / 6 bemoles', iv: 'B', v: 'C#7', ii: 'G#m7', iii: 'A#m7', vi: 'D#m7', vii: 'E#m7b5' },
-    { maj: 'Db', min: 'Bbm', root: 1, sharps: '5 bemoles', iv: 'Gb', v: 'Ab7', ii: 'Ebm7', iii: 'Fm7', vi: 'Bbm7', vii: 'Cm7b5' },
-    { maj: 'Ab', min: 'Fm', root: 8, sharps: '4 bemoles (Bb, Eb, Ab, Db)', iv: 'Db', v: 'Eb7', ii: 'Bbm7', iii: 'Cm7', vi: 'Fm7', vii: 'Gm7b5' },
-    { maj: 'Eb', min: 'Cm', root: 3, sharps: '3 bemoles (Bb, Eb, Ab)', iv: 'Ab', v: 'Bb7', ii: 'Fm7', iii: 'Gm7', vi: 'Cm7', vii: 'Dm7b5' },
-    { maj: 'Bb', min: 'Gm', root: 10, sharps: '2 bemoles (Bb, Eb)', iv: 'Eb', v: 'F7', ii: 'Cm7', iii: 'Dm7', vi: 'Gm7', vii: 'Am7b5' },
-    { maj: 'F', min: 'Dm', root: 5, sharps: '1 bemol (Bb)', iv: 'Bb', v: 'C7', ii: 'Gm7', iii: 'Am7', vi: 'Dm7', vii: 'Em7b5' },
+    { maj: 'C', min: 'Am', root: 0, sharps: '0 alteraciones', iv: 'F', v: 'G7', ii: 'Dm7', iii: 'Em7', vi: 'Am7', vii: 'Bm7b5', secDom: 'E7' },
+    { maj: 'G', min: 'Em', root: 7, sharps: '1 sostenido (F#)', iv: 'C', v: 'D7', ii: 'Am7', iii: 'Bm7', vi: 'Em7', vii: 'F#m7b5', secDom: 'B7' },
+    { maj: 'D', min: 'Bm', root: 2, sharps: '2 sostenidos (F#, C#)', iv: 'G', v: 'A7', ii: 'Em7', iii: 'F#m7', vi: 'Bm7', vii: 'C#m7b5', secDom: 'F#7' },
+    { maj: 'A', min: 'F#m', root: 9, sharps: '3 sostenidos (F#, C#, G#)', iv: 'D', v: 'E7', ii: 'Bm7', iii: 'C#m7', vi: 'F#m7', vii: 'G#m7b5', secDom: 'C#7' },
+    { maj: 'E', min: 'C#m', root: 4, sharps: '4 sostenidos (F#, C#, G#, D#)', iv: 'A', v: 'B7', ii: 'F#m7', iii: 'G#m7', vi: 'C#m7', vii: 'D#m7b5', secDom: 'G#7' },
+    { maj: 'B', min: 'G#m', root: 11, sharps: '5 sostenidos (F#, C#, G#, D#, A#)', iv: 'E', v: 'F#7', ii: 'C#m7', iii: 'D#m7', vi: 'G#m7', vii: 'A#m7b5', secDom: 'D#7' },
+    { maj: 'F#/Gb', min: 'Ebm', root: 6, sharps: '6 sostenidos / 6 bemoles', iv: 'B', v: 'Db7', ii: 'Abm7', iii: 'Bbm7', vi: 'Ebm7', vii: 'Fm7b5', secDom: 'Bb7' },
+    { maj: 'Db', min: 'Bbm', root: 1, sharps: '5 bemoles (Bb, Eb, Ab, Db, Gb)', iv: 'Gb', v: 'Ab7', ii: 'Ebm7', iii: 'Fm7', vi: 'Bbm7', vii: 'Cm7b5', secDom: 'F7' },
+    { maj: 'Ab', min: 'Fm', root: 8, sharps: '4 bemoles (Bb, Eb, Ab, Db)', iv: 'Db', v: 'Eb7', ii: 'Bbm7', iii: 'Cm7', vi: 'Fm7', vii: 'Gm7b5', secDom: 'C7' },
+    { maj: 'Eb', min: 'Cm', root: 3, sharps: '3 bemoles (Bb, Eb, Ab)', iv: 'Ab', v: 'Bb7', ii: 'Fm7', iii: 'Gm7', vi: 'Cm7', vii: 'Dm7b5', secDom: 'G7' },
+    { maj: 'Bb', min: 'Gm', root: 10, sharps: '2 bemoles (Bb, Eb)', iv: 'Eb', v: 'F7', ii: 'Cm7', iii: 'Dm7', vi: 'Gm7', vii: 'Am7b5', secDom: 'D7' },
+    { maj: 'F', min: 'Dm', root: 5, sharps: '1 bemol (Bb)', iv: 'Bb', v: 'C7', ii: 'Gm7', iii: 'Am7', vi: 'Dm7', vii: 'Em7b5', secDom: 'A7' },
   ];
 
   let activeIdx = 0;
+  let viewMode: 'classic' | 'branches' | 'bifurcation' | 'star' = 'classic';
+  let neckMode: 'guitar' | 'bass' = 'guitar';
 
   container.innerHTML = `
     <div class="widget-header">
       <div>
-        <strong style="color:var(--accent-gold); font-size:1.1rem;">Círculo de Quintas Interactivo y Mapa de Familias Armónicas</strong>
-        <p style="font-size:0.82rem; color:var(--text-muted); margin:0;">Haz clic en cualquier tonalidad del círculo para escuchar su acorde tónica y su cadencia I – IV – V7 – I.</p>
+        <strong style="color:var(--accent-gold); font-size:1.12rem;">🎡 Círculo de Quintas Interactivo Extendido (Relativos, Eje de Tritono, Ramas 6–2–5–1 y Estrella Tonal)</strong>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin:0;">Cambia entre las 4 vistas gráficas y pulsa cualquier nodo circular para escuchar el acorde, la cadena <code>V7 → I → V7/vi → vi</code> o comparar el Sustituto Tritonal opuesto a 180°.</p>
       </div>
-      <div class="widget-controls">
-        <button type="button" class="btn btn-primary js-cof-cadence">🎸 Escuchar Cadencia I – IV – V7 – I</button>
-        <button type="button" class="btn js-cof-rel" style="background:rgba(167,139,250,0.18); color:#c4b5fd; border:1px solid rgba(167,139,250,0.4);">🎹 Comparar Mayor vs Relativa Menor</button>
-        <button type="button" class="btn js-cof-stop" style="background:rgba(244,63,94,0.2); color:#fb7185;">⏹ Detener</button>
+      <div class="widget-controls" style="display:flex; flex-wrap:wrap; gap:6px;">
+        <button type="button" class="btn btn-primary js-cof-cadence">🎸 Escuchar vi–ii–V7–I</button>
+        <button type="button" class="btn js-cof-rel" style="background:rgba(167,139,250,0.18); color:#c4b5fd; border:1px solid rgba(167,139,250,0.4);">🎹 Mayor vs Relativa</button>
+        <button type="button" class="btn js-cof-tritone" style="background:rgba(244,63,94,0.18); color:#fda4af; border:1px solid rgba(244,63,94,0.45);">⚡ Escuchar Tritono (180°)</button>
+        <button type="button" class="btn js-cof-stop" style="background:rgba(30,41,59,0.9); color:#fb7185; border:1px solid #475569;">⏹ Stop</button>
       </div>
     </div>
-    <div class="circle-fifths-layout">
-      <div class="circle-svg-box js-cof-svg-box"></div>
+
+    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px;">
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        <button type="button" class="btn js-cof-view" data-view="classic" style="font-size:0.76rem; padding:5px 10px;">1. Reloj + Tritono 180°</button>
+        <button type="button" class="btn js-cof-view" data-view="branches" style="font-size:0.76rem; padding:5px 10px;">2. Ramas V7 → I → V7/vi → vi</button>
+        <button type="button" class="btn js-cof-view" data-view="bifurcation" style="font-size:0.76rem; padding:5px 10px;">3. Bifurcación Mayor / Menor</button>
+        <button type="button" class="btn js-cof-view" data-view="star" style="font-size:0.76rem; padding:5px 10px;">4. Estrella Geométrica Tonal</button>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button type="button" class="btn js-cof-neck-mode" data-mode="guitar" style="font-size:0.74rem; padding:4px 9px;">🎸 Guitarra (6c)</button>
+        <button type="button" class="btn js-cof-neck-mode" data-mode="bass" style="font-size:0.74rem; padding:4px 9px;">🎸 Bajo (4c)</button>
+      </div>
+    </div>
+
+    <div class="circle-fifths-layout" style="grid-template-columns:minmax(280px, 560px) 1fr; gap:18px; align-items:start;">
+      <div class="circle-svg-box js-cof-svg-box" style="width:100%; display:flex; justify-content:center; background:rgba(9,13,22,0.85); border:1px solid rgba(56,189,248,0.28); border-radius:12px; padding:10px;"></div>
       <div class="cof-info-panel js-cof-info"></div>
     </div>
   `;
@@ -3321,99 +3338,310 @@ function buildCircleOfFifthsWidget(
   const infoBox = container.querySelector<HTMLElement>('.js-cof-info')!;
   const cadenceBtn = container.querySelector<HTMLButtonElement>('.js-cof-cadence')!;
   const relBtn = container.querySelector<HTMLButtonElement>('.js-cof-rel')!;
+  const tritoneBtn = container.querySelector<HTMLButtonElement>('.js-cof-tritone')!;
   const stopBtn = container.querySelector<HTMLButtonElement>('.js-cof-stop')!;
+  const viewBtns = container.querySelectorAll<HTMLButtonElement>('.js-cof-view');
+  const neckModeBtns = container.querySelectorAll<HTMLButtonElement>('.js-cof-neck-mode');
+
+  const chordMidisForNode = (root: number, kind: 'maj' | 'min' | 'dom7'): number[] => {
+    const b = 48 + root;
+    if (kind === 'min') return [b, b + 3, b + 7, b + 10];
+    if (kind === 'dom7') return [b, b + 4, b + 7, b + 10];
+    return [b, b + 4, b + 7, b + 11];
+  };
 
   const renderCircle = (): void => {
-    const cx = 180;
-    const cy = 180;
-    const rOuter = 152;
-    const rMid = 104;
-    const rInner = 58;
-
-    let svg = `<svg viewBox="0 0 360 360" width="340" height="340" style="user-select:none;">`;
-    keys.forEach((k, i) => {
-      const angleDeg = i * 30 - 90;
-      const a1 = ((angleDeg - 15) * Math.PI) / 180;
-      const a2 = ((angleDeg + 15) * Math.PI) / 180;
-      const aMid = (angleDeg * Math.PI) / 180;
-
-      const isCurrent = i === activeIdx;
-      const isNeighbor = i === (activeIdx + 1) % 12 || i === (activeIdx + 11) % 12;
-
-      const fillOuter = isCurrent
-        ? 'rgba(245, 158, 11, 0.88)'
-        : isNeighbor
-          ? 'rgba(56, 189, 248, 0.35)'
-          : 'rgba(30, 41, 59, 0.9)';
-      const fillInner = isCurrent
-        ? 'rgba(167, 139, 250, 0.78)'
-        : isNeighbor
-          ? 'rgba(56, 189, 248, 0.22)'
-          : 'rgba(15, 23, 42, 0.95)';
-
-      const x1o = cx + rOuter * Math.cos(a1);
-      const y1o = cy + rOuter * Math.sin(a1);
-      const x2o = cx + rOuter * Math.cos(a2);
-      const y2o = cy + rOuter * Math.sin(a2);
-      const x1m = cx + rMid * Math.cos(a1);
-      const y1m = cy + rMid * Math.sin(a1);
-      const x2m = cx + rMid * Math.cos(a2);
-      const y2m = cy + rMid * Math.sin(a2);
-      const x1i = cx + rInner * Math.cos(a1);
-      const y1i = cy + rInner * Math.sin(a1);
-      const x2i = cx + rInner * Math.cos(a2);
-      const y2i = cy + rInner * Math.sin(a2);
-
-      const pathOuter = `M ${x1m} ${y1m} L ${x1o} ${y1o} A ${rOuter} ${rOuter} 0 0 1 ${x2o} ${y2o} L ${x2m} ${y2m} A ${rMid} ${rMid} 0 0 0 ${x1m} ${y1m} Z`;
-      const pathInner = `M ${x1i} ${y1i} L ${x1m} ${y1m} A ${rMid} ${rMid} 0 0 1 ${x2m} ${y2m} L ${x2i} ${y2i} A ${rInner} ${rInner} 0 0 0 ${x1i} ${y1i} Z`;
-
-      const txOuter = cx + ((rOuter + rMid) / 2) * Math.cos(aMid);
-      const tyOuter = cy + ((rOuter + rMid) / 2) * Math.sin(aMid);
-      const txInner = cx + ((rMid + rInner) / 2) * Math.cos(aMid);
-      const tyInner = cy + ((rMid + rInner) / 2) * Math.sin(aMid);
-
-      svg += `
-        <g class="cof-sector" data-idx="${i}" style="cursor:pointer;">
-          <path d="${pathOuter}" fill="${fillOuter}" stroke="#334155" stroke-width="1.5"/>
-          <path d="${pathInner}" fill="${fillInner}" stroke="#334155" stroke-width="1.5"/>
-          <text x="${txOuter}" y="${tyOuter + 4}" text-anchor="middle" fill="${isCurrent ? '#090d16' : '#f8fafc'}" font-size="12" font-weight="800">${k.maj}</text>
-          <text x="${txInner}" y="${tyInner + 4}" text-anchor="middle" fill="${isCurrent ? '#090d16' : '#cbd5e1'}" font-size="10" font-weight="700">${k.min}</text>
-        </g>
-      `;
+    viewBtns.forEach((b) => {
+      const act = b.getAttribute('data-view') === viewMode;
+      b.style.background = act ? 'rgba(245,158,11,0.25)' : 'rgba(30,41,59,0.9)';
+      b.style.color = act ? '#fbbf24' : '#cbd5e1';
+      b.style.border = `1px solid ${act ? '#f59e0b' : '#334155'}`;
+      b.style.fontWeight = act ? '800' : '600';
     });
-    svg += `<circle cx="${cx}" cy="${cy}" r="${rInner - 2}" fill="#090d16" stroke="#475569" stroke-width="1.5"/>`;
-    svg += `<text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="800">${keys[activeIdx].maj}</text>`;
-    svg += `<text x="${cx}" y="${cy + 12}" text-anchor="middle" fill="#38bdf8" font-size="10">Quintas</text>`;
-    svg += `</svg>`;
-    svgBox.innerHTML = svg;
+    neckModeBtns.forEach((b) => {
+      const act = b.getAttribute('data-mode') === neckMode;
+      b.style.background = act ? 'rgba(56,189,248,0.22)' : 'rgba(30,41,59,0.9)';
+      b.style.color = act ? '#38bdf8' : '#94a3b8';
+      b.style.border = `1px solid ${act ? '#38bdf8' : '#334155'}`;
+    });
 
+    const oppIdx = (activeIdx + 6) % 12;
+    const ivIdx = (activeIdx + 11) % 12;
+    const vIdx = (activeIdx + 1) % 12;
+    const iiIdx = (activeIdx + 2) % 12; // ii minor sits in inner ring at +2 clockwise (Dm in C)
+    const iiiIdx = (activeIdx + 4) % 12; // iii minor sits in inner ring at +4 clockwise (Em in C)
     const k = keys[activeIdx];
+    const opp = keys[oppIdx];
+
+    if (viewMode === 'classic') {
+      const cx = 250;
+      const cy = 250;
+      const rOuter = 212;
+      const rMid = 148;
+      const rInner = 88;
+      const rCore = 48;
+
+      let svg = `<svg viewBox="0 0 500 500" style="width:100%; max-width:500px; height:auto; user-select:none;">`;
+      keys.forEach((item, i) => {
+        const angleDeg = i * 30 - 90;
+        const a1 = ((angleDeg - 15) * Math.PI) / 180;
+        const a2 = ((angleDeg + 15) * Math.PI) / 180;
+        const aMid = (angleDeg * Math.PI) / 180;
+
+        const isCurrent = i === activeIdx;
+        const isOpp = i === oppIdx;
+        const isDiatonicNeighbour = i === ivIdx || i === vIdx || i === iiIdx || i === iiiIdx;
+
+        const fillOuter = isCurrent
+          ? 'rgba(245, 158, 11, 0.92)'
+          : isOpp
+            ? 'rgba(244, 63, 94, 0.42)'
+            : i === ivIdx || i === vIdx
+              ? 'rgba(56, 189, 248, 0.35)'
+              : 'rgba(30, 41, 59, 0.92)';
+        const fillInner = isCurrent
+          ? 'rgba(167, 139, 250, 0.85)'
+          : isDiatonicNeighbour
+            ? 'rgba(16, 185, 129, 0.25)'
+            : 'rgba(15, 23, 42, 0.96)';
+
+        const x1o = cx + rOuter * Math.cos(a1);
+        const y1o = cy + rOuter * Math.sin(a1);
+        const x2o = cx + rOuter * Math.cos(a2);
+        const y2o = cy + rOuter * Math.sin(a2);
+        const x1m = cx + rMid * Math.cos(a1);
+        const y1m = cy + rMid * Math.sin(a1);
+        const x2m = cx + rMid * Math.cos(a2);
+        const y2m = cy + rMid * Math.sin(a2);
+        const x1i = cx + rInner * Math.cos(a1);
+        const y1i = cy + rInner * Math.sin(a1);
+        const x2i = cx + rInner * Math.cos(a2);
+        const y2i = cy + rInner * Math.sin(a2);
+        const x1c = cx + rCore * Math.cos(a1);
+        const y1c = cy + rCore * Math.sin(a1);
+        const x2c = cx + rCore * Math.cos(a2);
+        const y2c = cy + rCore * Math.sin(a2);
+
+        const pathOuter = `M ${x1m} ${y1m} L ${x1o} ${y1o} A ${rOuter} ${rOuter} 0 0 1 ${x2o} ${y2o} L ${x2m} ${y2m} A ${rMid} ${rMid} 0 0 0 ${x1m} ${y1m} Z`;
+        const pathInner = `M ${x1i} ${y1i} L ${x1m} ${y1m} A ${rMid} ${rMid} 0 0 1 ${x2m} ${y2m} L ${x2i} ${y2i} A ${rInner} ${rInner} 0 0 0 ${x1i} ${y1i} Z`;
+        const pathCore = `M ${x1c} ${y1c} L ${x1i} ${y1i} A ${rInner} ${rInner} 0 0 1 ${x2i} ${y2i} L ${x2c} ${y2c} A ${rCore} ${rCore} 0 0 0 ${x1c} ${y1c} Z`;
+
+        const txOuter = cx + ((rOuter + rMid) / 2) * Math.cos(aMid);
+        const tyOuter = cy + ((rOuter + rMid) / 2) * Math.sin(aMid);
+        const txInner = cx + ((rMid + rInner) / 2) * Math.cos(aMid);
+        const tyInner = cy + ((rMid + rInner) / 2) * Math.sin(aMid);
+        const txCore = cx + ((rInner + rCore) / 2) * Math.cos(aMid);
+        const tyCore = cy + ((rInner + rCore) / 2) * Math.sin(aMid);
+
+        const degTag = isCurrent ? 'I' : i === ivIdx ? 'IV' : i === vIdx ? 'V' : isOpp ? '♭II/TT' : '';
+        const minDegTag = isCurrent ? 'vi' : i === ivIdx ? 'ii' : i === vIdx ? 'iii' : '';
+
+        svg += `
+          <g class="cof-sector" data-idx="${i}" data-kind="maj" style="cursor:pointer;">
+            <path d="${pathOuter}" fill="${fillOuter}" stroke="#334155" stroke-width="1.5"/>
+            <text x="${txOuter}" y="${tyOuter + (degTag ? 0 : 4)}" text-anchor="middle" fill="${isCurrent ? '#090d16' : '#f8fafc'}" font-size="14" font-weight="900">${item.maj}</text>
+            ${degTag ? `<text x="${txOuter}" y="${tyOuter + 13}" text-anchor="middle" fill="${isCurrent ? '#451a03' : isOpp ? '#fda4af' : '#7dd3fc'}" font-size="9.5" font-weight="800">${degTag}</text>` : ''}
+          </g>
+          <g class="cof-sector" data-idx="${i}" data-kind="min" style="cursor:pointer;">
+            <path d="${pathInner}" fill="${fillInner}" stroke="#334155" stroke-width="1.3"/>
+            <text x="${txInner}" y="${tyInner + (minDegTag ? 1 : 4)}" text-anchor="middle" fill="${isCurrent ? '#090d16' : '#cbd5e1'}" font-size="12" font-weight="800">${item.min}</text>
+            ${minDegTag ? `<text x="${txInner}" y="${tyInner + 12}" text-anchor="middle" fill="${isCurrent ? '#1e1b4b' : '#34d399'}" font-size="8.5" font-weight="800">${minDegTag}</text>` : ''}
+          </g>
+          <g class="cof-sector" data-idx="${i}" data-kind="dom7" style="cursor:pointer;">
+            <path d="${pathCore}" fill="${isCurrent ? 'rgba(251,191,36,0.28)' : 'rgba(9,13,22,0.96)'}" stroke="#1e293b" stroke-width="1"/>
+            <text x="${txCore}" y="${tyCore + 3.5}" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="700">${item.v}</text>
+          </g>
+        `;
+      });
+
+      // Draw 180-degree Tritone Axis Line across the center
+      const aAct = ((activeIdx * 30 - 90) * Math.PI) / 180;
+      const aOpp = ((oppIdx * 30 - 90) * Math.PI) / 180;
+      const lx1 = cx + (rOuter - 12) * Math.cos(aAct);
+      const ly1 = cy + (rOuter - 12) * Math.sin(aAct);
+      const lx2 = cx + (rOuter - 12) * Math.cos(aOpp);
+      const ly2 = cy + (rOuter - 12) * Math.sin(aOpp);
+      svg += `<line x1="${lx1}" y1="${ly1}" x2="${lx2}" y2="${ly2}" stroke="#fb7185" stroke-width="2.2" stroke-dasharray="6,4" opacity="0.85" pointer-events="none"/>`;
+
+      svg += `<circle cx="${cx}" cy="${cy}" r="${rCore - 2}" fill="#090d16" stroke="#f59e0b" stroke-width="2"/>`;
+      svg += `<text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="#f59e0b" font-size="14" font-weight="900">${k.maj} / ${k.min}</text>`;
+      svg += `<text x="${cx}" y="${cy + 7}" text-anchor="middle" fill="#fda4af" font-size="9" font-weight="700">Tritono ↔ ${opp.maj}</text>`;
+      svg += `<text x="${cx}" y="${cy + 20}" text-anchor="middle" fill="#38bdf8" font-size="8.5">+5ªJ ↻ · +4ªJ ↺</text>`;
+      svg += `</svg>`;
+      svgBox.innerHTML = svg;
+    } else if (viewMode === 'branches' || viewMode === 'bifurcation') {
+      // Images 4 & 5: Radial Branches showing V7 -> I -> V7/vi -> vi (or Bifurcated Major/Minor)
+      const cx = 290;
+      const cy = 290;
+      const isBif = viewMode === 'bifurcation';
+      let svg = `<svg viewBox="0 0 580 580" style="width:100%; max-width:560px; height:auto; user-select:none;">`;
+      svg += `<text x="${cx}" y="22" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="700">${isBif ? 'Cada Dominante V7 puede resolver tanto a Mayor (rosa) como a Menor (cian)' : 'Ramas Radiales: V7 → I → V7/vi → vi (Pulsa cualquier círculo para escucharlo)'}</text>`;
+
+      keys.forEach((item, i) => {
+        const angleRad = ((i * 30 - 90) * Math.PI) / 180;
+        const perpRad = angleRad + Math.PI / 2;
+        const isCurrent = i === activeIdx;
+
+        // 4 radial levels from outside to inside:
+        // Level 0 (outermost): V7 of I (e.g. G7)
+        // Level 1: I (C) [and Cm in bifurcation]
+        // Level 2: V7/vi (E7)
+        // Level 3 (innermost): vi (Am / A)
+        const r0 = 242;
+        const r1 = 190;
+        const r2 = 138;
+        const r3 = 86;
+
+        const p0 = { x: cx + r0 * Math.cos(angleRad), y: cy + r0 * Math.sin(angleRad) };
+        const p2 = { x: cx + r2 * Math.cos(angleRad), y: cy + r2 * Math.sin(angleRad) };
+        const off = isBif ? 12 : 0;
+
+        const p1Maj = { x: cx + r1 * Math.cos(angleRad) - off * Math.cos(perpRad), y: cy + r1 * Math.sin(angleRad) - off * Math.sin(perpRad) };
+        const p1Min = { x: cx + r1 * Math.cos(angleRad) + off * Math.cos(perpRad), y: cy + r1 * Math.sin(angleRad) + off * Math.sin(perpRad) };
+        const p3Maj = { x: cx + r3 * Math.cos(angleRad) - off * Math.cos(perpRad), y: cy + r3 * Math.sin(angleRad) - off * Math.sin(perpRad) };
+        const p3Min = { x: cx + r3 * Math.cos(angleRad) + off * Math.cos(perpRad), y: cy + r3 * Math.sin(angleRad) + off * Math.sin(perpRad) };
+
+        if (isCurrent) {
+          svg += `<line x1="${p0.x}" y1="${p0.y}" x2="${p3Min.x}" y2="${p3Min.y}" stroke="#22c55e" stroke-width="34" stroke-linecap="round" opacity="0.16"/>`;
+        }
+
+        // Connector lines
+        if (isBif) {
+          svg += `<line x1="${p0.x}" y1="${p0.y}" x2="${p1Maj.x}" y2="${p1Maj.y}" stroke="#ec4899" stroke-width="1.3" opacity="0.75"/>`;
+          svg += `<line x1="${p0.x}" y1="${p0.y}" x2="${p1Min.x}" y2="${p1Min.y}" stroke="#38bdf8" stroke-width="1.3" opacity="0.75"/>`;
+          svg += `<line x1="${p1Maj.x}" y1="${p1Maj.y}" x2="${p2.x}" y2="${p2.y}" stroke="#f59e0b" stroke-width="1.2" opacity="0.65"/>`;
+          svg += `<line x1="${p1Min.x}" y1="${p1Min.y}" x2="${p2.x}" y2="${p2.y}" stroke="#f59e0b" stroke-width="1.2" opacity="0.65"/>`;
+          svg += `<line x1="${p2.x}" y1="${p2.y}" x2="${p3Maj.x}" y2="${p3Maj.y}" stroke="#ec4899" stroke-width="1.3" opacity="0.75"/>`;
+          svg += `<line x1="${p2.x}" y1="${p2.y}" x2="${p3Min.x}" y2="${p3Min.y}" stroke="#38bdf8" stroke-width="1.3" opacity="0.75"/>`;
+        } else {
+          svg += `<line x1="${p0.x}" y1="${p0.y}" x2="${p1Maj.x}" y2="${p1Maj.y}" stroke="#fbbf24" stroke-width="1.4" opacity="0.8"/>`;
+          svg += `<line x1="${p1Maj.x}" y1="${p1Maj.y}" x2="${p2.x}" y2="${p2.y}" stroke="#ec4899" stroke-width="1.4" opacity="0.8"/>`;
+          svg += `<line x1="${p2.x}" y1="${p2.y}" x2="${p3Min.x}" y2="${p3Min.y}" stroke="#38bdf8" stroke-width="1.4" opacity="0.8"/>`;
+        }
+
+        const relRoot = (item.root + 9) % 12;
+        const relMajName = NOTE_NAMES[relRoot];
+        const drawNode = (x: number, y: number, label: string, color: string, root: number, kind: 'maj' | 'min' | 'dom7', rCircle: number) => `
+          <g class="cof-node" data-idx="${i}" data-root="${root}" data-kind="${kind}" data-label="${label}" style="cursor:pointer;">
+            <circle cx="${x}" cy="${y}" r="${rCircle}" fill="#0b1120" stroke="${color}" stroke-width="${isCurrent ? 2.2 : 1.5}"/>
+            <text x="${x}" y="${y + 3.2}" text-anchor="middle" fill="${color}" font-size="${label.length > 3 ? 7.8 : 9.2}" font-weight="800">${label}</text>
+          </g>
+        `;
+
+        // V7 of I
+        svg += drawNode(p0.x, p0.y, item.v, '#f59e0b', (item.root + 7) % 12, 'dom7', 14);
+        // I Major (and i Minor in bifurcation)
+        svg += drawNode(p1Maj.x, p1Maj.y, item.maj, '#f472b6', item.root, 'maj', isBif ? 11.5 : 14);
+        if (isBif) svg += drawNode(p1Min.x, p1Min.y, `${item.maj.split('/')[0]}m`, '#38bdf8', item.root, 'min', 11.5);
+        // V7/vi
+        svg += drawNode(p2.x, p2.y, item.secDom, '#f59e0b', (item.root + 4) % 12, 'dom7', 13.5);
+        // vi Minor (and VI Major in bifurcation)
+        if (isBif) {
+          svg += drawNode(p3Maj.x, p3Maj.y, relMajName, '#f472b6', relRoot, 'maj', 11);
+          svg += drawNode(p3Min.x, p3Min.y, item.min, '#38bdf8', relRoot, 'min', 11);
+        } else {
+          svg += drawNode(p3Min.x, p3Min.y, item.min, '#38bdf8', relRoot, 'min', 14);
+        }
+      });
+
+      svg += `<circle cx="${cx}" cy="${cy}" r="40" fill="#090d16" stroke="#475569" stroke-width="1.5"/>`;
+      svg += `<text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="900">${k.maj}</text>`;
+      svg += `<text x="${cx}" y="${cy + 11}" text-anchor="middle" fill="#38bdf8" font-size="8.5">${k.v}→${k.maj}→${k.secDom}→${k.min}</text>`;
+      svg += `</svg>`;
+      svgBox.innerHTML = svg;
+    } else {
+      // Image 6: Geometric Star Harmonic Network (Ref. 04-10)
+      const cx = 290;
+      const cy = 290;
+      const rMaj = 242;
+      const rDom = 192;
+      const rSus = 148;
+      const rMin = 104;
+
+      let svg = `<svg viewBox="0 0 580 580" style="width:100%; max-width:560px; height:auto; user-select:none;">`;
+      // Dashed triangle links across keys (chromatic/relative web)
+      keys.forEach((_, i) => {
+        const aNow = ((i * 30 - 90) * Math.PI) / 180;
+        const aNext = (((i + 1) % 12 * 30 - 90) * Math.PI) / 180;
+        const aThird = (((i + 4) % 12 * 30 - 90) * Math.PI) / 180;
+        const xM = cx + rMaj * Math.cos(aNow);
+        const yM = cy + rMaj * Math.sin(aNow);
+        const xmNext = cx + rMin * Math.cos(aNext);
+        const ymNext = cy + rMin * Math.sin(aNext);
+        const xmPrev = cx + rMin * Math.cos(aThird);
+        const ymPrev = cy + rMin * Math.sin(aThird);
+        svg += `<line x1="${xM}" y1="${yM}" x2="${xmNext}" y2="${ymNext}" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>`;
+        svg += `<line x1="${xM}" y1="${yM}" x2="${xmPrev}" y2="${ymPrev}" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>`;
+      });
+
+      keys.forEach((item, i) => {
+        const a = ((i * 30 - 90) * Math.PI) / 180;
+        const isCurrent = i === activeIdx;
+        const pMaj = { x: cx + rMaj * Math.cos(a), y: cy + rMaj * Math.sin(a) };
+        const pDom = { x: cx + rDom * Math.cos(a), y: cy + rDom * Math.sin(a) };
+        const pSus = { x: cx + rSus * Math.cos(a), y: cy + rSus * Math.sin(a) };
+        const pMin = { x: cx + rMin * Math.cos(a), y: cy + rMin * Math.sin(a) };
+
+        svg += `<line x1="${pMin.x}" y1="${pMin.y}" x2="${pMaj.x}" y2="${pMaj.y}" stroke="${isCurrent ? '#fbbf24' : '#475569'}" stroke-width="${isCurrent ? 2 : 1.1}"/>`;
+        const relRoot = (item.root + 9) % 12;
+        const drawStarNode = (x: number, y: number, label: string, color: string, root: number, kind: 'maj' | 'min' | 'dom7', rC: number) => `
+          <g class="cof-node" data-idx="${i}" data-root="${root}" data-kind="${kind}" data-label="${label}" style="cursor:pointer;">
+            <circle cx="${x}" cy="${y}" r="${rC}" fill="#090d16" stroke="${color}" stroke-width="${isCurrent ? 2.4 : 1.4}"/>
+            <text x="${x}" y="${y + 3.2}" text-anchor="middle" fill="${color}" font-size="${label.length > 3 ? 7.6 : 9}" font-weight="800">${label}</text>
+          </g>
+        `;
+        svg += drawStarNode(pMaj.x, pMaj.y, item.maj, '#f472b6', item.root, 'maj', 14.5);
+        svg += drawStarNode(pDom.x, pDom.y, item.v, '#f59e0b', (item.root + 7) % 12, 'dom7', 12.5);
+        svg += drawStarNode(pSus.x, pSus.y, `${NOTE_NAMES[(item.root + 7) % 12]}4`, '#94a3b8', (item.root + 7) % 12, 'dom7', 11);
+        svg += drawStarNode(pMin.x, pMin.y, item.min, '#38bdf8', relRoot, 'min', 13.5);
+      });
+
+      svg += `<text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="900">✦</text>`;
+      svg += `<text x="${cx}" y="${cy + 14}" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="700">${k.maj} · ${k.min}</text>`;
+      svg += `</svg>`;
+      svgBox.innerHTML = svg;
+    }
+
+    const activeMidis = chordMidisForNode(k.root, 'maj');
     infoBox.innerHTML = `
-      <h4 style="margin:0 0 8px 0; color:var(--accent-gold); font-size:1.15rem;">
-        Tonalidad de ${k.maj} Mayor / Relativa: ${k.min}
-      </h4>
-      <p style="margin:0 0 12px 0; font-size:0.86rem; color:var(--text-muted);">
-        Armadura de clave: <strong style="color:#f8fafc;">${k.sharps}</strong>
-      </p>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(125px, 1fr)); gap:8px; margin-bottom:12px;">
-        <div style="background:rgba(245,158,11,0.14); border:1px solid rgba(245,158,11,0.4); padding:8px 10px; border-radius:6px;">
-          <div style="font-size:0.72rem; color:var(--accent-gold);">I (Tónica)</div>
-          <div style="font-size:1rem; font-weight:800;">${k.maj}Maj7</div>
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
+        <div>
+          <h4 style="margin:0 0 4px 0; color:var(--accent-gold); font-size:1.15rem;">
+            Tonalidad: ${k.maj} Mayor ↔ Relativa Menor: ${k.min}
+          </h4>
+          <div style="font-size:0.84rem; color:var(--text-muted);">
+            Armadura: <strong style="color:#f8fafc;">${k.sharps}</strong> · <strong>Regla Relativa:</strong> baja <code>3 semitonos</code> (6º grado) desde ${k.maj} → ${k.min} (mismas 7 notas).
+          </div>
         </div>
-        <div style="background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.35); padding:8px 10px; border-radius:6px;">
-          <div style="font-size:0.72rem; color:var(--accent-cyan);">IV (Subdominante)</div>
-          <div style="font-size:1rem; font-weight:800;">${k.iv}Maj7</div>
-        </div>
-        <div style="background:rgba(244,63,94,0.14); border:1px solid rgba(244,63,94,0.4); padding:8px 10px; border-radius:6px;">
-          <div style="font-size:0.72rem; color:#fb7185;">V7 (Dominante)</div>
-          <div style="font-size:1rem; font-weight:800;">${k.v}</div>
-        </div>
-        <div style="background:rgba(167,139,250,0.14); border:1px solid rgba(167,139,250,0.4); padding:8px 10px; border-radius:6px;">
-          <div style="font-size:0.72rem; color:#c4b5fd;">vi (Relativo Menor)</div>
-          <div style="font-size:1rem; font-weight:800;">${k.vi}</div>
-        </div>
+        ${renderMiniChordNeckSvg(activeMidis, 36 + k.root, neckMode)}
       </div>
-      <div style="font-size:0.84rem; color:#cbd5e1; background:rgba(0,0,0,0.3); padding:10px; border-radius:6px;">
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:8px; margin-bottom:10px;">
+        <button type="button" class="js-cof-quick" data-root="${(k.root + 9) % 12}" data-kind="min" data-label="vi: ${k.vi}" style="background:rgba(167,139,250,0.16); border:1px solid rgba(167,139,250,0.45); padding:8px; border-radius:6px; text-align:left; cursor:pointer; color:#f8fafc;">
+          <div style="font-size:0.7rem; color:#c4b5fd;">6 · vi (Relativa)</div>
+          <div style="font-size:0.98rem; font-weight:800;">${k.vi}</div>
+        </button>
+        <button type="button" class="js-cof-quick" data-root="${(k.root + 2) % 12}" data-kind="min" data-label="ii: ${k.ii}" style="background:rgba(16,185,129,0.14); border:1px solid rgba(16,185,129,0.4); padding:8px; border-radius:6px; text-align:left; cursor:pointer; color:#f8fafc;">
+          <div style="font-size:0.7rem; color:#34d399;">2 · ii (Subdom.)</div>
+          <div style="font-size:0.98rem; font-weight:800;">${k.ii}</div>
+        </button>
+        <button type="button" class="js-cof-quick" data-root="${(k.root + 7) % 12}" data-kind="dom7" data-label="V7: ${k.v}" style="background:rgba(244,63,94,0.14); border:1px solid rgba(244,63,94,0.45); padding:8px; border-radius:6px; text-align:left; cursor:pointer; color:#f8fafc;">
+          <div style="font-size:0.7rem; color:#fda4af;">5 · V7 (Dominante)</div>
+          <div style="font-size:0.98rem; font-weight:800;">${k.v}</div>
+        </button>
+        <button type="button" class="js-cof-quick" data-root="${k.root}" data-kind="maj" data-label="I: ${k.maj}Maj7" style="background:rgba(245,158,11,0.16); border:1px solid rgba(245,158,11,0.45); padding:8px; border-radius:6px; text-align:left; cursor:pointer; color:#f8fafc;">
+          <div style="font-size:0.7rem; color:var(--accent-gold);">1 · I (Tónica)</div>
+          <div style="font-size:0.98rem; font-weight:800;">${k.maj}Maj7</div>
+        </button>
+      </div>
+
+      <div style="font-size:0.82rem; color:#e2e8f0; background:rgba(15,23,42,0.85); border:1px solid rgba(56,189,248,0.28); padding:10px; border-radius:8px; margin-bottom:8px;">
+        <strong>🔗 Relación 6 – 2 – 5 – 1 en el Círculo ("La Escalera que Baja"):</strong><br>
+        En sentido antihorario (cayendo por 5ª Justas = <code>-7 semitonos</code>): <strong style="color:#c4b5fd;">${k.vi} (6)</strong> → <strong style="color:#34d399;">${k.ii} (2)</strong> → <strong style="color:#fda4af;">${k.v} (5)</strong> → <strong style="color:#fbbf24;">${k.maj} (1)</strong>.<br>
+        <strong>⚡ Eje Diametral (180°):</strong> El opuesto exacto a <strong>${k.maj}</strong> es <strong style="color:#fb7185;">${opp.maj}</strong> (<code>6 × 7 = 42 ≡ 6 semitonos</code> = <strong>Tritono exacto</strong>; por eso <code>${opp.maj}7</code> es el sustituto tritonal de <code>${k.v}</code>).
+      </div>
+
+      <div style="font-size:0.8rem; color:#cbd5e1; background:rgba(0,0,0,0.3); padding:8px 10px; border-radius:6px;">
         <strong>Familia Diatónica Completa:</strong>
         I: ${k.maj}Maj7 · ii: ${k.ii} · iii: ${k.iii} · IV: ${k.iv}Maj7 · V7: ${k.v} · vi: ${k.vi} · vii°: ${k.vii}
       </div>
@@ -3422,36 +3650,89 @@ function buildCircleOfFifthsWidget(
 
   renderCircle();
 
-  svgBox.addEventListener('click', (e) => {
-    const sector = (e.target as HTMLElement).closest<HTMLElement>('.cof-sector');
-    if (!sector) return;
-    activeIdx = parseInt(sector.getAttribute('data-idx')!, 10);
-    renderCircle();
-    const r = keys[activeIdx].root;
-    audio.strumChord([48 + r, 52 + r, 55 + r, 60 + r], 'guitar', 0, true);
-    onStatus(`Círculo de Quintas: Tonalidad ${keys[activeIdx].maj} Mayor (${keys[activeIdx].sharps})`);
+  container.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const viewBtn = target.closest<HTMLElement>('.js-cof-view');
+    if (viewBtn) {
+      viewMode = (viewBtn.getAttribute('data-view') as typeof viewMode) || 'classic';
+      renderCircle();
+      return;
+    }
+    const modeBtn = target.closest<HTMLElement>('.js-cof-neck-mode');
+    if (modeBtn) {
+      neckMode = (modeBtn.getAttribute('data-mode') as 'guitar' | 'bass') || 'guitar';
+      renderCircle();
+      return;
+    }
+    const quickBtn = target.closest<HTMLElement>('.js-cof-quick');
+    if (quickBtn) {
+      const r = parseInt(quickBtn.getAttribute('data-root')!, 10);
+      const kind = (quickBtn.getAttribute('data-kind') as 'maj' | 'min' | 'dom7') || 'maj';
+      const label = quickBtn.getAttribute('data-label') || '';
+      audio.stopAll();
+      audio.playElectricBass(36 + r, 1.2, 0, 0.36, 'finger', false);
+      audio.strumChord(chordMidisForNode(r, kind), 'guitar', 0, false);
+      onStatus(`Grado pulsado: ${label}`);
+      return;
+    }
+    const node = target.closest<HTMLElement>('.cof-node');
+    if (node) {
+      activeIdx = parseInt(node.getAttribute('data-idx')!, 10);
+      const r = parseInt(node.getAttribute('data-root')!, 10);
+      const kind = (node.getAttribute('data-kind') as 'maj' | 'min' | 'dom7') || 'maj';
+      const label = node.getAttribute('data-label') || '';
+      renderCircle();
+      audio.stopAll();
+      audio.playElectricBass(36 + r, 1.2, 0, 0.36, 'finger', false);
+      audio.strumChord(chordMidisForNode(r, kind), 'guitar', 0, false);
+      onStatus(`Nodo del Círculo: ${label}`);
+      return;
+    }
+    const sector = target.closest<HTMLElement>('.cof-sector');
+    if (sector) {
+      activeIdx = parseInt(sector.getAttribute('data-idx')!, 10);
+      const kind = (sector.getAttribute('data-kind') as 'maj' | 'min' | 'dom7') || 'maj';
+      renderCircle();
+      const k = keys[activeIdx];
+      const r = kind === 'min' ? (k.root + 9) % 12 : kind === 'dom7' ? (k.root + 7) % 12 : k.root;
+      audio.stopAll();
+      audio.playElectricBass(36 + r, 1.2, 0, 0.36, 'finger', false);
+      audio.strumChord(chordMidisForNode(r, kind), 'guitar', 0, false);
+      onStatus(`Círculo de Quintas: ${k.maj} Mayor / ${k.min} (${k.sharps})`);
+    }
   });
 
   cadenceBtn.addEventListener('click', () => {
     audio.stopAll();
     const r = keys[activeIdx].root;
     const chords = [
-      [48 + r, 52 + r, 55 + r, 60 + r],
-      [48 + ((r + 5) % 12), 52 + ((r + 5) % 12), 55 + ((r + 5) % 12), 60 + ((r + 5) % 12)],
-      [48 + ((r + 7) % 12), 52 + ((r + 7) % 12), 55 + ((r + 7) % 12), 58 + ((r + 7) % 12)],
-      [48 + r, 52 + r, 55 + r, 60 + r],
+      chordMidisForNode((r + 9) % 12, 'min'), // vi
+      chordMidisForNode((r + 2) % 12, 'min'), // ii
+      chordMidisForNode((r + 7) % 12, 'dom7'), // V7
+      chordMidisForNode(r, 'maj'), // I
     ];
-    chords.forEach((c, idx) => audio.strumChord(c, 'guitar', idx * 0.85, false));
-    onStatus(`Reproduciendo Cadencia I – IV – V7 – I en ${keys[activeIdx].maj}`);
+    chords.forEach((c, idx) => audio.strumChord(c, 'guitar', idx * 0.82, false));
+    onStatus(`Reproduciendo Ciclo vi – ii – V7 – I en ${keys[activeIdx].maj}`);
   });
 
   relBtn.addEventListener('click', () => {
     audio.stopAll();
     const r = keys[activeIdx].root;
     const relMin = (r + 9) % 12;
-    audio.strumChord([48 + r, 52 + r, 55 + r, 60 + r], 'piano', 0, false);
-    audio.strumChord([48 + relMin, 51 + relMin, 55 + relMin, 60 + relMin], 'piano', 0.95, false);
+    audio.strumChord(chordMidisForNode(r, 'maj'), 'piano', 0, false);
+    audio.strumChord(chordMidisForNode(relMin, 'min'), 'piano', 0.95, false);
     onStatus(`Comparando ${keys[activeIdx].maj} Mayor con su relativa menor ${keys[activeIdx].min}`);
+  });
+
+  tritoneBtn.addEventListener('click', () => {
+    audio.stopAll();
+    const r = keys[activeIdx].root;
+    const domRoot = (r + 7) % 12;
+    const ttRoot = (domRoot + 6) % 12;
+    audio.strumChord(chordMidisForNode(domRoot, 'dom7'), 'piano', 0, false);
+    audio.strumChord(chordMidisForNode(ttRoot, 'dom7'), 'piano', 0.9, false);
+    audio.strumChord(chordMidisForNode(r, 'maj'), 'piano', 1.8, false);
+    onStatus(`Eje Diametral 180°: V7 (${keys[activeIdx].v}) ↔ Sustituto Tritonal (${NOTE_NAMES[ttRoot]}7) → ${keys[activeIdx].maj}`);
   });
 
   stopBtn.addEventListener('click', () => {
@@ -3461,18 +3742,19 @@ function buildCircleOfFifthsWidget(
 }
 
 /**
- * Interactive 16-Step Drum & Groove Sequencer (with Upgraded 5-Track Studio Drum Synth)
+ * Interactive 16-Step Drum & Groove Sequencer (with Meter / Subdivision / Syncopation & Bass Accompaniment)
  */
 function buildSequencerWidget(
   container: HTMLElement,
   audio: MusicAudioEngine,
   onStatus: (msg: string) => void,
-  title = 'Secuenciador Interactivo de Batería y Groove de 16 Pasos (Semicorcheas)'
+  title = 'Secuenciador Interactivo de Compases, Agrupaciones y Síncopa (16 Pasos)'
 ): void {
-  const presets: Record<string, { name: string; bpm: number; grid: number[][] }> = {
+  const presets: Record<string, { name: string; bpm: number; meter: string; grid: number[][] }> = {
     rock: {
-      name: 'Rock Clásico / Pop (Backbeat 2 y 4)',
-      bpm: 110,
+      name: '4/4 Rock Clásico / Pop (Backbeat en 2 y 4)',
+      bpm: 108,
+      meter: '4/4 (4 pulsos de 4 semicorcheas)',
       grid: [
         [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0], // Hi-Hat
         [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], // Snare
@@ -3481,8 +3763,9 @@ function buildSequencerWidget(
       ],
     },
     funk: {
-      name: 'Funk Linear & Ghost Notes (16th Groove)',
-      bpm: 102,
+      name: '4/4 Funk Lineal + Síncopa de Semicorchea y Ghost Notes',
+      bpm: 100,
+      meter: '4/4 (Síncopa en 1a, 2e, 3& y 4e)',
       grid: [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
@@ -3490,19 +3773,32 @@ function buildSequencerWidget(
         [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
       ],
     },
-    reggaeton: {
-      name: 'Dembow / Urbano Latino (Tresillo + Backbeat)',
-      bpm: 96,
+    tresillo: {
+      name: 'Síncopa Afro-Latina: Tresillo (3+3+2) + Clave de Son 3-2',
+      bpm: 98,
+      meter: '4/4 Agrupación Aditiva 3+3+2 | 2+2+2+2',
       grid: [
         [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-        [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0],
+        [0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0],
+        [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0],
+      ],
+    },
+    konnakol_7_8: {
+      name: 'Amalgama 7/8 + 9/8 (Ta-ka Ta-ka Ta-ki-ta | 2+2+3)',
+      bpm: 116,
+      meter: 'Agrupación Konnakol: 3+3+3+3+2+2 = 16 pulsos',
+      grid: [
+        [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0],
+        [0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0],
+        [0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0],
       ],
     },
     bossa: {
-      name: 'Bossa Nova / Samba Cruzado',
-      bpm: 124,
+      name: 'Bossa Nova / Samba Cruzado (Bajo en 1 y 3 + Aro Sincopado)',
+      bpm: 122,
+      meter: '2/4 o 4/4 Brasileño Sincopado',
       grid: [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0],
@@ -3512,26 +3808,32 @@ function buildSequencerWidget(
     },
   };
 
-  let currentPreset = 'funk';
+  let currentPreset = 'rock';
+  let currentBpm = presets[currentPreset].bpm;
   let grid = presets[currentPreset].grid.map((r) => [...r]);
-  const rowLabels = ['Hi-Hat (Charles)', 'Caja Fuerte (2 y 4)', 'Caja Fantasma (Ghost)', 'Bombo (Kick)'];
+  let playingStep = -1;
+  const rowLabels = ['🟡 Hi-Hat (Charles)', '🔵 Caja Fuerte (Acento)', '🟣 Nota Fantasma (Ghost)', '🔴 Bombo (Kick)'];
   const rowTypes: ('hihat' | 'snare' | 'ghost' | 'kick')[] = ['hihat', 'snare', 'ghost', 'kick'];
 
   container.innerHTML = `
     <div class="widget-header">
       <div>
         <strong style="color:var(--accent-gold); font-size:1.1rem;">${title}</strong>
-        <p style="font-size:0.82rem; color:var(--text-muted); margin:0;">Activa o desactiva celdas en la rejilla de 16 semicorcheas (1 e & a 2 e & a 3 e & a 4 e & a) y escucha el groove con síntesis de estudio.</p>
+        <p class="js-seq-meter-info" style="font-size:0.82rem; color:var(--accent-cyan); margin:2px 0 0 0; font-weight:600;">
+          Compás y Agrupación: ${presets[currentPreset].meter} — Haz clic en cualquier celda para encender o apagar el golpe.
+        </p>
       </div>
       <div class="widget-controls">
-        <label style="font-size:0.82rem;">Patrón:</label>
+        <label style="font-size:0.8rem;">Patrón / Compás:</label>
         <select class="js-seq-preset">
-          <option value="funk">Funk 16th + Ghost Notes</option>
-          <option value="rock">Rock Clásico (Backbeat)</option>
-          <option value="reggaeton">Dembow / Tresillo</option>
-          <option value="bossa">Bossa Nova / Clave</option>
+          ${Object.entries(presets)
+            .map(([k, v]) => `<option value="${k}" ${k === currentPreset ? 'selected' : ''}>${v.name}</option>`)
+            .join('')}
         </select>
+        <label style="font-size:0.8rem;">BPM: <strong class="js-seq-bpm-lbl" style="color:var(--accent-gold);">${currentBpm}</strong></label>
+        <input type="range" class="js-seq-bpm" min="65" max="155" value="${currentBpm}" style="width:85px; accent-color:#f59e0b;">
         <button type="button" class="btn btn-primary js-seq-play">▶ Reproducir 2 Compases</button>
+        <button type="button" class="btn js-seq-clear" style="background:rgba(148,163,184,0.16); color:#cbd5e1;">🧹 Limpiar</button>
         <button type="button" class="btn js-seq-stop" style="background:rgba(244,63,94,0.2); color:#fb7185;">⏹ Detener</button>
       </div>
     </div>
@@ -3539,24 +3841,33 @@ function buildSequencerWidget(
   `;
 
   const gridEl = container.querySelector<HTMLElement>('.js-seq-grid')!;
+  const meterInfoEl = container.querySelector<HTMLElement>('.js-seq-meter-info')!;
   const presetSel = container.querySelector<HTMLSelectElement>('.js-seq-preset')!;
+  const bpmSlider = container.querySelector<HTMLInputElement>('.js-seq-bpm')!;
+  const bpmLbl = container.querySelector<HTMLElement>('.js-seq-bpm-lbl')!;
   const playBtn = container.querySelector<HTMLButtonElement>('.js-seq-play')!;
+  const clearBtn = container.querySelector<HTMLButtonElement>('.js-seq-clear')!;
   const stopBtn = container.querySelector<HTMLButtonElement>('.js-seq-stop')!;
 
   const renderGrid = (): void => {
-    let html = `<div class="seq-label" style="color:var(--text-muted);">Paso</div>`;
+    let html = `<div class="seq-label" style="color:var(--text-muted);">Subdivisión (16ª)</div>`;
     const subLabels = ['1', 'e', '&', 'a', '2', 'e', '&', 'a', '3', 'e', '&', 'a', '4', 'e', '&', 'a'];
     for (let s = 0; s < 16; s++) {
       const isDownbeat = s % 4 === 0;
-      html += `<div style="text-align:center; font-size:0.72rem; font-weight:${isDownbeat ? '800' : '500'}; color:${isDownbeat ? 'var(--accent-gold)' : 'var(--text-muted)'};">${subLabels[s]}</div>`;
+      const isPlayhead = s === playingStep;
+      html += `<div style="text-align:center; font-size:0.74rem; padding:2px 0; border-radius:4px; background:${isPlayhead ? '#f59e0b' : 'transparent'}; font-weight:${isDownbeat || isPlayhead ? '800' : '500'}; color:${isPlayhead ? '#090c12' : isDownbeat ? 'var(--accent-gold)' : 'var(--text-muted)'};">${subLabels[s]}</div>`;
     }
 
     rowLabels.forEach((label, rIdx) => {
       html += `<div class="seq-label">${label}</div>`;
       for (let cIdx = 0; cIdx < 16; cIdx++) {
         const active = grid[rIdx][cIdx] === 1;
-        const beatGroup = cIdx % 4 === 0 ? 'border-color:rgba(245,158,11,0.45);' : '';
-        html += `<div class="seq-cell ${active ? 'active' : ''}" data-row="${rIdx}" data-col="${cIdx}" style="${beatGroup}"></div>`;
+        const isPlayhead = cIdx === playingStep;
+        const isDownbeat = cIdx % 4 === 0;
+        const activeClass = active ? (rIdx === 1 || rIdx === 3 ? 'active-gold' : 'active') : '';
+        const playClass = isPlayhead ? 'playing-step' : '';
+        const borderStyle = !active && isDownbeat ? 'border-color:rgba(245,158,11,0.55);' : '';
+        html += `<button type="button" class="seq-cell ${activeClass} ${playClass}" data-row="${rIdx}" data-col="${cIdx}" style="${borderStyle}">${active ? '●' : isDownbeat ? '·' : ''}</button>`;
       }
     });
     gridEl.innerHTML = html;
@@ -3573,188 +3884,984 @@ function buildSequencerWidget(
     renderGrid();
     if (grid[r][c] === 1) {
       audio.playDrumHit(rowTypes[r]);
+      onStatus(`${rowLabels[r]} activado en el paso ${c + 1}`);
     }
   });
 
   presetSel.addEventListener('change', () => {
     currentPreset = presetSel.value;
     audio.stopAll();
+    playingStep = -1;
+    currentBpm = presets[currentPreset].bpm;
+    bpmSlider.value = String(currentBpm);
+    bpmLbl.textContent = String(currentBpm);
+    meterInfoEl.textContent = `Compás y Agrupación: ${presets[currentPreset].meter} — Haz clic en cualquier celda para encender o apagar el golpe.`;
     grid = presets[currentPreset].grid.map((r) => [...r]);
     renderGrid();
     onStatus(`Patrón cargado: ${presets[currentPreset].name}`);
   });
 
+  bpmSlider.addEventListener('input', () => {
+    currentBpm = parseInt(bpmSlider.value, 10) || 105;
+    bpmLbl.textContent = String(currentBpm);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    audio.stopAll();
+    playingStep = -1;
+    grid = grid.map((r) => r.map(() => 0));
+    renderGrid();
+    onStatus('Rejilla limpiada: haz clic en las celdas para crear tu propio ritmo.');
+  });
+
   playBtn.addEventListener('click', () => {
     audio.stopAll();
-    const bpm = presets[currentPreset].bpm;
-    const stepSec = 60 / bpm / 4;
-    for (let bar = 0; bar < 2; bar++) {
-      for (let step = 0; step < 16; step++) {
-        const delay = (bar * 16 + step) * stepSec;
+    const stepMs = (60 / currentBpm / 4) * 1000;
+    const totalSteps = 32; // 2 bars
+    for (let s = 0; s < totalSteps; s++) {
+      const col = s % 16;
+      audio.schedule(() => {
+        playingStep = col;
+        renderGrid();
         rowTypes.forEach((drumType, rIdx) => {
-          if (grid[rIdx][step] === 1) {
-            audio.playDrumHit(drumType, delay);
+          if (grid[rIdx][col] === 1) {
+            audio.playDrumHit(drumType, 0);
           }
         });
-      }
+      }, s * stepMs);
     }
-    onStatus(`Reproduciendo secuencia: ${presets[currentPreset].name} (${bpm} BPM)`);
+    audio.schedule(() => {
+      playingStep = -1;
+      renderGrid();
+    }, totalSteps * stepMs + 60);
+    onStatus(`Reproduciendo secuencia: ${presets[currentPreset].name} (${currentBpm} BPM)`);
   });
 
   stopBtn.addEventListener('click', () => {
     audio.stopAll();
+    playingStep = -1;
+    renderGrid();
     onStatus('Secuenciador detenido');
   });
 }
 
 /**
- * Progression & Archetype Laboratory with Piano & Guitar Strum + Stop Button
+ * Context-Specific Progression, Cadence, Ladder-Down, Tritone Sub, Modal Interchange & Modulation Laboratory
+ * Includes Dedicated 4-String Electric Bass (Bajo 4 Cuerdas), Acoustic Piano & Guitar playback!
  */
+interface ProgressionItem {
+  id: string;
+  name: string;
+  roman: string[];
+  chords: number[][];
+  bassLine: number[]; // Authentic 4-string bass walking/groove notes (E1=28 to G2=43)
+  desc: string;
+  voiceLeadingNote: string;
+}
+
+const PROGRESSION_SETS_BY_CONTEXT: Record<string, ProgressionItem[]> = {
+  archetypes: [
+    {
+      id: 'pop_axis',
+      name: '1) Arquetipo Pop/Rock: I – V – vi – IV (C – G – Am – F)',
+      roman: ['I (C Mayor)', 'V (G Mayor)', 'vi (Am7)', 'IV (Fmaj7)'],
+      chords: [
+        [48, 55, 60, 64],
+        [43, 55, 59, 62],
+        [45, 52, 60, 64],
+        [41, 53, 57, 60],
+      ],
+      bassLine: [36, 38, 31, 35, 33, 31, 29, 31],
+      desc: 'El ciclo diatónico más universal: afirma la tónica (I), abre tensión (V), gira hacia la relativa menor (vi) y se expande en la subdominante (IV).',
+      voiceLeadingNote: 'Bajo en 4 cuerdas: C2 (3ª tr.3) → G1 (4ª tr.3) → A1 (3ª tr.0) → F1 (4ª tr.1).',
+    },
+    {
+      id: 'fifties_doo_wop',
+      name: '2) Ciclo Clásico / Stand By Me: I – vi – IV – V7 (C – Am – F – G7)',
+      roman: ['I (C)', 'vi (Am)', 'IV (F)', 'V7 (G7)'],
+      chords: [
+        [48, 55, 60, 64],
+        [45, 52, 57, 60],
+        [41, 53, 57, 60],
+        [43, 53, 59, 62],
+      ],
+      bassLine: [36, 35, 33, 31, 29, 33, 31, 35],
+      desc: 'Cae por terceras diatónicas (C → Am → F) manteniendo 2 notas en común en cada paso antes de tensar el arco en V7.',
+      voiceLeadingNote: 'Enlace por descenso de bajo: C2 → B1 (paso) → A1 → G1 → F1 → G1.',
+    },
+    {
+      id: 'pachelbel_canon',
+      name: '3) Canon de Pachelbel: I – V – vi – iii – IV – I – IV – V',
+      roman: ['I (C)', 'V (G)', 'vi (Am)', 'iii (Em)', 'IV (F)', 'I (C)', 'IV (F)', 'V7 (G7)'],
+      chords: [
+        [48, 55, 60, 64],
+        [43, 55, 59, 62],
+        [45, 52, 57, 60],
+        [40, 52, 55, 59],
+        [41, 53, 57, 60],
+        [48, 52, 55, 60],
+        [41, 53, 57, 60],
+        [43, 53, 59, 62],
+      ],
+      bassLine: [36, 31, 33, 28, 29, 36, 29, 31],
+      desc: 'Secuencia barroca inmortal que alterna caída de cuarta justa y subida de segunda en las raíces.',
+      voiceLeadingNote: 'La voz aguda desciende paso a paso: E4 → D4 → C4 → B3 → A3 → G3 → A3 → B3.',
+    },
+    {
+      id: 'royal_road_jpop',
+      name: '4) Royal Road (Ōdō Shinkō / Anime & Neo-Soul): IVmaj7 – V7 – iii7 – vi7',
+      roman: ['IVmaj7 (Fmaj7)', 'V7 (G7)', 'iii7 (Em7)', 'vi7 (Am7)'],
+      chords: [
+        [41, 53, 57, 60, 64],
+        [43, 53, 59, 62],
+        [40, 52, 55, 59, 62],
+        [45, 52, 55, 60, 64],
+      ],
+      bassLine: [29, 36, 31, 38, 28, 35, 33, 40],
+      desc: 'Arranca en la subdominante nostálgica y resuelve el V7 de forma rota hacia iii7–vi7 evitando cerrar en I para mantener un flujo infinito.',
+      voiceLeadingNote: 'Bajo en octavas y quintas: F1 → G1 → E1 (4ª al aire) → A1.',
+    },
+  ],
+  cadences: [
+    {
+      id: 'cad_authentic',
+      name: '1) Cadencia Auténtica Perfecta: ii7 – V7 – I (Punto Final Absoluto)',
+      roman: ['I (Cmaj7)', 'ii7 (Dm7)', 'V7 (G7)', 'I (C Mayor)'],
+      chords: [
+        [48, 55, 59, 64],
+        [50, 57, 60, 65],
+        [43, 53, 59, 62],
+        [48, 52, 55, 60],
+      ],
+      bassLine: [36, 38, 31, 36],
+      desc: 'El tritono de G7 (Si–Fa) se cierra por movimiento contrario hacia Do–Mi mientras el bajo salta de Sol a Do.',
+      voiceLeadingNote: 'Sensible B3 → C4 (+1 semitono) y Séptima F4 → E4 (-1 semitono).',
+    },
+    {
+      id: 'cad_plagal_minor',
+      name: '2) Cadencia Plagal y Plagal Menor Cinematográfica: IV → ivm6 → I',
+      roman: ['I (C)', 'IVmaj7 (Fmaj7)', 'ivm6 (Fm6)', 'I (Cmaj9)'],
+      chords: [
+        [48, 55, 60, 64],
+        [41, 53, 57, 60, 64],
+        [41, 53, 56, 60, 62],
+        [48, 55, 59, 62, 64],
+      ],
+      bassLine: [36, 29, 29, 36],
+      desc: 'La 3ª de Fa baja de La natural a La bemol antes de reposar en Sol (quinta de Do). Es el suspiro nostálgico por excelencia.',
+      voiceLeadingNote: 'Línea guía interna: A3 → Ab3 → G3 sobre pedal subdominante F1.',
+    },
+    {
+      id: 'cad_deceptive',
+      name: '3) Cadencia Rota (Engañosa): IV – V7 → vi (Sorpresa Lírica) y → ♭VImaj7 (Épica)',
+      roman: ['IV (F)', 'V7 (G7)', 'vi (Am7 - Rota Diatónica)', '♭VImaj7 (Abmaj7 - Rota Épica)'],
+      chords: [
+        [41, 53, 57, 60],
+        [43, 53, 59, 62],
+        [45, 52, 55, 60],
+        [44, 51, 55, 60],
+      ],
+      bassLine: [29, 31, 33, 32],
+      desc: 'La sensible Si resuelve correctamente a Do, pero el bajo sube por paso a La (Am7) o La bemol (Abmaj7) cambiando por completo el paisaje.',
+      voiceLeadingNote: 'Bajo ascendente G1 → A1 (o G1 → Ab1) mientras la soprano canta B3 → C4.',
+    },
+    {
+      id: 'cad_half_phrygian',
+      name: '4) Semicadencia Frigia (en Menor): Am – G – Fmaj7 → E7(♭9) [Signo ¿?]',
+      roman: ['i (Am)', '♭VII (G)', '♭VI (Fmaj7)', 'V7 (E7♭9 - Suspenso)'],
+      chords: [
+        [45, 52, 57, 60],
+        [43, 50, 55, 59],
+        [41, 48, 52, 57],
+        [40, 47, 52, 56, 59],
+      ],
+      bassLine: [33, 31, 29, 28],
+      desc: 'El bajo desciende por grados conjuntos hasta el 5º grado (Mi) dejando la frase suspendida en máxima expectativa.',
+      voiceLeadingNote: 'En el bajo de 4 cuerdas: A1 (tr.0) → G1 (4ª tr.3) → F1 (4ª tr.1) → E1 (4ª al aire).',
+    },
+  ],
+  'ii-v-i-major': [
+    {
+      id: '251_major_guide',
+      name: '1) Motor ii–V–I Mayor con Notas Guía (3ª y 7ª): Dm9 → G13 → Cmaj9',
+      roman: ['ii9 (Dm9)', 'V13 (G13)', 'Imaj9 (Cmaj9)', 'VI7alt (A7♭13)'],
+      chords: [
+        [50, 53, 60, 64],
+        [43, 53, 59, 64],
+        [48, 52, 59, 62],
+        [45, 52, 55, 61, 65],
+      ],
+      bassLine: [38, 37, 31, 35, 36, 35, 33, 37],
+      desc: 'Observa el relevo perfecto: la 7ª de Dm7 (Do) baja un semitono a la 3ª de G7 (Si), y la 7ª de G7 (Fa) baja un semitono a la 3ª de Cmaj7 (Mi).',
+      voiceLeadingNote: 'Walking Bass con aproximaciones cromáticas en pulso 4: D2 → Db2 → G1 → B1 → C2.',
+    },
+    {
+      id: '251_minor_altered',
+      name: '2) Motor iiø7–V7(♭9)–im Menor: Dm7♭5 → G7(♭9,♭13) → Cm(maj9)',
+      roman: ['iiø7 (Dm7♭5)', 'V7alt (G7♭9♭13)', 'im (CmMaj9)', 'im6 (Cm6)'],
+      chords: [
+        [50, 53, 56, 60],
+        [43, 53, 56, 59, 63],
+        [48, 51, 55, 59, 62],
+        [48, 51, 55, 57, 62],
+      ],
+      bassLine: [38, 32, 31, 35, 36, 39, 36, 31],
+      desc: 'El acorde semidisminuido aporta la ♭6 (Lab) que se mantiene como ♭9 de G7 antes de caer por semitono a Sol.',
+      voiceLeadingNote: 'Doble atracción de semitono hacia Cm: B3 → C4 y Ab4 → G4.',
+    },
+    {
+      id: 'ladder_down_diatonic',
+      name: '3) "La Escalera que Baja" Diatónica Completa: Fmaj7 → Bm7♭5 → Em7 → Am7 → Dm7 → G7 → Cmaj7',
+      roman: ['IV (Fmaj7)', 'viiø (Bm7♭5)', 'iii7 (Em7)', 'vi7 (Am7)', 'ii7 (Dm7)', 'V7 (G7)', 'I (Cmaj7)'],
+      chords: [
+        [41, 53, 57, 60],
+        [47, 53, 57, 62],
+        [40, 52, 55, 59],
+        [45, 52, 55, 60],
+        [50, 53, 57, 60],
+        [43, 53, 55, 59],
+        [48, 52, 55, 59],
+      ],
+      bassLine: [29, 35, 28, 33, 38, 31, 36],
+      desc: 'Ciclo completo de quintas descendentes por los 7 grados (Autumn Leaves / Fly Me to the Moon).',
+      voiceLeadingNote: 'En el bajo (G-D-A-E) bajar por quintas equivale a cruzar a la cuerda vecina en el mismo traste.',
+    },
+    {
+      id: 'ladder_down_chromatic_tritone',
+      name: '4) "La Escalera que Baja" Cromática (Sustitutos Tritonales): Em7 → Eb7 → Dm7 → Db7 → Cmaj7',
+      roman: ['iii7 (Em7)', '♭III7 (Eb9#11)', 'ii7 (Dm7)', '♭II7 (Db9#11)', 'Imaj7 (Cmaj9)'],
+      chords: [
+        [52, 55, 59, 62],
+        [51, 55, 58, 61, 65],
+        [50, 53, 57, 60],
+        [49, 53, 56, 59, 63],
+        [48, 52, 55, 59, 62],
+      ],
+      bassLine: [40, 39, 38, 37, 36],
+      desc: 'Al sustituir A7 por Eb7 y G7 por Db7, el bajo desciende en línea recta por semitonos desde Mi hasta Do.',
+      voiceLeadingNote: 'Bajo en 3ª cuerda (La): Traste 7 (E2) → Tr.6 (Eb2) → Tr.5 (D2) → Tr.4 (Db2) → Tr.3 (C2).',
+    },
+  ],
+  'sec-dom': [
+    {
+      id: 'sec_dom_chain',
+      name: '1) Cadena de Dominantes Secundarios (Ragtime / Rhythm Changes): E7 → A7 → D7 → G7 → C',
+      roman: ['V7/vi (E7)', 'V7/ii (A7)', 'V7/V (D7)', 'V7 (G7)', 'I (C6/9)'],
+      chords: [
+        [40, 52, 56, 59],
+        [45, 52, 55, 61],
+        [50, 54, 57, 60],
+        [43, 53, 55, 59],
+        [48, 52, 57, 62],
+      ],
+      bassLine: [28, 35, 33, 37, 38, 33, 31, 35, 36],
+      desc: 'Cada acorde menor del ciclo iii–vi–ii–V se convierte en un dominante mayor (V7) que empuja con tritono al siguiente peldaño.',
+      voiceLeadingNote: 'Cromatismo interno continuo: G# → G♮, C# → C♮, F# → F♮, B → C.',
+    },
+    {
+      id: 'tritone_sub_251',
+      name: '2) Sustituto Tritonal en Acción: Dm9 → Db7(#11) [en vez de G7] → Cmaj9',
+      roman: ['ii9 (Dm9)', 'SubV7 (Db9#11)', 'Imaj9 (Cmaj9)', 'SubV7/ii (Eb9#11)'],
+      chords: [
+        [50, 53, 57, 60, 64],
+        [49, 53, 59, 63, 67],
+        [48, 52, 55, 59, 62],
+        [51, 55, 61, 65],
+      ],
+      bassLine: [38, 37, 36, 39],
+      desc: 'G7 y Db7 comparten exactamente el mismo tritono (Si–Fa = Dob–Fa), por lo que Db7 resuelve a Do con un deslizamiento sedoso de semitono.',
+      voiceLeadingNote: 'La nota Sol en la melodía sobre Db7 se convierte automáticamente en la mágica #11 Lidia Dominante.',
+    },
+    {
+      id: 'ladder_up_dim_bridges',
+      name: '3) "La Escalera que Sube" con Acordes Puente Disminuidos: C → C#°7 → Dm7 → D#°7 → Em7 → F → F#°7 → G7',
+      roman: ['I (C)', '#I°7 (C#°7)', 'ii7 (Dm7)', '#II°7 (D#°7)', 'iii7 (Em7)', 'IV (F)', '#IV°7 (F#°7)', 'V7 (G7)'],
+      chords: [
+        [48, 55, 60, 64],
+        [49, 55, 58, 64],
+        [50, 57, 60, 65],
+        [51, 57, 60, 66],
+        [52, 55, 59, 64],
+        [53, 57, 60, 65],
+        [54, 57, 60, 66],
+        [55, 59, 62, 65],
+      ],
+      bassLine: [36, 37, 38, 39, 40, 41, 42, 43],
+      desc: 'Rampa cromática ascendente de 8 peldaños donde cada disminuido actúa como sensible motorizada hacia el siguiente grado diatónico.',
+      voiceLeadingNote: 'Bajo subiendo traste a traste desde C2 (tr.3) hasta G2 (tr.10).',
+    },
+    {
+      id: 'aug_bridges',
+      name: '4) Puentes Aumentados (+5) y Line Cliché Ascendente: C → Caug → Fmaj7 → Fm6 → C',
+      roman: ['I (C)', 'I+ (Caug / V+/IV)', 'IVmaj7 (Fmaj7)', 'ivm6 (Fm6)', 'I (C)'],
+      chords: [
+        [48, 52, 55, 60],
+        [48, 52, 56, 60],
+        [41, 53, 57, 60],
+        [41, 53, 56, 60],
+        [48, 52, 55, 60],
+      ],
+      bassLine: [36, 36, 29, 29, 36],
+      desc: 'La 5ª de Do (Sol) sube a Sol# (Caug) empujando magnéticamente a La (3ª de Fa), y luego regresa por Lab (Fm6) de vuelta a Sol.',
+      voiceLeadingNote: 'Arco cromático de ida y vuelta en la voz central: G3 → G#3 → A3 → Ab3 → G3.',
+    },
+  ],
+  interchange: [
+    {
+      id: 'mi_eolico_doors',
+      name: '1) Las 3 Puertas del Modo Eólico Paralelo: C → Abmaj7 (♭VI) → Bb9 (♭VII) → C',
+      roman: ['I (C Mayor)', '♭VImaj7 (Abmaj7)', '♭VII9 (Bb9)', 'I (C Mayor)'],
+      chords: [
+        [48, 55, 60, 64],
+        [44, 51, 55, 60],
+        [46, 53, 56, 60, 62],
+        [48, 55, 60, 64],
+      ],
+      bassLine: [36, 32, 34, 36],
+      desc: 'La "Cadencia Mario Bros / Épica Cinematográfica": toma prestados Ab y Bb de Do Menor para aterrizar triunfalmente por tonos enteros en Do Mayor.',
+      voiceLeadingNote: 'Bajo en subida heroica por tonos enteros: Ab1 (4ª tr.4) → Bb1 (4ª tr.6) → C2 (4ª tr.8).',
+    },
+    {
+      id: 'mi_backdoor_251',
+      name: '2) Cadencia Backdoor ("Por la Puerta Trasera"): Cmaj7 → Fm7 (iv7) → Bb9 (♭VII7) → Cmaj7',
+      roman: ['Imaj7 (Cmaj7)', 'iv7 (Fm7)', '♭VII9 (Bb9#11)', 'Imaj9 (Cmaj9)'],
+      chords: [
+        [48, 52, 55, 59],
+        [41, 48, 51, 56],
+        [46, 50, 56, 60, 64],
+        [48, 52, 55, 59, 62],
+      ],
+      bassLine: [36, 29, 34, 36],
+      desc: 'En lugar de entrar por la puerta principal (Dm7–G7–C), entra desde el subdominante menor (Fm7–Bb7–C). Pilares del Jazz, Stevie Wonder y Neo-Soul.',
+      voiceLeadingNote: 'Las notas Lab y Mib de Fm7/Bb7 descienden suavemente a Sol y Mi de Cmaj7.',
+    },
+    {
+      id: 'mi_dorian_lydian',
+      name: '3) Intercambio Dórico y Lidio Luminoso: Cm7 → F9 (IV7 Dórico) | Cmaj7 → D/C (II Lidio)',
+      roman: ['im7 (Cm7)', 'IV9 (F9 Dórico)', 'Imaj7 (Cmaj7)', 'II/I (D/C Lidio)'],
+      chords: [
+        [48, 51, 55, 58],
+        [41, 51, 57, 60, 62],
+        [48, 52, 55, 59],
+        [48, 54, 57, 62],
+      ],
+      bassLine: [36, 29, 36, 38],
+      desc: 'Contrasta el calor funk del IV7 mayor en un contexto menor (Santana / Daft Punk) con el vuelo espacial del II mayor sobre bajo de tónica.',
+      voiceLeadingNote: 'La nota La natural ilumina a Cm7; el Fa# ilumina a Cmaj7.',
+    },
+    {
+      id: 'mi_neapolitan_phrygian',
+      name: '4) Préstamo Frigio / Napolitano: Cmaj7 → Dbmaj7(#11) (♭IImaj7) → Cmaj9',
+      roman: ['Imaj7 (Cmaj7)', '♭IImaj7 (Dbmaj7#11)', 'V7sus4 (G9sus4)', 'Imaj9 (Cmaj9)'],
+      chords: [
+        [48, 52, 55, 59],
+        [49, 53, 56, 60, 67],
+        [43, 53, 57, 60, 62],
+        [48, 52, 55, 59, 62],
+      ],
+      bassLine: [36, 37, 31, 36],
+      desc: 'El acorde ♭IImaj7 prestado del modo Frigio mantiene a Do y Sol como notas comunes (7M y #11 de Reb) mientras el bajo roza Reb.',
+      voiceLeadingNote: 'Nota común hipnótica C4–G4 suspendida arriba mientras el bajo hace C2 → Db2 → G1 → C2.',
+    },
+  ],
+  'mod-pivot': [
+    {
+      id: 'mod_pivot_fifth',
+      name: '1) Modulación por Acorde Pivote (Do Mayor → Sol Mayor vía Am7 = vi de C / ii de G)',
+      roman: ['C: I (Cmaj7)', 'C:vi = G:ii (Am7 Pivote)', 'G: V7 (D7)', 'G: I (Gmaj7 Nueva Tónica)'],
+      chords: [
+        [48, 52, 55, 59],
+        [45, 52, 55, 60],
+        [50, 54, 57, 60],
+        [43, 50, 54, 59],
+      ],
+      bassLine: [36, 33, 38, 31],
+      desc: 'Am7 pertenece a ambas tonalidades: entra como vi de Do Mayor y sale reasignado como ii de un ii–V–I hacia Sol Mayor.',
+      voiceLeadingNote: 'El Fa natural se transforma en Fa# dentro de D7 para sellar la nueva tonalidad de Sol.',
+    },
+    {
+      id: 'mod_lift_semitone',
+      name: '2) Modulación Directa / "Subida de Camionero" (+1 Semitono: C → G7 → Ab7 → Db Mayor)',
+      roman: ['C: I (C)', 'C: V7 (G7)', 'Prep. ♭VI7 (Ab7)', 'Db: I (Db Mayor +1 Semitono!)'],
+      chords: [
+        [48, 55, 60, 64],
+        [43, 53, 59, 62],
+        [44, 51, 56, 60],
+        [49, 56, 61, 65],
+      ],
+      bassLine: [36, 31, 32, 37],
+      desc: 'Inyección instantánea de adrenalina en el último estribillo subiendo toda la orquesta medio tono mediante su nuevo V7 (Ab7).',
+      voiceLeadingNote: 'El bajo sube cromáticamente en el puente: G1 → Ab1 → Db2.',
+    },
+    {
+      id: 'mod_enarmonic_dim7',
+      name: '3) Modulación Enarmónica por °7 Simétrico (De Do Mayor a Mi♭ Mayor vía B°7 = D°7)',
+      roman: ['C: I (Cmaj7)', 'Puente Simétrico (B°7 = D°7)', 'Eb: V7 (Bb7)', 'Eb: I (Ebmaj7)'],
+      chords: [
+        [48, 52, 55, 59],
+        [47, 50, 53, 56],
+        [46, 53, 56, 62],
+        [51, 55, 58, 62],
+      ],
+      bassLine: [36, 35, 34, 39],
+      desc: 'Como B°7 (Si–Re–Fa–Lab) divide la octava en 4 partes iguales, basta bajar cualquiera de sus 4 notas medio tono (Si → Sib) para caer en Bb7 → Eb.',
+      voiceLeadingNote: 'Una sola voz baja un semitono (B3 → Bb3) y teletransporta la tonalidad a una 3ª menor de distancia.',
+    },
+    {
+      id: 'mod_common_tone',
+      name: '4) Modulación por Nota Común Cinematográfica (C Mayor → Abmaj7 → E Mayor manteniendo Mi4)',
+      roman: ['C Mayor (Mi = 3ª)', 'Abmaj7#5 (Mi = #5)', 'C#m7 (Mi = ♭3)', 'E Mayor (Mi = Tónica)'],
+      chords: [
+        [48, 55, 60, 64],
+        [44, 51, 55, 64],
+        [49, 56, 59, 64],
+        [40, 52, 56, 59, 64],
+      ],
+      bassLine: [36, 32, 37, 28],
+      desc: 'La nota aguda Mi4 actúa como bisagra fija en el techo mientras las raíces viajan por terceras mayores (C → Ab → E).',
+      voiceLeadingNote: 'Hilo conductor en soprano: E4 constante de principio a fin.',
+    },
+  ],
+  'voice-leading': [
+    {
+      id: 'vl_smooth_vs_jump',
+      name: '1) Conducción Óptima por Enlace Armónico: C (Fundamental) → F/C (2ª Inv) → G7/B (1ª Inv) → C',
+      roman: ['C (C3–E3–G3–C4)', 'F/C (C3–F3–A3–C4)', 'G7/B (B2–F3–G3–D4)', 'C (C3–E3–G3–C4)'],
+      chords: [
+        [48, 52, 55, 60],
+        [48, 53, 57, 60],
+        [47, 53, 55, 62],
+        [48, 52, 55, 60],
+      ],
+      bassLine: [36, 36, 35, 36],
+      desc: 'Distancia total recorrida por las 4 voces: apenas 3 semitonos por cambio. Ninguna voz salta más de un tono.',
+      voiceLeadingNote: 'El bajo permanece en Do (C2) y solo roza la sensible Si (B1) antes de volver a Do.',
+    },
+    {
+      id: 'vl_guide_tones_shell',
+      name: '2) Esqueleto de Notas Guía (3ª y 7ª en Movimiento Contrario al Bajo): Am7 → D7 → Gmaj7 → Cmaj7',
+      roman: ['vi7 (Am7: G+C)', 'II7 (D7: F#+C)', 'Vmaj7 (Gmaj7: F#+B)', 'Imaj7 (Cmaj7: E+B)'],
+      chords: [
+        [45, 55, 60, 64],
+        [50, 54, 60, 64],
+        [43, 54, 59, 62],
+        [48, 52, 59, 62],
+      ],
+      bassLine: [33, 38, 31, 36],
+      desc: 'Mientras una nota guía se queda quieta como nota común, la otra baja un solo semitono (G → F# → F# → E y C → C → B → B).',
+      voiceLeadingNote: 'Economía máxima: 1 semitono de movimiento en las voces internas por cada salto de 5ª en el bajo.',
+    },
+    {
+      id: 'vl_line_cliche_minor',
+      name: '3) Contrapunto Interno (Line Cliché en Voz Central): Cm → Cm(maj7) → Cm7 → Cm6 → Abmaj7 → G7',
+      roman: ['Cm (Voz=Do4)', 'CmMaj7 (Voz=Si3)', 'Cm7 (Voz=Sib3)', 'Cm6 (Voz=La3)', 'Abmaj7 (Voz=Sol3)', 'G7♭9 (Voz=Fa3)'],
+      chords: [
+        [48, 55, 60, 63],
+        [48, 55, 59, 63],
+        [48, 55, 58, 63],
+        [48, 55, 57, 63],
+        [44, 51, 55, 60],
+        [43, 50, 53, 59],
+      ],
+      bassLine: [36, 36, 36, 36, 32, 31],
+      desc: 'Una sola voz interna desciende cromáticamente (Do → Si → Sib → La → Lab → Sol) creando una melodía oculta hipnótica.',
+      voiceLeadingNote: 'Puedes tocar esta misma línea cromática en el bajo: Cm → Cm/B → Cm/Bb → Cm/A → Abmaj7 → G7.',
+    },
+  ],
+};
+
+function computePlayableGuitarVoicing(
+  chordMidis: number[],
+  bassMidi: number
+): { frets: (number | null)[]; baseFret: number; tabText: string } {
+  // 6 strings from 6th (low E2=40) to 1st (high E4=64)
+  const openLowToHigh = [40, 45, 50, 55, 59, 64];
+  const pcs = new Set(chordMidis.map((m) => ((m % 12) + 12) % 12));
+  const rootPc = (((bassMidi ?? chordMidis[0]) % 12) + 12) % 12;
+
+  const fretOn5 = (rootPc - (45 % 12) + 12) % 12;
+  const fretOn6 = (rootPc - (40 % 12) + 12) % 12;
+
+  // Prefer root on 5th string if fret <= 6, else 6th string if fret <= 7, else whichever is smaller
+  let bassStringIdx = 1; // 5th string (A2)
+  let rootFret = fretOn5;
+  if (fretOn6 <= 4 && fretOn5 > 4) {
+    bassStringIdx = 0;
+    rootFret = fretOn6;
+  } else if (fretOn5 > 7 && fretOn6 <= 8) {
+    bassStringIdx = 0;
+    rootFret = fretOn6;
+  }
+
+  const minWindow = Math.max(0, rootFret - 1);
+  const maxWindow = rootFret + 3;
+  const frets: (number | null)[] = [null, null, null, null, null, null];
+  frets[bassStringIdx] = rootFret;
+
+  for (let s = bassStringIdx + 1; s < 6; s++) {
+    const openMidi = openLowToHigh[s];
+    let chosen: number | null = null;
+    // If open string is in chord and rootFret <= 3, allow open string
+    if (rootFret <= 3 && pcs.has(openMidi % 12)) {
+      chosen = 0;
+    }
+    for (let f = Math.max(1, minWindow); f <= maxWindow; f++) {
+      const pc = (openMidi + f) % 12;
+      if (pcs.has(pc)) {
+        // Prefer fret closest to rootFret
+        if (chosen === null || Math.abs(f - rootFret) < Math.abs(chosen - rootFret)) {
+          chosen = f;
+        }
+      }
+    }
+    frets[s] = chosen;
+  }
+
+  const nonZero = frets.filter((f): f is number => f !== null && f > 0);
+  const minFret = nonZero.length > 0 ? Math.min(...nonZero) : 1;
+  const maxFret = nonZero.length > 0 ? Math.max(...nonZero) : 4;
+  const baseFret = maxFret <= 4 ? 1 : minFret;
+  const tabText = frets.map((f) => (f === null ? 'X' : String(f))).join('-');
+
+  return { frets, baseFret, tabText };
+}
+
+function computePlayableBassVoicing(
+  chordMidis: number[],
+  bassMidi: number
+): { frets: (number | null)[]; baseFret: number; tabText: string } {
+  // 4 strings from 4th (low E1=28) to 1st (G2=43)
+  const openLowToHigh = [28, 33, 38, 43];
+  const pcs = new Set(chordMidis.map((m) => ((m % 12) + 12) % 12));
+  const rootPc = (((bassMidi ?? chordMidis[0]) % 12) + 12) % 12;
+
+  const fretOn4 = (rootPc - (28 % 12) + 12) % 12;
+  const fretOn3 = (rootPc - (33 % 12) + 12) % 12;
+
+  // Prefer root on 3rd string (A1) if fret <= 4 and fretOn4 > 5, else 4th string (E1)
+  let bassStringIdx = 0; // 4th string (E1)
+  let rootFret = fretOn4;
+  if (fretOn4 > 6 && fretOn3 <= 5) {
+    bassStringIdx = 1; // 3rd string (A1)
+    rootFret = fretOn3;
+  }
+
+  const minWindow = Math.max(0, rootFret - 2);
+  const maxWindow = rootFret + 3;
+  const frets: (number | null)[] = [null, null, null, null];
+  frets[bassStringIdx] = rootFret;
+  const usedPcs = new Set<number>([rootPc]);
+
+  for (let s = bassStringIdx + 1; s < 4; s++) {
+    const openMidi = openLowToHigh[s];
+    let chosen: number | null = null;
+    let bestScore = 999;
+
+    for (let f = minWindow; f <= maxWindow; f++) {
+      if (f === 0 && rootFret > 3) continue;
+      const pc = (openMidi + f) % 12;
+      if (pcs.has(pc)) {
+        const dist = Math.abs(f - rootFret);
+        const dupPenalty = usedPcs.has(pc) ? 4 : 0;
+        const score = dist + dupPenalty;
+        if (score < bestScore) {
+          bestScore = score;
+          chosen = f;
+        }
+      }
+    }
+    if (chosen !== null) {
+      usedPcs.add((openMidi + chosen) % 12);
+    }
+    frets[s] = chosen;
+  }
+
+  const nonZero = frets.filter((f): f is number => f !== null && f > 0);
+  const minFret = nonZero.length > 0 ? Math.min(...nonZero) : 1;
+  const maxFret = nonZero.length > 0 ? Math.max(...nonZero) : 4;
+  const baseFret = maxFret <= 4 ? 1 : minFret;
+  const tabText = frets.map((f) => (f === null ? 'X' : String(f))).join('-');
+
+  return { frets, baseFret, tabText };
+}
+
+function renderMiniChordNeckSvg(
+  chordMidis: number[],
+  bassMidi: number,
+  mode: 'guitar' | 'bass' = 'guitar'
+): string {
+  const isBass = mode === 'bass';
+  const openLowToHigh = isBass ? [28, 33, 38, 43] : [40, 45, 50, 55, 59, 64];
+  const stringNames = isBass ? ['E', 'A', 'D', 'G'] : ['E', 'A', 'D', 'G', 'B', 'e'];
+  const numStrings = openLowToHigh.length;
+  const rootPc = (((bassMidi ?? chordMidis[0]) % 12) + 12) % 12;
+  const { frets, baseFret, tabText } = isBass
+    ? computePlayableBassVoicing(chordMidis, bassMidi)
+    : computePlayableGuitarVoicing(chordMidis, bassMidi);
+
+  const w = 136;
+  const h = 114;
+  const padL = isBass ? 28 : 22;
+  const padT = 22;
+  const gridW = isBass ? 82 : 95;
+  const gridH = 68;
+  const strGap = gridW / (numStrings - 1);
+  const fretGap = gridH / 4;
+
+  const lines: string[] = [];
+  // Nut or base fret indicator
+  if (baseFret === 1) {
+    lines.push(`<line x1="${padL}" y1="${padT}" x2="${padL + gridW}" y2="${padT}" stroke="${isBass ? '#38bdf8' : '#f8fafc'}" stroke-width="3.2" />`);
+  } else {
+    lines.push(`<line x1="${padL}" y1="${padT}" x2="${padL + gridW}" y2="${padT}" stroke="#64748b" stroke-width="1.5" />`);
+    lines.push(
+      `<text x="${padL - 5}" y="${padT + fretGap * 0.65}" text-anchor="end" fill="${isBass ? '#38bdf8' : '#fbbf24'}" font-size="9" font-weight="800">${baseFret}fr</text>`
+    );
+  }
+
+  // 4 Fret horizontal wires
+  for (let f = 1; f <= 4; f++) {
+    const y = padT + f * fretGap;
+    lines.push(`<line x1="${padL}" y1="${y}" x2="${padL + gridW}" y2="${y}" stroke="#334155" stroke-width="1.1" />`);
+  }
+
+  // Vertical strings + top status + dots
+  for (let s = 0; s < numStrings; s++) {
+    const x = padL + s * strGap;
+    const sw = isBass ? 2.5 - s * 0.32 : 1.8 - s * 0.16;
+    lines.push(`<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT + gridH}" stroke="${isBass ? '#7dd3fc' : '#94a3b8'}" stroke-width="${sw.toFixed(2)}" />`);
+    lines.push(
+      `<text x="${x}" y="${padT + gridH + 12}" text-anchor="middle" fill="${isBass ? '#38bdf8' : '#94a3b8'}" font-size="8.5" font-weight="800">${stringNames[s]}</text>`
+    );
+
+    const fVal = frets[s];
+    if (fVal === null) {
+      lines.push(
+        `<text x="${x}" y="${padT - 6}" text-anchor="middle" fill="#fb7185" font-size="9.5" font-weight="800">×</text>`
+      );
+    } else if (fVal === 0) {
+      const pc = openLowToHigh[s] % 12;
+      const isRoot = pc === rootPc;
+      lines.push(
+        `<circle cx="${x}" cy="${padT - 8}" r="4.8" fill="${isRoot ? '#f59e0b' : 'none'}" stroke="${isRoot ? '#fef08a' : isBass ? '#34d399' : '#38bdf8'}" stroke-width="1.8" />`
+      );
+    } else {
+      const relFret = Math.max(1, Math.min(4, fVal - baseFret + 1));
+      const cy = padT + (relFret - 0.5) * fretGap;
+      const pc = (openLowToHigh[s] + fVal) % 12;
+      const isRoot = pc === rootPc;
+      const noteName = NOTE_NAMES[pc];
+      lines.push(
+        `<circle cx="${x}" cy="${cy}" r="${isBass ? '7.0' : '6.4'}" fill="${isRoot ? '#f59e0b' : isBass ? '#059669' : '#0284c7'}" stroke="${isRoot ? '#fef08a' : isBass ? '#6ee7b7' : '#7dd3fc'}" stroke-width="1.5" />`
+      );
+      lines.push(
+        `<text x="${x}" y="${cy + 2.8}" text-anchor="middle" fill="${isRoot ? '#0f172a' : '#f8fafc'}" font-size="6.9" font-weight="900">${noteName}</text>`
+      );
+    }
+  }
+
+  return `
+    <div style="margin-top:6px; display:flex; flex-direction:column; align-items:center;">
+      <svg viewBox="0 0 ${w} ${h}" style="width:128px; height:106px; background:${isBass ? 'rgba(6,24,38,0.88)' : 'rgba(7,10,18,0.75)'}; border:1px solid ${isBass ? 'rgba(56,189,248,0.45)' : 'rgba(148,163,184,0.2)'}; border-radius:6px;">
+        ${lines.join('')}
+      </svg>
+      <div style="font-size:0.68rem; color:#94a3b8; font-family:monospace; margin-top:3px;">${isBass ? 'Bajo (4c)' : 'Guitarra (6c)'}: <strong style="color:${isBass ? '#38bdf8' : '#fde68a'};">${tabText}</strong></div>
+    </div>
+  `;
+}
+
 function buildProgressionWidget(
   container: HTMLElement,
   audio: MusicAudioEngine,
   onStatus: (msg: string) => void,
-  title = 'Laboratorio Interactivo de Progresiones Armónicas y Conducción de Voces'
+  title = 'Laboratorio Interactivo de Progresiones Armónicas y Conducción de Voces',
+  contextKey = 'archetypes'
 ): void {
-  const progressions = [
-    {
-      id: 'pop_axis',
-      name: 'I – V – vi – IV (Axis of Pop / Rock)',
-      roman: ['I (CMaj7)', 'V (G7)', 'vi (Am7)', 'IV (FMaj7)'],
-      chords: [
-        [48, 52, 55, 59],
-        [43, 50, 55, 59],
-        [45, 52, 55, 60],
-        [41, 48, 52, 57],
-      ],
-      desc: 'El ciclo más célebre del pop/rock contemporáneo: luminosidad inicial, suspenso dominante, giro lírico menor y expansión subdominante.',
-    },
-    {
-      id: 'jazz_251',
-      name: 'ii7 – V7 – IMaj7 – VI7alt (Jazz Turnaround)',
-      roman: ['ii7 (Dm7)', 'V7 (G7)', 'IMaj7 (CMaj7)', 'VI7b9 (A7b9)'],
-      chords: [
-        [50, 53, 57, 60],
-        [43, 53, 55, 59],
-        [48, 52, 55, 59],
-        [45, 52, 55, 58],
-      ],
-      desc: 'Las notas guía (3ª y 7ª) descienden por semitono con economía absoluta de movimiento.',
-    },
-    {
-      id: 'andalusian',
-      name: 'i – bVII – bVI – V7 (Cadencia Andaluza / Flamenco)',
-      roman: ['i (Am)', 'bVII (G)', 'bVI (F)', 'V7 (E7b9)'],
-      chords: [
-        [45, 52, 57, 60],
-        [43, 50, 55, 59],
-        [41, 48, 53, 57],
-        [40, 47, 52, 56],
-      ],
-      desc: 'Descenso por grados conjuntos en el bajo hacia el dominante frigio con tercera mayor.',
-    },
-    {
-      id: 'modal_interchange',
-      name: 'I – iii7 – IV – iv6 (Préstamo Modal / Subdominante Menor)',
-      roman: ['I (C)', 'iii7 (Em7)', 'IV (FMaj7)', 'ivm6 (Fm6)'],
-      chords: [
-        [48, 52, 55, 60],
-        [40, 52, 55, 59],
-        [41, 48, 52, 57],
-        [41, 48, 53, 56],
-      ],
-      desc: 'El acorde iv menor prestado del modo eólico aporta nostalgia cinematográfica instantánea (descenso A -> Ab -> G).',
-    },
-    {
-      id: 'neoriemann',
-      name: 'Transformaciones Neo-Riemannianas (P, L, R Cinematográfico)',
-      roman: ['C Mayor (Base)', 'Cm (P: Paralelo)', 'Ab Mayor (L desde Cm)', 'Fm (R / Plagal Oscuro)'],
-      chords: [
-        [48, 52, 55, 60],
-        [48, 51, 55, 60],
-        [44, 51, 56, 60],
-        [41, 48, 53, 56],
-      ],
-      desc: 'Cada acorde comparte 2 notas comunes con el anterior y mueve la tercera restante solo 1 semitono (sonido Hans Zimmer / John Williams).',
-    },
-  ];
-
-  let currentIdx = title.includes('Riemann') ? 4 : 0;
-  let currentInst: 'guitar' | 'piano' = 'guitar';
+  const progressions = PROGRESSION_SETS_BY_CONTEXT[contextKey] || PROGRESSION_SETS_BY_CONTEXT['archetypes'];
+  let currentIdx = 0;
+  let activeChordIdx = 0;
+  let currentInst: 'guitar' | 'piano' | 'bass' = 'guitar';
+  let neckViewMode: 'guitar' | 'bass' = 'guitar';
+  let showOnlyVoicingOnNeck = false;
+  let includeBassLine = true;
 
   container.innerHTML = `
     <div class="widget-header">
       <div>
         <strong style="color:var(--accent-gold); font-size:1.1rem;">${title}</strong>
-        <p style="font-size:0.82rem; color:var(--text-muted); margin:0;">Haz clic en cada acorde individualmente para rasguearlo o reproduce el bucle armónico completo.</p>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin:0;">Haz clic en cada acorde para escucharlo y alterna entre Guitarra (6 cuerdas) y Bajo Eléctrico (4 cuerdas) para cambiar todos los diagramas del mástil.</p>
       </div>
       <div class="widget-controls">
         <select class="js-prog-select">
           ${progressions.map((p, idx) => `<option value="${idx}" ${idx === currentIdx ? 'selected' : ''}>${p.name}</option>`).join('')}
         </select>
         <select class="js-prog-inst">
-          <option value="guitar">🎸 Guitarra Acústica/Eléctrica</option>
-          <option value="piano">🎹 Piano de Cola</option>
+          <option value="guitar" selected>🎸 Guitarra (6 Cuerdas) + Bajo</option>
+          <option value="bass">🎸 Bajo Eléctrico (4 Cuerdas)</option>
+          <option value="piano">🎹 Piano + Bajo 4 Cuerdas</option>
         </select>
         <button type="button" class="btn btn-primary js-prog-play">▶ Escuchar Progresión</button>
+        <button type="button" class="btn js-prog-bass-only js-prog-bass" style="background:rgba(56,189,248,0.16); color:#38bdf8; border:1px solid rgba(56,189,248,0.4);">🎸 Escuchar Walking/Groove de Bajo</button>
         <button type="button" class="btn js-prog-stop" style="background:rgba(244,63,94,0.2); color:#fb7185;">⏹ Detener</button>
       </div>
     </div>
-    <div class="js-prog-desc" style="margin-bottom:12px; font-size:0.86rem; color:var(--text-muted);"></div>
-    <div class="js-prog-cards" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px;"></div>
+    <div class="js-prog-desc" style="margin-bottom:8px; font-size:0.86rem; color:var(--text-secondary);"></div>
+    <div class="js-prog-vl" style="margin-bottom:12px; padding:8px 12px; background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); border-radius:6px; font-size:0.8rem; color:#bae6fd;"></div>
+    <div class="js-prog-cards" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(158px, 1fr)); gap:10px; margin-bottom:14px;"></div>
+
+    <!-- Live Interactive 12-Fret Fretboard Diagram for Active Chord in Modulation/Progression -->
+    <div style="background:rgba(15,23,42,0.92); border:1px solid rgba(245,158,11,0.35); border-radius:10px; padding:12px;">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px;">
+        <div>
+          <strong style="color:var(--accent-gold); font-size:0.9rem;" class="js-prog-neck-title">🎸 Mapa en el Mástil (0–12 Trastes)</strong>
+          <div style="font-size:0.74rem; color:#94a3b8;">Dorado = Fundamental/Bajo · Azul/Verde = Voces del Acorde · Aro Blanco ★ = Digitación Principal del Acorde</div>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <button type="button" class="btn js-prog-neck-mode" data-mode="guitar" style="font-size:0.75rem; padding:4px 10px; background:rgba(245,158,11,0.22); color:#fbbf24; border:1px solid #f59e0b;">🎸 Mástil Guitarra (6 Cuerdas)</button>
+          <button type="button" class="btn js-prog-neck-mode" data-mode="bass" style="font-size:0.75rem; padding:4px 10px; background:rgba(30,41,59,0.9); color:#94a3b8; border:1px solid #334155;">🎸 Mástil Bajo (4 Cuerdas)</button>
+          <button type="button" class="btn js-prog-neck-filter" style="font-size:0.74rem; padding:4px 10px; background:rgba(56,189,248,0.14); color:#38bdf8; border:1px solid rgba(56,189,248,0.38);">🎯 Ver: Mapa Completo (0–12)</button>
+        </div>
+      </div>
+      <div class="js-prog-neck-host"></div>
+    </div>
   `;
 
   const sel = container.querySelector<HTMLSelectElement>('.js-prog-select')!;
   const instSel = container.querySelector<HTMLSelectElement>('.js-prog-inst')!;
   const playBtn = container.querySelector<HTMLButtonElement>('.js-prog-play')!;
+  const bassOnlyBtn = container.querySelector<HTMLButtonElement>('.js-prog-bass-only')!;
   const stopBtn = container.querySelector<HTMLButtonElement>('.js-prog-stop')!;
   const descEl = container.querySelector<HTMLElement>('.js-prog-desc')!;
+  const vlEl = container.querySelector<HTMLElement>('.js-prog-vl')!;
   const cardsEl = container.querySelector<HTMLElement>('.js-prog-cards')!;
+  const neckTitleEl = container.querySelector<HTMLElement>('.js-prog-neck-title')!;
+  const neckHostEl = container.querySelector<HTMLElement>('.js-prog-neck-host')!;
+  const neckModeBtns = container.querySelectorAll<HTMLButtonElement>('.js-prog-neck-mode');
+  const neckFilterBtn = container.querySelector<HTMLButtonElement>('.js-prog-neck-filter')!;
+
+  const syncNeckModeButtons = (): void => {
+    neckModeBtns.forEach((b) => {
+      const active = b.getAttribute('data-mode') === neckViewMode;
+      b.style.background = active ? 'rgba(245,158,11,0.24)' : 'rgba(30,41,59,0.9)';
+      b.style.color = active ? '#fbbf24' : '#94a3b8';
+      b.style.borderColor = active ? '#f59e0b' : '#334155';
+    });
+  };
+
+  const renderFullNeckForActiveChord = (): void => {
+    const p = progressions[currentIdx];
+    const cIdx = Math.min(activeChordIdx, p.chords.length - 1);
+    const chordMidis = p.chords[cIdx];
+    const bassMidi = p.bassLine[cIdx % p.bassLine.length] ?? chordMidis[0] - 12;
+    const label = p.roman[cIdx];
+    const rootPc = ((bassMidi % 12) + 12) % 12;
+    const pcs = new Set(chordMidis.map((m) => ((m % 12) + 12) % 12));
+
+    const isBass = neckViewMode === 'bass';
+    const stringsConfig = isBass ? BASS_STRINGS : GUITAR_STRINGS;
+    const voicing = isBass
+      ? computePlayableBassVoicing(chordMidis, bassMidi)
+      : computePlayableGuitarVoicing(chordMidis, bassMidi);
+
+    neckTitleEl.textContent = isBass
+      ? `🎸 Mapa en el Mástil de BAJO ELÉCTRICO (4 Cuerdas: G–D–A–E · 0–12 Trastes) — Paso ${cIdx + 1}: ${label} [Digitación Bajo: ${voicing.tabText}]`
+      : `🎸 Mapa en el Mástil de GUITARRA (6 Cuerdas: e–B–G–D–A–E · 0–12 Trastes) — Paso ${cIdx + 1}: ${label} [Digitación Guitarra: ${voicing.tabText}]`;
+
+    const numStrings = stringsConfig.length;
+    let html = `<div class="fretboard-wrapper">`;
+    html += `<div class="fretboard-row" style="border-bottom:1px solid rgba(255,255,255,0.16); margin-bottom:4px;"><div class="string-label" style="color:var(--text-muted); font-size:0.7rem;">Traste</div>`;
+    for (let f = 0; f <= 12; f++) {
+      const marker = [3, 5, 7, 9, 12].includes(f) ? '•' : '';
+      html += `<div class="fret-cell" style="height:20px; border:none; color:var(--text-muted); font-size:0.72rem; font-weight:700;">${f === 0 ? '0 (Aire)' : `${f}${marker}`}</div>`;
+    }
+    html += `</div>`;
+
+    stringsConfig.forEach((st, sIdx) => {
+      // stringsConfig is ordered 1st string (highest pitch, idx 0) down to lowest string (idx numStrings - 1)
+      // voicing.frets is ordered lowest string (idx 0) to highest string (idx numStrings - 1)
+      const voicedFret = voicing.frets[numStrings - 1 - sIdx];
+
+      html += `<div class="fretboard-row"><div class="string-label" style="color:${isBass ? '#38bdf8' : '#fbbf24'};">${st.label}</div>`;
+      for (let f = 0; f <= 12; f++) {
+        const midi = st.openMidi + f;
+        const pc = midi % 12;
+        const noteName = NOTE_NAMES[pc];
+        const isRoot = pc === rootPc;
+        const isChordTone = pcs.has(pc);
+        const isPrimaryVoicingFret = voicedFret === f;
+
+        let stateClass = '';
+        if (showOnlyVoicingOnNeck) {
+          if (isPrimaryVoicingFret) {
+            stateClass = isRoot ? 'root' : isBass ? 'char' : 'active';
+          }
+        } else {
+          if (isRoot) {
+            stateClass = 'root';
+          } else if (isChordTone) {
+            stateClass = isBass ? 'char' : 'active';
+          }
+        }
+
+        const ringStyle = isPrimaryVoicingFret
+          ? 'box-shadow:0 0 0 2.5px #ffffff, 0 0 14px #f59e0b; transform:scale(1.12); font-weight:900;'
+          : '';
+
+        html += `
+          <div class="fret-cell js-prog-neck-cell" data-midi="${midi}" data-note="${noteName}" title="Cuerda ${st.label}, Traste ${f}: ${noteName}${isPrimaryVoicingFret ? ' (★ Posición del Voicing)' : ''}">
+            <div class="fret-note ${stateClass}" style="${ringStyle}">${isPrimaryVoicingFret ? `${noteName}★` : noteName}</div>
+          </div>
+        `;
+      }
+      html += `</div>`;
+    });
+    html += `</div>`;
+    neckHostEl.innerHTML = html;
+  };
 
   const renderCards = (): void => {
     const p = progressions[currentIdx];
     descEl.textContent = p.desc;
+    vlEl.innerHTML = `<strong>🧭 Conducción de Voces y Bajo (4 Cuerdas G–D–A–E):</strong> ${p.voiceLeadingNote}`;
     cardsEl.innerHTML = p.roman
-      .map(
-        (label, cIdx) => `
-      <button type="button" class="js-chord-card" data-cidx="${cIdx}" style="background:rgba(30,41,59,0.85); border:1px solid rgba(56,189,248,0.4); border-radius:8px; padding:14px 12px; color:#f8fafc; cursor:pointer; text-align:center; transition:0.15s;">
-        <div style="font-size:0.75rem; color:var(--accent-cyan); margin-bottom:4px;">Compás ${cIdx + 1}</div>
-        <div style="font-size:1.05rem; font-weight:800; color:var(--accent-gold);">${label}</div>
-        <div style="font-size:0.72rem; color:#94a3b8; margin-top:4px;">🔊 Clic para escuchar</div>
-      </button>
-    `
-      )
+      .map((label, cIdx) => {
+        const notesList = p.chords[cIdx].map((m) => NOTE_NAMES[m % 12]).join(' – ');
+        const bassMidi = p.bassLine[cIdx % p.bassLine.length] ?? p.chords[cIdx][0] - 12;
+        const bassName = `${NOTE_NAMES[bassMidi % 12]}${Math.floor(bassMidi / 12) - 1}`;
+        const isSelected = cIdx === activeChordIdx;
+        const svgNeck = renderMiniChordNeckSvg(p.chords[cIdx], bassMidi, neckViewMode);
+        return `
+          <button type="button" class="js-chord-card" data-cidx="${cIdx}" style="background:${isSelected ? 'rgba(30,58,138,0.55)' : 'rgba(30,41,59,0.88)'}; border:2px solid ${isSelected ? '#f59e0b' : 'rgba(56,189,248,0.35)'}; border-radius:10px; padding:10px 8px; color:#f8fafc; cursor:pointer; text-align:center; transition:0.15s; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-size:0.71rem; color:var(--accent-cyan); margin-bottom:2px;">Paso ${cIdx + 1} · Bajo: ${bassName}</div>
+              <div style="font-size:0.95rem; font-weight:800; color:var(--accent-gold);">${label}</div>
+              <div style="font-size:0.71rem; color:#cbd5e1; margin-top:2px; font-family:monospace;">[${notesList}]</div>
+            </div>
+            ${svgNeck}
+            <div style="font-size:0.68rem; color:#38bdf8; margin-top:4px;">🔊 Clic para escuchar (${neckViewMode === 'bass' ? 'Bajo 4c' : 'Guitarra 6c'})</div>
+          </button>
+        `;
+      })
       .join('');
+    syncNeckModeButtons();
+    renderFullNeckForActiveChord();
   };
 
   renderCards();
 
+  neckModeBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      neckViewMode = (btn.getAttribute('data-mode') as 'guitar' | 'bass') || 'guitar';
+      currentInst = neckViewMode;
+      instSel.value = neckViewMode;
+      renderCards();
+      onStatus(
+        `Diagramas del mástil cambiados a: ${neckViewMode === 'bass' ? 'Bajo Eléctrico (4 Cuerdas: E–A–D–G)' : 'Guitarra (6 Cuerdas: E–A–D–G–B–e)'}`
+      );
+    });
+  });
+
+  neckFilterBtn.addEventListener('click', () => {
+    showOnlyVoicingOnNeck = !showOnlyVoicingOnNeck;
+    neckFilterBtn.textContent = showOnlyVoicingOnNeck
+      ? '🎯 Ver: Solo Digitación (★)'
+      : '🎯 Ver: Mapa Completo (0–12)';
+    renderFullNeckForActiveChord();
+  });
+
+  neckHostEl.addEventListener('click', (e) => {
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.js-prog-neck-cell');
+    if (!cell) return;
+    const midi = parseInt(cell.getAttribute('data-midi') || '60', 10);
+    const note = cell.getAttribute('data-note') || 'C';
+    if (neckViewMode === 'bass') {
+      audio.playElectricBass(midi, 1.1, 0, 0.4, 'finger', true);
+    } else {
+      audio.playPluckedGuitar(midi, 1.1, 0, 0.3, true);
+    }
+    onStatus(`Traste pulsado en mástil (${neckViewMode === 'bass' ? 'Bajo 4c' : 'Guitarra 6c'}): ${note} (MIDI ${midi})`);
+  });
+
   sel.addEventListener('change', () => {
     currentIdx = parseInt(sel.value, 10);
+    activeChordIdx = 0;
     audio.stopAll();
     renderCards();
   });
 
   instSel.addEventListener('change', () => {
-    currentInst = instSel.value as 'guitar' | 'piano';
+    currentInst = instSel.value as 'guitar' | 'piano' | 'bass';
+    includeBassLine = true;
+    if (currentInst === 'bass') {
+      neckViewMode = 'bass';
+    } else if (currentInst === 'guitar') {
+      neckViewMode = 'guitar';
+    }
+    renderCards();
+    onStatus(
+      `Instrumento y diagramas cambiados a: ${currentInst === 'bass' ? 'Bajo Eléctrico (4 Cuerdas)' : currentInst === 'guitar' ? 'Guitarra (6 Cuerdas)' : 'Piano + Bajo'}`
+    );
   });
 
   cardsEl.addEventListener('click', (e) => {
     const card = (e.target as HTMLElement).closest<HTMLElement>('.js-chord-card');
     if (!card) return;
     const cIdx = parseInt(card.getAttribute('data-cidx')!, 10);
+    activeChordIdx = cIdx;
     const p = progressions[currentIdx];
-    audio.strumChord(p.chords[cIdx], currentInst, 0, true);
-    onStatus(`Acorde ${p.roman[cIdx]} reproducido en ${currentInst === 'guitar' ? 'Guitarra' : 'Piano'}`);
+    audio.stopAll();
+    renderCards();
+    const bassMidi = p.bassLine[cIdx % p.bassLine.length] ?? p.chords[cIdx][0] - 12;
+    if (currentInst === 'bass') {
+      audio.playElectricBass(bassMidi, 1.3, 0, 0.42, 'finger', false);
+      p.chords[cIdx].slice(1).forEach((m, i) => {
+        audio.playElectricBass(m - 12, 0.45, (i + 1) * 0.28, 0.34, 'finger', false);
+      });
+    } else {
+      if (includeBassLine) {
+        audio.playElectricBass(bassMidi, 1.4, 0, 0.36, 'finger', false);
+      }
+      audio.strumChord(p.chords[cIdx], currentInst, 0, false);
+    }
+    onStatus(`Acorde ${p.roman[cIdx]} + Bajo ${NOTE_NAMES[bassMidi % 12]} (Mástil actualizado)`);
   });
 
   playBtn.addEventListener('click', () => {
     audio.stopAll();
     const p = progressions[currentIdx];
     p.chords.forEach((notes, idx) => {
-      audio.strumChord(notes, currentInst, idx * 0.9, false);
+      audio.schedule(() => {
+        activeChordIdx = idx;
+        renderCards();
+        const bassMidi = p.bassLine[idx % p.bassLine.length] ?? notes[0] - 12;
+        if (currentInst === 'bass') {
+          audio.playElectricBass(bassMidi, 0.85, 0, 0.42, 'finger', false);
+        } else {
+          audio.playElectricBass(bassMidi, 0.88, 0, 0.35, 'finger', false);
+          audio.strumChord(notes, currentInst, 0, false);
+        }
+        onStatus(`▶ [${idx + 1}/${p.chords.length}] ${p.roman[idx]} — ${p.name}`);
+      }, idx * 920);
     });
-    onStatus(`Reproduciendo progresión: ${p.name}`);
+  });
+
+  bassOnlyBtn.addEventListener('click', () => {
+    audio.stopAll();
+    const p = progressions[currentIdx];
+    neckViewMode = 'bass';
+    currentInst = 'bass';
+    instSel.value = 'bass';
+    renderCards();
+    p.bassLine.forEach((bMidi, idx) => {
+      audio.schedule(() => {
+        activeChordIdx = idx % p.chords.length;
+        renderCards();
+        audio.playElectricBass(bMidi, 0.48, 0, 0.42, 'finger', false);
+        audio.playDrumHit(idx % 2 === 0 ? 'kick' : 'snare', 0);
+        audio.playDrumHit('hihat', 0);
+      }, idx * 460);
+    });
+    onStatus(`Bajo Eléctrico 4 Cuerdas: Walking/Groove sobre ${p.name}`);
   });
 
   stopBtn.addEventListener('click', () => {
@@ -3764,7 +4871,664 @@ function buildProgressionWidget(
 }
 
 /**
- * SPECIALIZED LAB 7: Melody Reharmonizer (1 Fixed Melody Note over 6 Different Chords)
+ * Interactive Scale Harmonizer & Functional Progression Builder (`data-lab="harmonizer"`)
+ * Harmonizes any scale in Triads (size=3), Sevenths (size=4) or Ninths (size=5) and lets the user chain their own progression!
+ */
+function buildDiatonicScaleHarmonizerLab(
+  stage: HTMLElement,
+  audio: MusicAudioEngine,
+  onStatus: (msg: string) => void
+): void {
+  const scalesToHarmonize: { id: string; name: string; intervals: number[] }[] = [
+    { id: 'major', name: 'Mayor Natural (Jónica)', intervals: [0, 2, 4, 5, 7, 9, 11] },
+    { id: 'minor', name: 'Menor Natural (Eólica)', intervals: [0, 2, 3, 5, 7, 8, 10] },
+    { id: 'harmonic_minor', name: 'Menor Armónica (con 7ª Sensible)', intervals: [0, 2, 3, 5, 7, 8, 11] },
+    { id: 'melodic_minor', name: 'Menor Melódica (6ª y 7ª Mayores)', intervals: [0, 2, 3, 5, 7, 9, 11] },
+    { id: 'dorian', name: 'Modo Dórico (Menor con 6ª Mayor)', intervals: [0, 2, 3, 5, 7, 9, 10] },
+    { id: 'phrygian', name: 'Modo Frigio (Menor con ♭2)', intervals: [0, 1, 3, 5, 7, 8, 10] },
+    { id: 'lydian', name: 'Modo Lidio (Mayor con #4)', intervals: [0, 2, 4, 6, 7, 9, 11] },
+    { id: 'mixolydian', name: 'Modo Mixolidio (Mayor con ♭7)', intervals: [0, 2, 4, 5, 7, 9, 10] },
+  ];
+
+  let rootPc = 0; // C
+  let scaleId = 'major';
+  let stackSize = 4; // 3=Triads, 4=Sevenths, 5=Ninths
+  let neckMode: 'guitar' | 'bass' = 'guitar';
+  let customChain: number[] = [0, 5, 1, 4]; // I - vi - ii - V default
+
+  const getChordQuality = (thirdSemi: number, fifthSemi: number, seventhSemi: number, size: number): { suffix: string; romanCase: 'upper' | 'lower'; role: string } => {
+    const isMinor3 = thirdSemi === 3;
+    const isDim5 = fifthSemi === 6;
+    const isAug5 = fifthSemi === 8;
+
+    if (size === 3) {
+      if (isDim5 && isMinor3) return { suffix: '° (Disminuido)', romanCase: 'lower', role: 'Dominante / Sensible' };
+      if (isAug5 && !isMinor3) return { suffix: '+ (Aumentado)', romanCase: 'upper', role: 'Tónica / Dominante' };
+      if (isMinor3) return { suffix: 'm (Menor)', romanCase: 'lower', role: 'Tónica / Subdominante' };
+      return { suffix: ' Mayor', romanCase: 'upper', role: 'Tónica / Subdominante / Dominante' };
+    }
+
+    let suffix = '';
+    if (isDim5 && isMinor3) {
+      suffix = seventhSemi === 9 ? '°7' : 'm7♭5';
+    } else if (isAug5 && !isMinor3) {
+      suffix = seventhSemi === 11 ? 'maj7#5' : '7#5';
+    } else if (isMinor3) {
+      suffix = seventhSemi === 11 ? 'm(maj7)' : 'm7';
+    } else {
+      suffix = seventhSemi === 11 ? 'maj7' : '7';
+    }
+    if (size === 5) {
+      suffix = suffix.replace('maj7', 'maj9').replace('m7', 'm9').replace(/^7$/, '9');
+    }
+    return {
+      suffix,
+      romanCase: isMinor3 ? 'lower' : 'upper',
+      role: suffix.includes('7') && !suffix.includes('maj') && !isMinor3 ? 'Dominante (Tensión)' : 'Diatónico',
+    };
+  };
+
+  stage.innerHTML = `
+    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:14px;">
+      <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+        <label style="font-size:0.8rem;">Tónica:</label>
+        <select class="js-dh-root">
+          ${NOTE_LABELS.map((l, i) => `<option value="${i}" ${i === rootPc ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+        <label style="font-size:0.8rem;">Escala a Armonizar:</label>
+        <select class="js-dh-scale">
+          ${scalesToHarmonize.map((s) => `<option value="${s.id}" ${s.id === scaleId ? 'selected' : ''}>${s.name}</option>`).join('')}
+        </select>
+        <label style="font-size:0.8rem;">Apilamiento:</label>
+        <select class="js-dh-size">
+          <option value="3">Tríadas (1–3–5)</option>
+          <option value="4" selected>Cuatríadas (1–3–5–7)</option>
+          <option value="5">Novenas (1–3–5–7–9)</option>
+        </select>
+        <label style="font-size:0.8rem;">Diagrama Mástil:</label>
+        <select class="js-dh-neck">
+          <option value="guitar" selected>🎸 Guitarra (6 Cuerdas)</option>
+          <option value="bass">🎸 Bajo Eléctrico (4 Cuerdas)</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary js-dh-play-all">▶ Escuchar los 7 Grados (I → vii)</button>
+        <button type="button" class="btn js-dh-stop" style="background:rgba(244,63,94,0.2); color:#fb7185;">⏹ Detener</button>
+      </div>
+    </div>
+
+    <div class="js-dh-degrees-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-bottom:14px;"></div>
+
+    <div style="background:rgba(15,23,42,0.92); border:1px solid rgba(245,158,11,0.4); border-radius:10px; padding:12px;">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">
+        <strong style="color:var(--accent-gold); font-size:0.9rem;">🔗 Constructor de Tu Propia Progresión (Haz clic en "+ Añadir" en cualquier grado arriba):</strong>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-primary js-dh-play-chain" style="font-size:0.78rem;">▶ Reproducir Mi Progresión (+ Bajo)</button>
+          <button type="button" class="btn js-dh-clear-chain" style="font-size:0.78rem; background:rgba(148,163,184,0.18); color:#cbd5e1;">🧹 Reiniciar Cadena</button>
+        </div>
+      </div>
+      <div class="js-dh-chain-view" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;"></div>
+    </div>
+  `;
+
+  const rootSel = stage.querySelector<HTMLSelectElement>('.js-dh-root')!;
+  const scaleSel = stage.querySelector<HTMLSelectElement>('.js-dh-scale')!;
+  const sizeSel = stage.querySelector<HTMLSelectElement>('.js-dh-size')!;
+  const neckSel = stage.querySelector<HTMLSelectElement>('.js-dh-neck')!;
+  const gridEl = stage.querySelector<HTMLElement>('.js-dh-degrees-grid')!;
+  const chainEl = stage.querySelector<HTMLElement>('.js-dh-chain-view')!;
+
+  const computeDegreeChords = () => {
+    const sc = scalesToHarmonize.find((s) => s.id === scaleId) || scalesToHarmonize[0];
+    const romans = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+    const funcRoles = ['Tónica (Reposo)', 'Subdominante', 'Tónica / Puente', 'Subdominante', 'Dominante (Motor)', 'Tónica Relativa', 'Sensible (Tritono)'];
+    return sc.intervals.map((degSemi, degIdx) => {
+      const notesMidi: number[] = [];
+      for (let t = 0; t < stackSize; t++) {
+        const scalePos = (degIdx + t * 2) % 7;
+        const octAdd = Math.floor((degIdx + t * 2) / 7) * 12;
+        notesMidi.push(48 + rootPc + sc.intervals[scalePos] + octAdd);
+      }
+      const rootMidi = notesMidi[0];
+      const thirdSemi = notesMidi[1] - rootMidi;
+      const fifthSemi = notesMidi[2] - rootMidi;
+      const seventhSemi = notesMidi[3] ? notesMidi[3] - rootMidi : 10;
+      const qual = getChordQuality(thirdSemi, fifthSemi, seventhSemi, stackSize);
+      const romanBase = qual.romanCase === 'lower' ? romans[degIdx].toLowerCase() : romans[degIdx];
+      const chordRootName = NOTE_NAMES[rootMidi % 12];
+      const notesNames = notesMidi.map((m) => NOTE_NAMES[m % 12]).join('–');
+      return {
+        degIdx,
+        roman: `${romanBase}${qual.suffix.split(' ')[0]}`,
+        chordName: `${chordRootName}${qual.suffix.split(' ')[0]}`,
+        notesMidi,
+        notesNames,
+        role: funcRoles[degIdx],
+      };
+    });
+  };
+
+  const renderHarmonizer = () => {
+    const chords = computeDegreeChords();
+    gridEl.innerHTML = chords
+      .map(
+        (c) => `
+      <div style="background:rgba(30,41,59,0.9); border:1px solid rgba(56,189,248,0.4); border-radius:8px; padding:10px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; text-align:center; gap:6px;">
+        <button type="button" class="js-dh-deg-play js-dh-play-deg" data-idx="${c.degIdx}" style="background:transparent; border:none; color:#f8fafc; cursor:pointer; text-align:center; padding:0; width:100%;">
+          <div style="font-size:0.72rem; color:var(--accent-cyan); font-weight:700;">Grado ${c.degIdx + 1} · ${c.roman}</div>
+          <div style="font-size:1.05rem; font-weight:800; color:var(--accent-gold); margin:2px 0;">${c.chordName}</div>
+          <div style="font-size:0.72rem; color:#cbd5e1; font-family:monospace;">[${c.notesNames}]</div>
+          ${renderMiniChordNeckSvg(c.notesMidi, c.notesMidi[0] - 12, neckMode)}
+          <div style="font-size:0.68rem; color:#94a3b8; margin-top:4px;">${c.role}</div>
+        </button>
+        <button type="button" class="btn js-dh-deg-add" data-idx="${c.degIdx}" style="font-size:0.7rem; padding:3px 6px; width:100%; background:rgba(16,185,129,0.18); color:#34d399; border:1px solid rgba(16,185,129,0.4);">+ Añadir a Progresión</button>
+      </div>
+    `
+      )
+      .join('');
+
+    if (customChain.length === 0) {
+      chainEl.innerHTML = `<span style="font-size:0.8rem; color:var(--text-muted);">Tu cadena está vacía. Pulsa "+ Añadir a Progresión" en cualquier grado arriba.</span>`;
+    } else {
+      chainEl.innerHTML = customChain
+        .map((dIdx, pos) => {
+          const c = chords[dIdx] || chords[0];
+          return `
+            <button type="button" class="btn js-dh-chain-step" data-idx="${dIdx}" style="background:rgba(245,158,11,0.18); color:#fbbf24; border:1px solid rgba(245,158,11,0.45); font-size:0.8rem;">
+              ${pos + 1}. <strong>${c.chordName}</strong> (${c.roman})
+            </button>
+          `;
+        })
+        .join('<span style="color:#64748b;">→</span>');
+    }
+  };
+
+  renderHarmonizer();
+
+  rootSel.addEventListener('change', () => {
+    rootPc = parseInt(rootSel.value, 10);
+    renderHarmonizer();
+  });
+  scaleSel.addEventListener('change', () => {
+    scaleId = scaleSel.value;
+    renderHarmonizer();
+  });
+  sizeSel.addEventListener('change', () => {
+    stackSize = parseInt(sizeSel.value, 10);
+    renderHarmonizer();
+  });
+  neckSel.addEventListener('change', () => {
+    neckMode = (neckSel.value as 'guitar' | 'bass') || 'guitar';
+    renderHarmonizer();
+  });
+
+  stage.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const chords = computeDegreeChords();
+
+    const playDeg = target.closest<HTMLElement>('.js-dh-deg-play, .js-dh-chain-step');
+    if (playDeg) {
+      const idx = parseInt(playDeg.getAttribute('data-idx')!, 10);
+      const c = chords[idx];
+      audio.stopAll();
+      audio.playElectricBass(c.notesMidi[0] - 12, 1.3, 0, 0.35, 'finger', false);
+      audio.strumChord(c.notesMidi, neckMode === 'bass' ? 'guitar' : 'piano', 0, false);
+      onStatus(`Grado ${idx + 1}: ${c.chordName} (${c.notesNames}) — ${c.role}`);
+      return;
+    }
+
+    const addDeg = target.closest<HTMLElement>('.js-dh-deg-add');
+    if (addDeg) {
+      const idx = parseInt(addDeg.getAttribute('data-idx')!, 10);
+      if (customChain.length >= 8) customChain.shift();
+      customChain.push(idx);
+      renderHarmonizer();
+      const c = chords[idx];
+      audio.stopAll();
+      audio.strumChord(c.notesMidi, 'piano', 0, false);
+      onStatus(`Añadido ${c.chordName} a tu progresión`);
+      return;
+    }
+
+    if (target.closest('.js-dh-play-all')) {
+      audio.stopAll();
+      chords.forEach((c, i) => {
+        audio.playElectricBass(c.notesMidi[0] - 12, 0.75, i * 0.72, 0.32, 'finger', false);
+        audio.strumChord(c.notesMidi, 'piano', i * 0.72, false);
+      });
+      onStatus(`Reproduciendo los 7 grados armonizados de ${NOTE_NAMES[rootPc]} (${scaleId})`);
+    } else if (target.closest('.js-dh-play-chain')) {
+      audio.stopAll();
+      customChain.forEach((dIdx, i) => {
+        const c = chords[dIdx] || chords[0];
+        audio.playElectricBass(c.notesMidi[0] - 12, 0.9, i * 0.88, 0.36, 'finger', false);
+        audio.strumChord(c.notesMidi, 'piano', i * 0.88, false);
+      });
+      onStatus('Reproduciendo tu progresión personalizada con piano y bajo');
+    } else if (target.closest('.js-dh-clear-chain')) {
+      customChain = [];
+      renderHarmonizer();
+    } else if (target.closest('.js-dh-stop')) {
+      audio.stopAll();
+    }
+  });
+}
+
+/**
+ * Interactive Neo-Riemannian Tonnetz & P/L/R/Slide Explorer (`data-lab="neo-riemann"`)
+ */
+function buildNeoRiemannTonnetzLab(
+  stage: HTMLElement,
+  audio: MusicAudioEngine,
+  onStatus: (msg: string) => void
+): void {
+  let treeSeedRoot = 0; // Root of the Neo-Riemannian tree (changeable!)
+  let treeSeedMinor = false;
+  let rootPc = 0; // Currently selected/sounding chord
+  let isMinor = false;
+  let neckMode: 'guitar' | 'bass' = 'guitar';
+  let treeView: 'genealogy' | 'radial' = 'genealogy';
+  let history: string[] = ['C (C–E–G)'];
+
+  const getTriadMidis = (r: number, minor: boolean): number[] => {
+    const base = 48 + r;
+    return [base, base + (minor ? 3 : 4), base + 7];
+  };
+
+  const stepTransform = (
+    r: number,
+    minor: boolean,
+    op: 'P' | 'L' | 'R' | 'S' | 'N'
+  ): { root: number; minor: boolean } => {
+    if (op === 'P') return { root: r, minor: !minor };
+    if (op === 'L') return { root: (r + (minor ? 8 : 4)) % 12, minor: !minor };
+    if (op === 'R') return { root: (r + (minor ? 3 : 9)) % 12, minor: !minor };
+    if (op === 'S') return { root: (r + (minor ? 11 : 1)) % 12, minor: !minor };
+    return { root: (r + (minor ? 7 : 5)) % 12, minor: !minor };
+  };
+
+  const triadLabel = (r: number, minor: boolean): string =>
+    `${NOTE_NAMES[r]}${minor ? 'm' : ''}`;
+
+  const triadKey = (r: number, minor: boolean): string => `${r}-${minor ? 'm' : 'M'}`;
+
+  const applyTransform = (op: 'P' | 'L' | 'R' | 'S' | 'N') => {
+    const next = stepTransform(rootPc, isMinor, op);
+    rootPc = next.root;
+    isMinor = next.minor;
+    const midis = getTriadMidis(rootPc, isMinor);
+    const notesStr = midis.map((m) => NOTE_NAMES[m % 12]).join('–');
+    const name = `${triadLabel(rootPc, isMinor)} (${notesStr})`;
+    history.push(`[${op}] → ${name}`);
+    if (history.length > 7) history.shift();
+
+    audio.stopAll();
+    audio.playElectricBass(36 + rootPc, 1.4, 0, 0.36, 'finger', false);
+    audio.strumChord([...midis, midis[0] + 12], 'piano', 0, false);
+    render();
+    onStatus(`Transformación ${op}: ${name}`);
+  };
+
+  const renderGenealogyTreeSvg = (): string => {
+    const w = 780;
+    const h = 370;
+    const visited = new Set<string>();
+    const seedKey = triadKey(treeSeedRoot, treeSeedMinor);
+    visited.add(seedKey);
+
+    interface TNode {
+      root: number;
+      minor: boolean;
+      op: string;
+      x: number;
+      y: number;
+      r: number;
+      repeated: boolean;
+      children: TNode[];
+    }
+
+    const rootNode: TNode = {
+      root: treeSeedRoot,
+      minor: treeSeedMinor,
+      op: 'Raíz',
+      x: w / 2,
+      y: 34,
+      r: 18,
+      repeated: false,
+      children: [],
+    };
+
+    const ops1: ('P' | 'R' | 'L')[] = ['P', 'R', 'L'];
+    const gen1Xs = [w * 0.175, w * 0.5, w * 0.825];
+    ops1.forEach((op1, i1) => {
+      const c1 = stepTransform(rootNode.root, rootNode.minor, op1);
+      const k1 = triadKey(c1.root, c1.minor);
+      const rep1 = visited.has(k1);
+      visited.add(k1);
+      const n1: TNode = {
+        root: c1.root,
+        minor: c1.minor,
+        op: op1,
+        x: gen1Xs[i1],
+        y: 112,
+        r: 16,
+        repeated: rep1,
+        children: [],
+      };
+      rootNode.children.push(n1);
+
+      // Gen 2: 3 children per Gen 1 node (P, R, L)
+      const spread2 = 76;
+      ops1.forEach((op2, i2) => {
+        const c2 = stepTransform(n1.root, n1.minor, op2);
+        const k2 = triadKey(c2.root, c2.minor);
+        const rep2 = visited.has(k2);
+        visited.add(k2);
+        const n2: TNode = {
+          root: c2.root,
+          minor: c2.minor,
+          op: op2,
+          x: n1.x + (i2 - 1) * spread2,
+          y: 202,
+          r: 14.5,
+          repeated: rep2,
+          children: [],
+        };
+        n1.children.push(n2);
+
+        // Gen 3: only expand if not already repeated (just like Image 7!)
+        if (!rep2) {
+          const spread3 = 26;
+          ops1.forEach((op3, i3) => {
+            const c3 = stepTransform(n2.root, n2.minor, op3);
+            const k3 = triadKey(c3.root, c3.minor);
+            const rep3 = visited.has(k3);
+            visited.add(k3);
+            n2.children.push({
+              root: c3.root,
+              minor: c3.minor,
+              op: op3,
+              x: n2.x + (i3 - 1) * spread3,
+              y: 298,
+              r: 11.5,
+              repeated: rep3,
+              children: [],
+            });
+          });
+        }
+      });
+    });
+
+    const edges: string[] = [];
+    const nodes: string[] = [];
+    const walk = (n: TNode) => {
+      n.children.forEach((ch) => {
+        edges.push(`<line x1="${n.x}" y1="${n.y}" x2="${ch.x}" y2="${ch.y}" stroke="${ch.repeated ? '#22c55e' : '#64748b'}" stroke-width="${ch.repeated ? 1.2 : 1.5}" opacity="0.8"/>`);
+        if (n.y < 140) {
+          const mx = (n.x + ch.x) / 2;
+          const my = (n.y + ch.y) / 2 - 4;
+          edges.push(`<text x="${mx}" y="${my}" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="800">${ch.op}</text>`);
+        }
+        walk(ch);
+      });
+      const isSelected = n.root === rootPc && n.minor === isMinor;
+      const strokeCol = isSelected ? '#fbbf24' : n.repeated ? '#22c55e' : n.minor ? '#38bdf8' : '#f472b6';
+      const fillCol = isSelected ? 'rgba(245,158,11,0.28)' : n.repeated ? 'rgba(34,197,94,0.12)' : '#090d16';
+      const label = triadLabel(n.root, n.minor);
+      nodes.push(`
+        <g class="js-nr-tree-node" data-root="${n.root}" data-minor="${n.minor ? '1' : '0'}" data-op="${n.op}" style="cursor:pointer;">
+          <circle cx="${n.x}" cy="${n.y}" r="${n.r}" fill="${fillCol}" stroke="${strokeCol}" stroke-width="${isSelected ? 2.6 : 1.7}"/>
+          <text x="${n.x}" y="${n.y + 3.5}" text-anchor="middle" fill="${isSelected ? '#fef08a' : strokeCol}" font-size="${n.r < 13 ? 8.2 : 10.5}" font-weight="900">${label}</text>
+        </g>
+      `);
+    };
+    walk(rootNode);
+
+    return `
+      <svg viewBox="0 0 ${w} ${h}" style="width:100%; max-width:800px; height:auto; background:rgba(7,10,18,0.86); border:1px solid rgba(56,189,248,0.28); border-radius:10px; user-select:none;">
+        ${edges.join('')}
+        ${nodes.join('')}
+        <text x="${w / 2}" y="${h - 14}" text-anchor="middle" fill="#4ade80" font-size="11" font-weight="700">
+          Los nodos verdes ya aparecieron arriba (por eso no necesitan descendencia) · Rosa = Mayor · Azul = Menor · Clic en cualquier nodo para sonar
+        </text>
+      </svg>
+    `;
+  };
+
+  const renderRadialFractalTreeSvg = (): string => {
+    const size = 660;
+    const cx = size / 2;
+    const cy = size / 2;
+    const edges: string[] = [];
+    const nodes: string[] = [];
+
+    const ops: ('P' | 'R' | 'L')[] = ['P', 'R', 'L'];
+    const pushNode = (x: number, y: number, r: number, root: number, minor: boolean, op: string, circleR: number) => {
+      const isSel = root === rootPc && minor === isMinor;
+      const col = isSel ? '#fbbf24' : minor ? '#38bdf8' : '#f472b6';
+      const label = triadLabel(root, minor);
+      nodes.push(`
+        <g class="js-nr-tree-node" data-root="${root}" data-minor="${minor ? '1' : '0'}" data-op="${op}" style="cursor:pointer;">
+          <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${circleR}" fill="${isSel ? 'rgba(245,158,11,0.3)' : '#090d16'}" stroke="${col}" stroke-width="${isSel ? 2.8 : 1.6}"/>
+          <text x="${x.toFixed(1)}" y="${(y + 3.4).toFixed(1)}" text-anchor="middle" fill="${isSel ? '#fef08a' : col}" font-size="${circleR < 13 ? 8.2 : 10.2}" font-weight="900">${label}</text>
+        </g>
+      `);
+    };
+
+    // Center node
+    pushNode(cx, cy, 0, treeSeedRoot, treeSeedMinor, 'Centro', 18);
+
+    // 3 primary branches separated by 120 deg (-90 = P up, +150 = R down-left, +30 = L down-right)
+    const baseAngles = [-90, 150, 30];
+    baseAngles.forEach((deg1, bIdx) => {
+      const op1 = ops[bIdx];
+      const n1 = stepTransform(treeSeedRoot, treeSeedMinor, op1);
+      const a1 = (deg1 * Math.PI) / 180;
+      const x1 = cx + 74 * Math.cos(a1);
+      const y1 = cy + 74 * Math.sin(a1);
+      edges.push(`<line x1="${cx}" y1="${cy}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="#94a3b8" stroke-width="1.6"/>`);
+      pushNode(x1, y1, 74, n1.root, n1.minor, op1, 15);
+
+      // 3 branches out from Gen 1 (center backward-inner leaf + 2 outer branches at ±38 deg)
+      const subAngles2 = [deg1 - 42, deg1 + 42, deg1 + 180];
+      const subDists2 = [76, 76, 36];
+      const subOps2 = ops.filter((_, idx) => idx !== 0);
+      [subOps2[0], subOps2[1], op1].forEach((op2, i2) => {
+        const n2 = stepTransform(n1.root, n1.minor, op2);
+        const a2 = (subAngles2[i2] * Math.PI) / 180;
+        const x2 = x1 + subDists2[i2] * Math.cos(a2);
+        const y2 = y1 + subDists2[i2] * Math.sin(a2);
+        edges.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#64748b" stroke-width="1.3"/>`);
+        pushNode(x2, y2, 150, n2.root, n2.minor, op2, i2 === 2 ? 11.5 : 14);
+
+        if (i2 < 2) {
+          // 3 outward branches to Gen 3 (just like Image 8)
+          const subAngles3 = [subAngles2[i2] - 26, subAngles2[i2] + 26, subAngles2[i2] + 150];
+          const subDists3 = [72, 72, 34];
+          ops.forEach((op3, i3) => {
+            const n3 = stepTransform(n2.root, n2.minor, op3);
+            const a3 = (subAngles3[i3] * Math.PI) / 180;
+            const x3 = x2 + subDists3[i3] * Math.cos(a3);
+            const y3 = y2 + subDists3[i3] * Math.sin(a3);
+            edges.push(`<line x1="${x2.toFixed(1)}" y1="${y2.toFixed(1)}" x2="${x3.toFixed(1)}" y2="${y3.toFixed(1)}" stroke="#475569" stroke-width="1.1"/>`);
+            pushNode(x3, y3, 220, n3.root, n3.minor, op3, i3 === 2 ? 10.5 : 12.5);
+
+            if (i3 < 2) {
+              // Gen 4 outer tips
+              const tipOffsets = [-16, 0, 16];
+              ops.forEach((op4, i4) => {
+                const n4 = stepTransform(n3.root, n3.minor, op4);
+                const a4 = ((subAngles3[i3] + tipOffsets[i4]) * Math.PI) / 180;
+                const x4 = x3 + 56 * Math.cos(a4);
+                const y4 = y3 + 56 * Math.sin(a4);
+                edges.push(`<line x1="${x3.toFixed(1)}" y1="${y3.toFixed(1)}" x2="${x4.toFixed(1)}" y2="${y4.toFixed(1)}" stroke="#334155" stroke-width="1"/>`);
+                pushNode(x4, y4, 290, n4.root, n4.minor, op4, 11);
+              });
+            }
+          });
+        }
+      });
+    });
+
+    return `
+      <svg viewBox="0 0 ${size} ${size}" style="width:100%; max-width:650px; height:auto; background:rgba(7,10,18,0.88); border:1px solid rgba(244,114,182,0.32); border-radius:12px; user-select:none;">
+        ${edges.join('')}
+        ${nodes.join('')}
+      </svg>
+    `;
+  };
+
+  const render = () => {
+    const midis = getTriadMidis(rootPc, isMinor);
+    const notesStr = midis.map((m) => NOTE_NAMES[m % 12]).join(' – ');
+    const currentName = `${NOTE_NAMES[rootPc]}${isMinor ? ' Menor' : ' Mayor'}`;
+
+    const pNext = stepTransform(rootPc, isMinor, 'P');
+    const lNext = stepTransform(rootPc, isMinor, 'L');
+    const rNext = stepTransform(rootPc, isMinor, 'R');
+    const sNext = stepTransform(rootPc, isMinor, 'S');
+
+    stage.innerHTML = `
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+          <label style="font-size:0.8rem; font-weight:700; color:var(--accent-gold);">Raíz del Árbol:</label>
+          <select class="js-nr-seed-root">
+            ${NOTE_LABELS.map((l, i) => `<option value="${i}" ${i === treeSeedRoot ? 'selected' : ''}>${l}</option>`).join('')}
+          </select>
+          <select class="js-nr-seed-qual">
+            <option value="0" ${!treeSeedMinor ? 'selected' : ''}>Mayor (1–3–5)</option>
+            <option value="1" ${treeSeedMinor ? 'selected' : ''}>Menor (1–♭3–5)</option>
+          </select>
+          <button type="button" class="btn js-nr-tree-view" data-view="genealogy" style="font-size:0.76rem; padding:4px 10px; background:${treeView === 'genealogy' ? 'rgba(56,189,248,0.24)' : 'rgba(30,41,59,0.9)'}; color:${treeView === 'genealogy' ? '#38bdf8' : '#cbd5e1'}; border:1px solid ${treeView === 'genealogy' ? '#38bdf8' : '#334155'};">🌳 Árbol Genealógico P/L/R</button>
+          <button type="button" class="btn js-nr-tree-view" data-view="radial" style="font-size:0.76rem; padding:4px 10px; background:${treeView === 'radial' ? 'rgba(244,114,182,0.24)' : 'rgba(30,41,59,0.9)'}; color:${treeView === 'radial' ? '#f472b6' : '#cbd5e1'}; border:1px solid ${treeView === 'radial' ? '#ec4899' : '#334155'};">❄️ Árbol Radial Fractal</button>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="btn js-nr-neck" data-mode="guitar" style="font-size:0.75rem; background:${neckMode === 'guitar' ? 'rgba(245,158,11,0.22)' : 'rgba(30,41,59,0.9)'}; color:${neckMode === 'guitar' ? '#fbbf24' : '#94a3b8'}; border:1px solid ${neckMode === 'guitar' ? '#f59e0b' : '#334155'};">🎸 Guitarra (6c)</button>
+          <button type="button" class="btn js-nr-neck" data-mode="bass" style="font-size:0.75rem; background:${neckMode === 'bass' ? 'rgba(56,189,248,0.22)' : 'rgba(30,41,59,0.9)'}; color:${neckMode === 'bass' ? '#38bdf8' : '#94a3b8'}; border:1px solid ${neckMode === 'bass' ? '#38bdf8' : '#334155'};">🎸 Bajo (4c)</button>
+          <button type="button" class="btn js-nr-reset" style="background:rgba(56,189,248,0.16); color:#38bdf8;">🔄 Centro</button>
+          <button type="button" class="btn btn-primary js-nr-cinema">🎬 Ciclo Imperial (C → Abm → Em → C)</button>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:center; margin-bottom:14px;">
+        ${treeView === 'radial' ? renderRadialFractalTreeSvg() : renderGenealogyTreeSvg()}
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; background:rgba(15,23,42,0.85); border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:12px;">
+        <div>
+          <span style="font-size:0.78rem; color:var(--accent-cyan);">Acorde Sonando / Seleccionado:</span>
+          <div style="font-size:1.35rem; font-weight:900; color:var(--accent-gold);">${currentName} <span style="font-size:0.95rem; color:#f8fafc; font-family:monospace;">[${notesStr}]</span></div>
+          <div style="font-size:0.78rem; color:#cbd5e1; margin-top:4px;"><strong>🧭 Ruta:</strong> ${history.join(' ')}</div>
+        </div>
+        ${renderMiniChordNeckSvg(midis, 36 + rootPc, neckMode)}
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:10px;">
+        <button type="button" class="js-nr-op" data-op="P" style="background:rgba(30,41,59,0.92); border:1px solid #f59e0b; border-radius:8px; padding:10px; text-align:left; color:#f8fafc; cursor:pointer;">
+          <div style="font-weight:800; color:#fbbf24; font-size:0.92rem;">P · Paralelo → ${triadLabel(pNext.root, pNext.minor)}</div>
+          <div style="font-size:0.74rem; color:#cbd5e1; margin-top:3px;">Conserva 1ª y 5ª; mueve la 3ª un semitono.</div>
+        </button>
+        <button type="button" class="js-nr-op" data-op="L" style="background:rgba(30,41,59,0.92); border:1px solid #38bdf8; border-radius:8px; padding:10px; text-align:left; color:#f8fafc; cursor:pointer;">
+          <div style="font-weight:800; color:#38bdf8; font-size:0.92rem;">L · Leading-Tone → ${triadLabel(lNext.root, lNext.minor)}</div>
+          <div style="font-size:0.74rem; color:#cbd5e1; margin-top:3px;">Conserva la 3ª menor; mueve la otra nota 1 semitono.</div>
+        </button>
+        <button type="button" class="js-nr-op" data-op="R" style="background:rgba(30,41,59,0.92); border:1px solid #10b981; border-radius:8px; padding:10px; text-align:left; color:#f8fafc; cursor:pointer;">
+          <div style="font-weight:800; color:#34d399; font-size:0.92rem;">R · Relativo → ${triadLabel(rNext.root, rNext.minor)}</div>
+          <div style="font-size:0.74rem; color:#cbd5e1; margin-top:3px;">Conserva la 3ª mayor; mueve la otra nota 1 tono.</div>
+        </button>
+        <button type="button" class="js-nr-op" data-op="S" style="background:rgba(30,41,59,0.92); border:1px solid #a855f7; border-radius:8px; padding:10px; text-align:left; color:#f8fafc; cursor:pointer;">
+          <div style="font-weight:800; color:#c084fc; font-size:0.92rem;">Slide → ${triadLabel(sNext.root, sNext.minor)}</div>
+          <div style="font-size:0.74rem; color:#cbd5e1; margin-top:3px;">Mantiene fija la 3ª y desliza 1ª y 5ª medio tono.</div>
+        </button>
+      </div>
+    `;
+  };
+
+  render();
+
+  stage.addEventListener('change', (e) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('js-nr-seed-root') || target.classList.contains('js-nr-seed-qual')) {
+      const rSel = stage.querySelector<HTMLSelectElement>('.js-nr-seed-root')!;
+      const qSel = stage.querySelector<HTMLSelectElement>('.js-nr-seed-qual')!;
+      treeSeedRoot = parseInt(rSel.value, 10);
+      treeSeedMinor = qSel.value === '1';
+      rootPc = treeSeedRoot;
+      isMinor = treeSeedMinor;
+      const midis = getTriadMidis(rootPc, isMinor);
+      history = [`${triadLabel(rootPc, isMinor)} (${midis.map((m) => NOTE_NAMES[m % 12]).join('–')})`];
+      audio.stopAll();
+      audio.playElectricBass(36 + rootPc, 1.3, 0, 0.36, 'finger', false);
+      audio.strumChord([...midis, midis[0] + 12], 'piano', 0, false);
+      render();
+      onStatus(`Árbol Neo-Riemanniano centrado en ${triadLabel(rootPc, isMinor)}`);
+    }
+  });
+
+  stage.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const viewBtn = target.closest<HTMLElement>('.js-nr-tree-view');
+    if (viewBtn) {
+      treeView = (viewBtn.getAttribute('data-view') as 'genealogy' | 'radial') || 'genealogy';
+      render();
+      return;
+    }
+    const treeNode = target.closest<HTMLElement>('.js-nr-tree-node');
+    if (treeNode) {
+      rootPc = parseInt(treeNode.getAttribute('data-root')!, 10);
+      isMinor = treeNode.getAttribute('data-minor') === '1';
+      const op = treeNode.getAttribute('data-op') || '';
+      const midis = getTriadMidis(rootPc, isMinor);
+      const notesStr = midis.map((m) => NOTE_NAMES[m % 12]).join('–');
+      history.push(`[${op}] → ${triadLabel(rootPc, isMinor)}`);
+      if (history.length > 7) history.shift();
+      audio.stopAll();
+      audio.playElectricBass(36 + rootPc, 1.35, 0, 0.36, 'finger', false);
+      audio.strumChord([...midis, midis[0] + 12], 'piano', 0, false);
+      render();
+      onStatus(`Nodo del Árbol (${op}): ${triadLabel(rootPc, isMinor)} (${notesStr})`);
+      return;
+    }
+    const neckBtn = target.closest<HTMLElement>('.js-nr-neck');
+    if (neckBtn) {
+      neckMode = (neckBtn.getAttribute('data-mode') as 'guitar' | 'bass') || 'guitar';
+      render();
+      onStatus(`Tonnetz: Diagrama cambiado a ${neckMode === 'bass' ? 'Bajo Eléctrico (4 Cuerdas)' : 'Guitarra (6 Cuerdas)'}`);
+      return;
+    }
+    const opBtn = target.closest<HTMLElement>('.js-nr-op');
+    if (opBtn) {
+      const op = opBtn.getAttribute('data-op') as 'P' | 'L' | 'R' | 'S';
+      applyTransform(op);
+      return;
+    }
+    if (target.closest('.js-nr-reset')) {
+      rootPc = treeSeedRoot;
+      isMinor = treeSeedMinor;
+      const midis = getTriadMidis(rootPc, isMinor);
+      history = [`${triadLabel(rootPc, isMinor)} (${midis.map((m) => NOTE_NAMES[m % 12]).join('–')})`];
+      audio.stopAll();
+      audio.strumChord([...midis, midis[0] + 12], 'piano', 0, false);
+      render();
+      onStatus(`Árbol reiniciado en ${triadLabel(rootPc, isMinor)}`);
+    } else if (target.closest('.js-nr-cinema')) {
+      audio.stopAll();
+      const base = 48 + treeSeedRoot;
+      const seq = [
+        [base, base + 4, base + 7, base + 12],
+        [base - 4, base + 3, base + 8, base + 11],
+        [base - 8, base + 4, base + 7, base + 11],
+        [base, base + 4, base + 7, base + 12],
+      ];
+      seq.forEach((ch, idx) => audio.strumChord(ch, 'piano', idx * 0.9, false));
+      onStatus(`Reproduciendo Ciclo Hexatónico Cinematográfico desde ${NOTE_NAMES[treeSeedRoot]}`);
+    }
+  });
+}
+
+/**
+ * SPECIALIZED LAB 7: Melody Reharmonizer (1 Fixed Melody Note E4 = 329.6 Hz over 6 Different Chords)
+ * Ensures the top melody note E4 (MIDI 64) is ALWAYS the crystal-clear top note of every chord voicing!
  */
 function buildHarmonizerWidget(
   stage: HTMLElement,
@@ -3772,25 +5536,67 @@ function buildHarmonizerWidget(
   onStatus: (msg: string) => void
 ): void {
   const options = [
-    { name: '1) C Mayor (Nota E4 = 3ª Mayor)', chord: [48, 55, 60], mel: 64, role: 'Luminoso, estable y hogareño.' },
-    { name: '2) Am9 (Nota E4 = 5ª Justa)', chord: [45, 52, 55, 59], mel: 64, role: 'Melancólico, reflexivo y profundo.' },
-    { name: '3) Fmaj7 (Nota E4 = 7ª Mayor)', chord: [41, 48, 52, 57], mel: 64, role: 'Nostálgico, flotante y cinematográfico.' },
-    { name: '4) Dm9 (Nota E4 = 9ª Mayor)', chord: [50, 53, 57, 60], mel: 64, role: 'Sofisticado, urbano, neo-soul / jazz.' },
-    { name: '5) Bbmaj7(#11) (Nota E4 = #11 Lidia)', chord: [46, 53, 57, 62], mel: 64, role: 'Maravilla espacial, sorpresa luminosa.' },
-    { name: '6) C#m7 / Ab7(#5) (Nota E4 = b3 / b13)', chord: [44, 52, 54, 60], mel: 64, role: 'Giro dramático e inesperado.' },
+    {
+      name: '1) C Mayor (Nota E4 = 3ª Mayor en el Tope)',
+      chord: [48, 55, 60, 64], // C3 - G3 - C4 - E4 (E4 is the exact top note!)
+      bass: 36, // C2
+      mel: 64,
+      role: 'Luminoso, estable y hogareño (E4 actúa como 3ª Mayor consonante).',
+    },
+    {
+      name: '2) Am9 (Nota E4 = 5ª Justa en el Tope)',
+      chord: [45, 55, 59, 60, 64], // A2 - G3 - B3 - C4 - E4
+      bass: 33, // A1
+      mel: 64,
+      role: 'Melancólico, reflexivo y profundo (E4 actúa como 5ª Justa de La menor).',
+    },
+    {
+      name: '3) Fmaj7 (Nota E4 = 7ª Mayor en el Tope)',
+      chord: [41, 53, 57, 60, 64], // F2 - F3 - A3 - C4 - E4
+      bass: 29, // F1
+      mel: 64,
+      role: 'Nostálgico, flotante y cinematográfico (E4 es la 7ª Mayor de Fa).',
+    },
+    {
+      name: '4) Dm9 (Nota E4 = 9ª Mayor en el Tope)',
+      chord: [50, 53, 57, 60, 64], // D3 - F3 - A3 - C4 - E4
+      bass: 38, // D2
+      mel: 64,
+      role: 'Sofisticado, urbano, neo-soul / jazz (E4 es la 9ª de Re menor).',
+    },
+    {
+      name: '5) Bbmaj7(#11) (Nota E4 = #11 Lidia en el Tope)',
+      chord: [46, 53, 57, 62, 64], // Bb2 - F3 - A3 - D4 - E4
+      bass: 34, // Bb1
+      mel: 64,
+      role: 'Maravilla espacial y sorpresa luminosa (E4 es la #11 Lidia sobre Sib).',
+    },
+    {
+      name: '6) C#m7 (Nota E4 = ♭3 Menor Dramática en el Tope)',
+      chord: [49, 56, 59, 64], // C#3 - G#3 - B3 - E4
+      bass: 37, // C#2
+      mel: 64,
+      role: 'Giro dramático e inesperado (el mismo Mi4 se resignifica como ♭3 de Do# menor).',
+    },
   ];
 
   stage.innerHTML = `
-    <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom:10px;">
-      La nota melódica superior es siempre <strong>E4 (Mi4, 329.6 Hz)</strong>, pero al cambiar el acorde que la sostiene debajo, cambia radicalmente su función interválica y su emoción:
-    </p>
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px;">
+      <p style="font-size:0.84rem; color:var(--text-muted); margin:0;">
+        <strong>Efecto Kuleshov Armónico:</strong> La nota más aguda de los 6 botones es <strong>SIEMPRE E4 (Mi4 = 329.6 Hz, sin ninguna nota por encima)</strong>. Escucha primero la nota E4 sola y luego haz clic en cada acorde para oír cómo cambia de emoción según el bajo que la sostiene:
+      </p>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button type="button" class="btn js-reharm-e4-only" style="background:rgba(16,185,129,0.18); color:#34d399; border:1px solid rgba(16,185,129,0.4); font-size:0.78rem;">🔊 Escuchar Solo la Nota Fija E4 (329.6 Hz)</button>
+        <button type="button" class="btn btn-primary js-reharm-play-all" style="font-size:0.78rem;">▶ Comparar los 6 Colores en Secuencia</button>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px;">
       ${options
         .map(
           (o, idx) => `
         <button type="button" class="js-reharm-card" data-idx="${idx}" style="background:rgba(15,23,42,0.9); border:1px solid rgba(56,189,248,0.4); border-radius:8px; padding:12px; text-align:left; cursor:pointer; color:#f8fafc;">
           <div style="font-weight:800; color:var(--accent-gold); font-size:0.88rem; margin-bottom:4px;">${o.name}</div>
-          <div style="font-size:0.76rem; color:var(--text-muted);">${o.role}</div>
+          <div style="font-size:0.75rem; color:var(--text-muted);">${o.role}</div>
         </button>
       `
         )
@@ -3798,15 +5604,37 @@ function buildHarmonizerWidget(
     </div>
   `;
 
+  const playOneReharm = (idx: number, delay = 0) => {
+    const o = options[idx];
+    audio.playElectricBass(o.bass, 1.5, delay, 0.36, 'finger', false);
+    // Play all chord voices synchronously in the same piano timbre so E4 shines cleanly on top
+    o.chord.forEach((m) => {
+      const isTopE4 = m === 64;
+      audio.playAcousticPiano(m, isTopE4 ? 1.8 : 1.4, delay, isTopE4 ? 0.32 : 0.18, false);
+    });
+  };
+
   stage.addEventListener('click', (e) => {
-    const card = (e.target as HTMLElement).closest<HTMLElement>('.js-reharm-card');
+    const target = e.target as HTMLElement;
+    if (target.closest('.js-reharm-e4-only')) {
+      audio.stopAll();
+      audio.playAcousticPiano(64, 1.6, 0, 0.34, false);
+      onStatus('Nota testigo pura: E4 (Mi4 = 329.6 Hz)');
+      return;
+    }
+    if (target.closest('.js-reharm-play-all')) {
+      audio.stopAll();
+      options.forEach((_o, i) => playOneReharm(i, i * 1.15));
+      onStatus('Comparando los 6 acordes bajo la misma nota melódica fija E4');
+      return;
+    }
+    const card = target.closest<HTMLElement>('.js-reharm-card');
     if (!card) return;
     const idx = parseInt(card.getAttribute('data-idx')!, 10);
     const o = options[idx];
     audio.stopAll();
-    audio.strumChord(o.chord, 'piano', 0, false);
-    audio.playPluckedGuitar(o.mel, 1.6, 0.12, 0.34, false);
-    onStatus(`Rearmonización: ${o.name} — ${o.role}`);
+    playOneReharm(idx, 0);
+    onStatus(`Rearmonización con E4 fija en el tope: ${o.name}`);
   });
 }
 
@@ -3846,13 +5674,26 @@ function buildUsarWidget(
     usarType === 'prog-intercambio' ||
     usarType === 'mod-botones'
   ) {
-    const titles: Record<string, string> = {
-      'prog-arquetipos': 'Explorador de Arquetipos Armónicos y Ciclos Diatónicos',
-      'prog-legacy': 'Constructor de Progresiones y Cadencias Funcionales',
-      'prog-intercambio': 'Comparador de Intercambio Modal y Dominantes Secundarios',
-      'mod-botones': 'Simulador de Modulaciones (Pivote, Directa, Cromática y Enarmónica)',
+    const configMap: Record<string, { title: string; context: string }> = {
+      'prog-arquetipos': {
+        title: 'Explorador de Arquetipos Armónicos y Ciclos Diatónicos (+ Bajo 4 Cuerdas)',
+        context: 'archetypes',
+      },
+      'prog-legacy': {
+        title: 'Constructor de Progresiones y Cadencias Funcionales (Auténtica, Plagal, Rota y Frigia)',
+        context: 'cadences',
+      },
+      'prog-intercambio': {
+        title: 'Comparador de Intercambio Modal, Backdoor 2-5-1 y Dominantes Secundarios',
+        context: 'interchange',
+      },
+      'mod-botones': {
+        title: 'Simulador de Modulaciones (Pivote, Directa +1 Semitono, Enarmónica °7 y Nota Común)',
+        context: 'mod-pivot',
+      },
     };
-    buildProgressionWidget(host, audio, onStatus, titles[usarType]);
+    const cfg = configMap[usarType] || configMap['prog-arquetipos'];
+    buildProgressionWidget(host, audio, onStatus, cfg.title, cfg.context);
   } else if (usarType === 'quena-lab' || usarType === 'quena-demos') {
     host.innerHTML = `
       <div class="widget-header">
@@ -3932,6 +5773,18 @@ function buildDataLabStage(
 
   if (labType === 'harmonics-lab') {
     buildHarmonicsOscilloscopeLab(stage, audio, onStatus);
+  } else if (labType === 'interval-9th-visualizer') {
+    buildInterval9thVisualizerLab(stage, audio, onStatus);
+  } else if (labType === 'polychord-visualizer') {
+    buildPolychordVisualizerLab(stage, audio, onStatus);
+  } else if (labType === 'neighbor-chords-visualizer') {
+    buildNeighborChordsVisualizerLab(stage, audio, onStatus);
+  } else if (labType === 'fretboard-triads-visualizer') {
+    buildFretboardTriadsVisualizerLab(stage, audio, onStatus);
+  } else if (labType === 'modes-network-14') {
+    buildModes14NetworkLab(stage, audio, onStatus);
+  } else if (labType === 'tension-pyramid-visualizer') {
+    buildTensionPyramidLab(stage, audio, onStatus);
   } else if (isBassInstrument || labType === 'bass-line-lab' || labType === 'bass-gym-lab') {
     buildDedicatedBassLab(
       stage,
@@ -3974,22 +5827,39 @@ function buildDataLabStage(
   } else if (labType === 'reading-lab' || labType === 'ear-lab') {
     buildEarAndReadingTrainerLab(stage, audio, onStatus, labType === 'reading-lab');
   } else if (labType === 'harmonizer') {
-    buildHarmonizerWidget(stage, audio, onStatus);
+    buildDiatonicScaleHarmonizerLab(stage, audio, onStatus);
+  } else if (labType === 'neo-riemann') {
+    buildNeoRiemannTonnetzLab(stage, audio, onStatus);
   } else if (
     labType === 'progression-lab' ||
-    labType === 'neo-riemann' ||
     labType === 'voice-leading' ||
     labType === 'form-lab' ||
     labType === 'arrangement-lab'
   ) {
-    buildProgressionWidget(
-      stage,
-      audio,
-      onStatus,
-      labType === 'neo-riemann'
-        ? 'Laboratorio de Transformaciones Neo-Riemannianas (P, L, R)'
-        : 'Laboratorio de Progresiones y Conducción de Voces'
-    );
+    const presetAttr = article.getAttribute('data-preset') || '';
+    let contextKey = 'archetypes';
+    let labTitle = 'Laboratorio de Progresiones y Conducción de Voces';
+
+    if (presetAttr === 'cadences') {
+      contextKey = 'cadences';
+      labTitle = 'Comparador Interactivo de Cadencias (Auténtica, Plagal Menor, Rota y Semicadencia Frigia)';
+    } else if (presetAttr === 'ii-v-i-major') {
+      contextKey = 'ii-v-i-major';
+      labTitle = 'Analizador de ii–V–I Mayor/Menor y "La Escalera que Baja" (+ Walking Bass)';
+    } else if (presetAttr === 'sec-dom') {
+      contextKey = 'sec-dom';
+      labTitle = 'Laboratorio: Dominantes Secundarios, Sustituto Tritonal, Escalera que Sube y Puentes °7/+';
+    } else if (presetAttr === 'interchange') {
+      contextKey = 'interchange';
+      labTitle = 'Explorador de Intercambio Modal (Eólico, Backdoor 2-5-1, Dórico y Napolitano ♭II)';
+    } else if (presetAttr === 'mod-pivot') {
+      contextKey = 'mod-pivot';
+      labTitle = 'Simulador de Modulaciones (Acorde Pivote, Subida +1 Semitono, Enarmónica °7 y Nota Común)';
+    } else if (labType === 'voice-leading') {
+      contextKey = 'voice-leading';
+      labTitle = 'Medidor de Conducción de Voces, Notas Guía (3ª y 7ª) y Line Cliché';
+    }
+    buildProgressionWidget(stage, audio, onStatus, labTitle, contextKey);
   } else if (labType === 'production-calc') {
     stage.innerHTML = `
       <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-bottom:12px;">
@@ -5185,4 +7055,2247 @@ function buildGuitarBendingLab(
     }
   });
 }
+
+/**
+ * NEW LAB 17: Interactive Simple & Compound Intervals (1st to 9th, 11th & 13th) Visualizer
+ * (`data-lab="interval-9th-visualizer"`)
+ */
+function buildInterval9thVisualizerLab(
+  stage: HTMLElement,
+  audio: MusicAudioEngine,
+  onStatus: (msg: string) => void
+): void {
+  interface IntervalSpec {
+    semi: number;
+    short: string;
+    name: string;
+    group: 'simple' | 'compound';
+    simpleEquiv: string;
+    ratio: string;
+    quality: string;
+    neckShapeGuitar: string;
+    neckShapeBass: string;
+    emotion: string;
+  }
+
+  const intervalsDb: IntervalSpec[] = [
+    { semi: 1, short: '2m (♭2)', name: 'Segunda Menor (1 st)', group: 'simple', simpleEquiv: '2m (1 st)', ratio: '16:15', quality: 'Disonancia Fuerte / Frigia', neckShapeGuitar: '+1 traste en la misma cuerda', neckShapeBass: '+1 traste en la misma cuerda', emotion: 'Tensión oscura flamenca / aproximación cromática' },
+    { semi: 2, short: '2M (2)', name: 'Segunda Mayor (2 st)', group: 'simple', simpleEquiv: '2M (2 st)', ratio: '9:8', quality: 'Disonancia Suave (Sus2)', neckShapeGuitar: '+2 trastes en la misma cuerda', neckShapeBass: '+2 trastes en la misma cuerda', emotion: 'Movimiento melódico natural y apertura sus2' },
+    { semi: 3, short: '3m (♭3)', name: 'Tercera Menor (3 st)', group: 'simple', simpleEquiv: '3m (3 st)', ratio: '6:5', quality: 'Consonancia Imperfecta (Base Menor)', neckShapeGuitar: '+3 trastes misma cuerda o -1 cuerda y -2 trastes', neckShapeBass: '+3 trastes misma cuerda o +1 cuerda aguda y -2 trastes', emotion: 'Melancolía, intimidad, color menor' },
+    { semi: 4, short: '3M (3)', name: 'Tercera Mayor (4 st)', group: 'simple', simpleEquiv: '3M (4 st)', ratio: '5:4', quality: 'Consonancia Imperfecta (Base Mayor)', neckShapeGuitar: '+4 trastes misma cuerda o +1 cuerda aguda y -1 traste', neckShapeBass: '+1 cuerda aguda y -1 traste (diagonal luminosa)', emotion: 'Luminosidad, alegría, estabilidad mayor' },
+    { semi: 5, short: '4J (4)', name: 'Cuarta Justa (5 st)', group: 'simple', simpleEquiv: '4J (5 st)', ratio: '4:3', quality: 'Consonancia Perfecta / Cuartal', neckShapeGuitar: 'Mismo traste en la cuerda inmediatamente más aguda (salvo G→B: +1 traste)', neckShapeBass: 'Mismo traste en la cuerda inmediatamente más aguda (simetría pura)', emotion: 'Fuerza arquitectónica, suspensión cuartal moderna' },
+    { semi: 6, short: '#4 / ♭5', name: 'Tritono (4ª Aum / 5ª Dism · 6 st)', group: 'simple', simpleEquiv: 'Tritono (6 st)', ratio: '45:32', quality: 'Disonancia Dinámica (Motor Dominante)', neckShapeGuitar: '+1 cuerda aguda y +1 traste', neckShapeBass: '+1 cuerda aguda y +1 traste (diagonal simétrica)', emotion: 'Inestabilidad magnética (Diabolus in Musica / Lidio #4)' },
+    { semi: 7, short: '5J (5)', name: 'Quinta Justa (7 st)', group: 'simple', simpleEquiv: '5J (7 st)', ratio: '3:2', quality: 'Consonancia Perfecta (Power Chord)', neckShapeGuitar: '+1 cuerda aguda y +2 trastes (figura de Power Chord)', neckShapeBass: '+1 cuerda aguda y +2 trastes (pilar grave absoluto)', emotion: 'Estabilidad férrea, potencia y centro gravitacional' },
+    { semi: 8, short: '6m (♭6)', name: 'Sexta Menor (8 st)', group: 'simple', simpleEquiv: '6m (8 st = Inv. de 3M)', ratio: '8:5', quality: 'Consonancia Imperfecta / Eólica', neckShapeGuitar: '+1 cuerda aguda y +3 trastes (o +2 cuerdas y -2 trastes)', neckShapeBass: '+1 cuerda aguda y +3 trastes', emotion: 'Nostalgia cinematográfica, dramatismo menor' },
+    { semi: 9, short: '6M (6)', name: 'Sexta Mayor (9 st)', group: 'simple', simpleEquiv: '6M (9 st = Inv. de 3m)', ratio: '5:3', quality: 'Consonancia Imperfecta / Dórica', neckShapeGuitar: '+2 cuerdas agudas y -1 traste (décima/sexta pastoral)', neckShapeBass: '+2 cuerdas agudas y -1 traste', emotion: 'Calidez pastoral, dulzura dórica y colchón maj6' },
+    { semi: 10, short: '7m (♭7)', name: 'Séptima Menor (10 st)', group: 'simple', simpleEquiv: '7m (10 st)', ratio: '16:9', quality: 'Disonancia Suave (Dominante / Menor 7)', neckShapeGuitar: '+2 cuerdas agudas en el mismo traste', neckShapeBass: '+2 cuerdas agudas en el mismo traste', emotion: 'Groove blues/funk, impulso dominante sin aspereza' },
+    { semi: 11, short: '7M (7)', name: 'Séptima Mayor (11 st)', group: 'simple', simpleEquiv: '7M (11 st)', ratio: '15:8', quality: 'Disonancia Luminosa (Maj7)', neckShapeGuitar: '+2 cuerdas agudas y +1 traste', neckShapeBass: '+2 cuerdas agudas y +1 traste', emotion: 'Sofisticación jazzística, ensoñación y anhelo' },
+    { semi: 12, short: '8J (8)', name: 'Octava Justa (12 st)', group: 'simple', simpleEquiv: '8J (12 st)', ratio: '2:1', quality: 'Consonancia Absoluta (Duplicación)', neckShapeGuitar: '+2 cuerdas agudas y +2 trastes (cuerdas 6→4 o 5→3)', neckShapeBass: '+2 cuerdas agudas y +2 trastes (octava funk)', emotion: 'Refuerzo de identidad al doble exacto de frecuencia' },
+    // Compound Intervals (9ths, 11ths, 13ths)
+    { semi: 13, short: '♭9 (9m)', name: 'Novena Menor (13 st = 8ª + 2m)', group: 'compound', simpleEquiv: '2ª Menor (2m + 7 grados = ♭9)', ratio: '32:15', quality: 'Tensión Compuesta Oscura (Dominante V7♭9)', neckShapeGuitar: 'Octava (+2 cuerdas, +2 trastes) + 1 traste más arriba', neckShapeBass: 'Raíz en 4ª cuerda (E) + 1ª cuerda (G) dos trastes atrás', emotion: 'Dramatismo extremo en V7(♭9) resolviendo a menor' },
+    { semi: 14, short: '9M (9)', name: 'Novena Mayor (14 st = 8ª + 2M)', group: 'compound', simpleEquiv: '2ª Mayor (2M + 7 grados = 9ª)', ratio: '9:4', quality: 'Tensión Compuesta Noble (Maj9, m9, 9)', neckShapeGuitar: 'Raíz en 5ª cuerda + 2ª cuerda mismo traste (o +2 cuerdas y +4 trastes)', neckShapeBass: 'Raíz en 4ª cuerda (traste T) + 1ª cuerda (G) en traste T-1 (décima/novena abierta)', emotion: 'Amplitud panorámica moderna; evita el choque cerrado de la 2ª' },
+    { semi: 15, short: '#9 (9Aum)', name: 'Novena Aumentada (15 st = 8ª + #2/♭3)', group: 'compound', simpleEquiv: '2ª Aum / 3ª Menor (#2 + 7 = #9)', ratio: '12:5', quality: 'Tensión Alterada Blues/Rock (Acorde Hendrix 7#9)', neckShapeGuitar: 'Raíz en 5ª cuerda (traste T) + 2ª cuerda en traste T+1 (sobre 3ªM en 4ª cuerda)', neckShapeBass: 'Raíz en 4ª cuerda (traste T) + 1ª cuerda (G) en mismo traste T', emotion: 'Fricción eléctrica simultánea entre modo mayor (3M) y menor (#9)' },
+    { semi: 17, short: '11J (11)', name: 'Oncena Justa (17 st = 8ª + 4J)', group: 'compound', simpleEquiv: '4ª Justa (4J + 7 grados = 11ª)', ratio: '8:3', quality: 'Tensión Compuesta Modal (m11 / 9sus4)', neckShapeGuitar: 'Raíz en 6ª/5ª cuerda + 4ª justa una octava arriba', neckShapeBass: 'Raíz en 4ª cuerda (traste T) + 1ª cuerda (G) en traste T+2', emotion: 'Suspensión urbana fresca (ideal en acordes menores m11)' },
+    { semi: 18, short: '#11 (11Aum)', name: 'Oncena Aumentada Lidia (18 st = 8ª + #4)', group: 'compound', simpleEquiv: '4ª Aumentada (#4 + 7 grados = #11)', ratio: '45:16', quality: 'Tensión Compuesta Luminosa (Maj7#11 / 7#11)', neckShapeGuitar: 'Raíz en 6ª/5ª cuerda + #4 en cuerdas 2ª o 1ª sin chocar con la 3ª mayor', neckShapeBass: 'Raíz en 4ª cuerda (traste T) + 1ª cuerda (G) en traste T+3', emotion: 'Maravilla espacial y brillo cinematográfico sin choque de semitono' },
+    { semi: 20, short: '♭13 (13m)', name: 'Trecena Menor (20 st = 8ª + ♭6)', group: 'compound', simpleEquiv: '6ª Menor (♭6 + 7 grados = ♭13)', ratio: '16:5', quality: 'Tensión Dominante Alterada (V7♭13)', neckShapeGuitar: 'Raíz en 6ª cuerda + ♭6 en 2ª cuerda (+1 traste respecto a la raíz)', neckShapeBass: 'Raíz en 4ª cuerda (traste T) + 1ª cuerda (G) en traste T+5', emotion: 'Tensión nostálgica que cae por semitono hacia la 5ª del acorde menor' },
+    { semi: 21, short: '13M (13)', name: 'Trecena Mayor (21 st = 8ª + 6M)', group: 'compound', simpleEquiv: '6ª Mayor (6M + 7 grados = 13ª)', ratio: '10:3', quality: 'Tensión Compuesta Cálida (G13, Cmaj13, Dm13)', neckShapeGuitar: 'Raíz en 6ª cuerda (traste T) + 2ª cuerda en traste T+2', neckShapeBass: 'Raíz en 4ª cuerda (traste T) + 1ª cuerda (G) en traste T+6', emotion: 'La cumbre expresiva del Jazz, Bossa Nova y R&B' },
+  ];
+
+  interface ChordPolygonPreset {
+    id: string;
+    label: string;
+    suffix: string;
+    extTag: string;
+    offsets: number[];
+  }
+
+  const chordPolygonPresets: ChordPolygonPreset[] = [
+    { id: 'add9', label: 'add9 (Tríada + 9ª)', suffix: 'add9', extTag: '9', offsets: [0, 4, 7, 14] },
+    { id: 'maj9', label: 'maj9 (7ªM + 9ª)', suffix: 'maj9', extTag: 'maj9', offsets: [0, 4, 7, 11, 14] },
+    { id: 'm9', label: 'm9 (Menor + ♭7 + 9)', suffix: 'm9', extTag: 'm9', offsets: [0, 3, 7, 10, 14] },
+    { id: 'dom9', label: '9 (Dominante + 9)', suffix: '9', extTag: '9', offsets: [0, 4, 7, 10, 14] },
+    { id: 'hendrix', label: '7(#9) (Hendrix)', suffix: '7(#9)', extTag: '7#9', offsets: [0, 4, 7, 10, 15] },
+    { id: 'maj7s11', label: 'maj7(#11) (Lidio)', suffix: 'maj7#11', extTag: '#11', offsets: [0, 4, 7, 11, 18] },
+    { id: 'dom13', label: '13 (9 + 13)', suffix: '13', extTag: '13', offsets: [0, 4, 7, 10, 14, 21] },
+    { id: 'maj', label: 'Tríada Mayor', suffix: '', extTag: 'Maj', offsets: [0, 4, 7] },
+    { id: 'min', label: 'Tríada Menor', suffix: 'm', extTag: 'm', offsets: [0, 3, 7] },
+  ];
+
+  const intervalNameMap: Record<number, string> = {
+    1: '2m',
+    2: '2M / 9',
+    3: '♭3',
+    4: '3',
+    5: '4J',
+    6: '♯4 / ♭5',
+    7: '5',
+    8: '♭6',
+    9: '6',
+    10: '♭7',
+    11: '7M',
+  };
+
+  let rootPc = 0; // C
+  let selectedSemi = 14; // Default: 9M (Novena Mayor)
+  let neckMode: 'guitar' | 'bass' = 'guitar';
+  let polyPresetIdx = 0; // Default: add9 (C E G D)
+
+  stage.innerHTML = `
+    <div style="background:rgba(10,14,24,0.92); border:1px solid rgba(236,72,153,0.38); border-radius:12px; padding:14px; margin-bottom:14px;">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
+        <div>
+          <strong style="color:#f472b6; font-size:1.05rem;">🕸️ Visualizador Geométrico de Intervalos Internos del Acorde</strong>
+          <div style="font-size:0.78rem; color:#cbd5e1;">Conecta todas las notas del acorde entre sí para ver todos los intervalos que se generan. Pulsa cualquier nodo para oír la nota o cualquier intervalo entre dos notas para oír el par.</div>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+          <label style="font-size:0.78rem; font-weight:700; color:var(--accent-gold);">Acorde:</label>
+          <select class="js-iv9-poly-preset">
+            ${chordPolygonPresets.map((p, i) => `<option value="${i}">${p.label}</option>`).join('')}
+          </select>
+          <button type="button" class="btn btn-primary js-iv9-poly-play" style="font-size:0.78rem;">🔊 Escuchar Acorde Completo</button>
+        </div>
+      </div>
+      <div class="js-iv9-polygon-host" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px; align-items:center;"></div>
+    </div>
+
+    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
+      <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+        <label style="font-size:0.8rem; font-weight:700; color:var(--accent-gold);">Nota Raíz:</label>
+        <select class="js-iv9-root">
+          ${NOTE_LABELS.map((l, i) => `<option value="${i}" ${i === rootPc ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+        <button type="button" class="btn js-iv9-neck-mode" data-mode="guitar" style="font-size:0.76rem; padding:4px 10px; background:rgba(245,158,11,0.22); color:#fbbf24; border:1px solid #f59e0b;">🎸 Mástil Guitarra (6 Cuerdas)</button>
+        <button type="button" class="btn js-iv9-neck-mode" data-mode="bass" style="font-size:0.76rem; padding:4px 10px; background:rgba(30,41,59,0.9); color:#94a3b8; border:1px solid #334155;">🎸 Mástil Bajo (4 Cuerdas)</button>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        <button type="button" class="btn btn-primary js-iv9-play-asc">▶ Melódico Ascendente</button>
+        <button type="button" class="btn js-iv9-play-harm" style="background:rgba(56,189,248,0.18); color:#38bdf8; border:1px solid rgba(56,189,248,0.4);">🔊 Armónico (Juntos)</button>
+        <button type="button" class="btn js-iv9-play-cmp" style="background:rgba(16,185,129,0.18); color:#34d399; border:1px solid rgba(16,185,129,0.4);">🔄 Comparar Simple vs. 9ª/Compuesto</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <div style="font-size:0.75rem; color:var(--accent-cyan); font-weight:700; margin-bottom:5px;">1) Intervalos Simples (Dentro de la 1ª Octava: 1 a 12 semitonos):</div>
+      <div class="js-iv9-simple-btns" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px;"></div>
+      <div style="font-size:0.75rem; color:#34d399; font-weight:700; margin-bottom:5px;">2) Novenas (♭9, 9, #9), Oncenas (11, #11) y Trecenas (♭13, 13) — Intervalos Compuestos (2ª Octava):</div>
+      <div class="js-iv9-comp-btns" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+    </div>
+
+    <div class="js-iv9-summary" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; align-items:center; background:rgba(15,23,42,0.92); border:1px solid rgba(245,158,11,0.38); border-radius:10px; padding:12px; margin-bottom:12px;"></div>
+
+    <div class="piano-wrapper" style="margin-bottom:12px;">
+      <div class="piano-keys js-iv9-piano"></div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:4px;">
+      <strong class="js-iv9-neck-title" style="font-size:0.86rem; color:var(--accent-gold);">🎸 Geometría del Intervalo en el Mástil (0–12 Trastes)</strong>
+      <span style="font-size:0.74rem; color:#94a3b8;">Dorado = Raíz (1ª) · Azul = Equivalente Simple · Verde Esmeralda = 9ª / Intervalo Objetivo (Clic en cualquier traste para sonar)</span>
+    </div>
+    <div class="js-iv9-neck-host"></div>
+  `;
+
+  const rootSel = stage.querySelector<HTMLSelectElement>('.js-iv9-root')!;
+  const polySel = stage.querySelector<HTMLSelectElement>('.js-iv9-poly-preset')!;
+  const polyHost = stage.querySelector<HTMLElement>('.js-iv9-polygon-host')!;
+  const simpleBtnsEl = stage.querySelector<HTMLElement>('.js-iv9-simple-btns')!;
+  const compBtnsEl = stage.querySelector<HTMLElement>('.js-iv9-comp-btns')!;
+  const summaryEl = stage.querySelector<HTMLElement>('.js-iv9-summary')!;
+  const pianoEl = stage.querySelector<HTMLElement>('.js-iv9-piano')!;
+  const neckTitleEl = stage.querySelector<HTMLElement>('.js-iv9-neck-title')!;
+  const neckHostEl = stage.querySelector<HTMLElement>('.js-iv9-neck-host')!;
+  const neckModeBtns = stage.querySelectorAll<HTMLButtonElement>('.js-iv9-neck-mode');
+
+  const getSpec = (): IntervalSpec =>
+    intervalsDb.find((it) => it.semi === selectedSemi) || intervalsDb[13];
+
+  const renderPolygonGraph = (): void => {
+    const preset = chordPolygonPresets[polyPresetIdx];
+    const rootName = NOTE_NAMES[rootPc];
+    const notes = preset.offsets.map((off) => ({
+      off,
+      pc: (rootPc + off) % 12,
+      midi: 60 + rootPc + off,
+      name: NOTE_NAMES[(rootPc + off) % 12],
+    }));
+
+    const svgW = 440;
+    const svgH = 385;
+    const topX = svgW / 2;
+    const topY = 46;
+    const polyCx = svgW / 2;
+    const polyCy = 264;
+    const polyR = notes.length <= 4 ? 86 : 96;
+
+    // Vertex positions starting at top (-90 deg) clockwise
+    const pts = notes.map((n, idx) => {
+      const ang = ((-90 + (idx * 360) / notes.length) * Math.PI) / 180;
+      return { ...n, x: polyCx + polyR * Math.cos(ang), y: polyCy + polyR * Math.sin(ang) };
+    });
+
+    // Connector lines from header note row down to polygon vertices (matching Image 2!)
+    const headerNoteY = 104;
+    const spacing = 26;
+    const startX = topX - ((notes.length - 1) * spacing) / 2;
+    const topLines: string[] = [];
+    pts.forEach((pt, idx) => {
+      const hx = startX + idx * spacing;
+      const laneOffset = (idx - (notes.length - 1) / 2) * 14;
+      const elbowY = headerNoteY + 18 + Math.abs(idx - (notes.length - 1) / 2) * 6;
+      if (idx === 0) {
+        topLines.push(`<polyline points="${hx},${headerNoteY + 6} ${hx},${elbowY} ${pt.x},${pt.y - 22}" fill="none" stroke="#f472b6" stroke-width="1.5" opacity="0.85"/>`);
+      } else {
+        const sideX = idx === notes.length - 1 ? polyCx - polyR - 26 : pt.x + laneOffset;
+        topLines.push(`<polyline points="${hx},${headerNoteY + 6} ${hx},${elbowY} ${sideX},${elbowY + 12} ${sideX},${pt.y} ${pt.x},${pt.y}" fill="none" stroke="#f472b6" stroke-width="1.35" opacity="0.72"/>`);
+      }
+    });
+
+    // All pairwise edges inside polygon
+    const pairEdges: string[] = [];
+    const pairItems: { aName: string; bName: string; aMidi: number; bMidi: number; semi: number; label: string; isClash: boolean }[] = [];
+
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        const a = pts[i];
+        const b = pts[j];
+        const rawDiff = b.off - a.off;
+        const modDiff = ((b.pc - a.pc) % 12 + 12) % 12;
+        const badgeLabel =
+          i === 0 && rawDiff === 14
+            ? '9'
+            : i === 0 && rawDiff === 15
+              ? '#9'
+              : i === 0 && rawDiff === 18
+                ? '#11'
+                : i === 0 && rawDiff === 21
+                  ? '13'
+                  : intervalNameMap[modDiff] || `${modDiff}st`;
+        const isClash = modDiff === 1 || modDiff === 6;
+
+        // Place badge slightly shifted along edge so overlapping diagonals don't collide
+        const t = (i + j) % 2 === 0 ? 0.44 : 0.56;
+        const mx = a.x + (b.x - a.x) * t;
+        const my = a.y + (b.y - a.y) * t;
+        const edgeCol = isClash ? '#fb7185' : modDiff === 7 ? '#34d399' : '#94a3b8';
+
+        pairEdges.push(`
+          <g class="js-iv9-pair-edge" data-ma="${a.midi}" data-mb="${b.midi}" data-semi="${rawDiff}" data-desc="${a.name} → ${b.name} (${badgeLabel})" style="cursor:pointer;">
+            <line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${edgeCol}" stroke-width="${isClash ? 1.8 : 1.3}" opacity="0.78"/>
+            <circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="10.5" fill="#1e293b" stroke="${edgeCol}" stroke-width="1.3"/>
+            <text x="${mx.toFixed(1)}" y="${(my + 3.4).toFixed(1)}" text-anchor="middle" fill="${isClash ? '#fda4af' : '#f8fafc'}" font-size="8.2" font-weight="800">${badgeLabel}</text>
+          </g>
+        `);
+        pairItems.push({
+          aName: a.name,
+          bName: b.name,
+          aMidi: a.midi,
+          bMidi: b.midi,
+          semi: rawDiff,
+          label: badgeLabel,
+          isClash,
+        });
+      }
+    }
+
+    const vertexNodes = pts
+      .map(
+        (pt, idx) => `
+      <g class="js-iv9-poly-note" data-midi="${pt.midi}" data-name="${pt.name}" style="cursor:pointer;">
+        <circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="20" fill="${idx === 0 ? 'rgba(245,158,11,0.22)' : '#090d16'}" stroke="${idx === 0 ? '#fbbf24' : '#f8fafc'}" stroke-width="${idx === 0 ? 2.4 : 1.7}"/>
+        <text x="${pt.x.toFixed(1)}" y="${(pt.y + 5.5).toFixed(1)}" text-anchor="middle" fill="${idx === 0 ? '#fef08a' : '#f8fafc'}" font-size="14" font-weight="900">${pt.name}</text>
+      </g>
+    `
+      )
+      .join('');
+
+    const headerNoteTexts = notes
+      .map((n, idx) => `<text x="${startX + idx * spacing}" y="${headerNoteY}" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="800">${n.name}</text>`)
+      .join('');
+
+    const svgHtml = `
+      <svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%; max-width:450px; height:auto; background:rgba(7,10,18,0.85); border:1px solid rgba(236,72,153,0.28); border-radius:10px; user-select:none;">
+        <g class="js-iv9-poly-play" style="cursor:pointer;">
+          <circle cx="${topX}" cy="${topY}" r="28" fill="none" stroke="#ec4899" stroke-width="2.5" stroke-dasharray="140,28"/>
+          <text x="${topX}" y="${topY + 8}" text-anchor="middle" fill="#f472b6" font-size="22" font-weight="900">${rootName}</text>
+          <text x="${topX}" y="${topY + 41}" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="700">${preset.extTag}</text>
+        </g>
+        ${headerNoteTexts}
+        ${topLines.join('')}
+        ${pairEdges.join('')}
+        ${vertexNodes}
+      </svg>
+    `;
+
+    const pairListHtml = `
+      <div>
+        <h4 style="margin:0 0 8px 0; color:var(--accent-gold); font-size:1rem;">
+          Analizando <code>${rootName}${preset.suffix}</code> (${notes.map((n) => n.name).join(' – ')})
+        </h4>
+        <p style="font-size:0.81rem; color:#cbd5e1; margin:0 0 8px 0;">
+          Un acorde no solo tiene intervalos respecto a la tónica: <strong>cada par de notas internas genera su propio intervalo</strong>. Haz clic en cualquier par de abajo o en los círculos del diagrama para escucharlo y proyectarlo en el mástil:
+        </p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(195px, 1fr)); gap:6px; max-height:260px; overflow-y:auto;">
+          ${pairItems
+            .map(
+              (p) => `
+            <button type="button" class="js-iv9-pair-edge" data-ma="${p.aMidi}" data-mb="${p.bMidi}" data-semi="${p.semi}" data-desc="${p.aName} → ${p.bName} (${p.label})" style="text-align:left; padding:6px 9px; border-radius:6px; background:${p.isClash ? 'rgba(244,63,94,0.14)' : 'rgba(30,41,59,0.85)'}; border:1px solid ${p.isClash ? 'rgba(244,63,94,0.45)' : 'rgba(56,189,248,0.25)'}; color:#e2e8f0; font-size:0.77rem; cursor:pointer;">
+              • Entre <strong style="color:#fbbf24;">${p.aName}</strong> y <strong style="color:#38bdf8;">${p.bName}</strong> hay <strong style="color:${p.isClash ? '#fda4af' : '#4ade80'};">${p.label}</strong> ${p.isClash ? '⚠️' : '🔊'}
+            </button>
+          `
+            )
+            .join('')}
+        </div>
+      </div>
+    `;
+
+    polyHost.innerHTML = pairListHtml + `<div style="display:flex; justify-content:center;">${svgHtml}</div>`;
+  };
+
+  const render = (): void => {
+    renderPolygonGraph();
+    const spec = getSpec();
+    const isBass = neckMode === 'bass';
+    const baseMidi = isBass ? 36 + rootPc : 48 + rootPc;
+    const targetMidi = baseMidi + spec.semi;
+    const simpleSemi = spec.semi > 12 ? spec.semi - 12 : spec.semi;
+    const rootName = NOTE_NAMES[rootPc];
+    const targetPc = (rootPc + spec.semi) % 12;
+    const targetName = NOTE_NAMES[targetPc];
+
+    neckModeBtns.forEach((b) => {
+      const active = b.getAttribute('data-mode') === neckMode;
+      b.style.background = active ? 'rgba(245,158,11,0.24)' : 'rgba(30,41,59,0.9)';
+      b.style.color = active ? '#fbbf24' : '#94a3b8';
+      b.style.borderColor = active ? '#f59e0b' : '#334155';
+    });
+
+    const renderBtnGroup = (group: 'simple' | 'compound') =>
+      intervalsDb
+        .filter((it) => it.group === group)
+        .map((it) => {
+          const active = it.semi === selectedSemi;
+          const borderCol = group === 'compound' ? '#10b981' : '#38bdf8';
+          return `<button type="button" class="btn js-iv9-pick" data-semi="${it.semi}" style="font-size:0.75rem; padding:5px 9px; background:${active ? (group === 'compound' ? 'rgba(16,185,129,0.28)' : 'rgba(56,189,248,0.28)') : 'rgba(30,41,59,0.88)'}; color:${active ? '#ffffff' : '#cbd5e1'}; border:1.5px solid ${active ? borderCol : '#334155'}; font-weight:${active ? '800' : '600'};">${it.short}</button>`;
+        })
+        .join('');
+
+    simpleBtnsEl.innerHTML = renderBtnGroup('simple');
+    compBtnsEl.innerHTML = renderBtnGroup('compound');
+
+    const dyadMidis = [baseMidi, targetMidi];
+    summaryEl.innerHTML = `
+      <div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:4px;">
+          <span style="font-size:1.15rem; font-weight:900; color:var(--accent-gold);">${rootName} → ${targetName} (${spec.name})</span>
+          <span style="font-size:0.75rem; padding:2px 8px; border-radius:4px; background:rgba(16,185,129,0.2); color:#34d399; font-weight:700;">${spec.quality}</span>
+          <span style="font-size:0.74rem; color:#94a3b8; font-family:monospace;">Proporción Acústica: ${spec.ratio}</span>
+        </div>
+        <div style="font-size:0.82rem; color:#e2e8f0; margin-bottom:4px;">
+          <strong>Regla Simple ↔ Compuesto:</strong> ${spec.simpleEquiv} · <strong>Sensación:</strong> ${spec.emotion}
+        </div>
+        <div style="font-size:0.8rem; color:var(--accent-cyan);">
+          <strong>📐 Geometría en ${isBass ? 'Bajo Eléctrico (4 Cuerdas)' : 'Guitarra (6 Cuerdas)'}:</strong> ${isBass ? spec.neckShapeBass : spec.neckShapeGuitar}
+        </div>
+      </div>
+      <div>
+        ${renderMiniChordNeckSvg(dyadMidis, baseMidi, neckMode)}
+      </div>
+    `;
+
+    // 2-Octave Piano (C4 = 60 to B5 = 83)
+    const pianoRootMidi = 60 + rootPc;
+    const pianoTargetMidi = pianoRootMidi + spec.semi;
+    const pianoSimpleMidi = pianoRootMidi + simpleSemi;
+    let pianoHtml = '';
+    for (let oct = 0; oct < 2; oct++) {
+      for (let pc = 0; pc < 12; pc++) {
+        const midi = 60 + oct * 12 + pc;
+        const isBlack = [1, 3, 6, 8, 10].includes(pc);
+        const isRootKey = midi === pianoRootMidi;
+        const isTargetKey = midi === pianoTargetMidi;
+        const isSimpleKey = spec.semi > 12 && midi === pianoSimpleMidi;
+        const keyClass = isBlack ? 'key-black' : 'key-white';
+        const stateClass = isRootKey ? 'is-root' : isTargetKey || isSimpleKey ? 'in-scale' : '';
+        const extraStyle = isTargetKey && spec.semi > 12 ? 'background:#10b981 !important; color:#052e16 !important;' : '';
+        pianoHtml += `<div class="${keyClass} ${stateClass} js-iv9-key" data-midi="${midi}" style="${extraStyle}" title="${NOTE_NAMES[pc]}${4 + oct}"><span>${NOTE_NAMES[pc]}${isRootKey ? ' (1)' : isTargetKey ? ` (${spec.short.split(' ')[0]})` : isSimpleKey ? ' (Simple)' : ''}</span></div>`;
+      }
+    }
+    pianoEl.innerHTML = pianoHtml;
+
+    // 12-Fret Interactive Neck
+    const stringsConfig = isBass ? BASS_STRINGS : GUITAR_STRINGS;
+    neckTitleEl.textContent = isBass
+      ? `🎸 Mapa del Intervalo ${spec.short} (${rootName} → ${targetName}) en BAJO ELÉCTRICO (4 Cuerdas: G–D–A–E)`
+      : `🎸 Mapa del Intervalo ${spec.short} (${rootName} → ${targetName}) en GUITARRA (6 Cuerdas: e–B–G–D–A–E)`;
+
+    let neckHtml = `<div class="fretboard-wrapper">`;
+    neckHtml += `<div class="fretboard-row" style="border-bottom:1px solid rgba(255,255,255,0.16); margin-bottom:4px;"><div class="string-label" style="color:var(--text-muted); font-size:0.7rem;">Traste</div>`;
+    for (let f = 0; f <= 12; f++) {
+      const marker = [3, 5, 7, 9, 12].includes(f) ? '•' : '';
+      neckHtml += `<div class="fret-cell" style="height:20px; border:none; color:var(--text-muted); font-size:0.72rem; font-weight:700;">${f === 0 ? '0' : `${f}${marker}`}</div>`;
+    }
+    neckHtml += `</div>`;
+
+    stringsConfig.forEach((st) => {
+      neckHtml += `<div class="fretboard-row"><div class="string-label" style="color:${isBass ? '#38bdf8' : '#fbbf24'};">${st.label}</div>`;
+      for (let f = 0; f <= 12; f++) {
+        const midi = st.openMidi + f;
+        const pc = midi % 12;
+        const noteName = NOTE_NAMES[pc];
+        const isRoot = pc === rootPc;
+        const isTarget = pc === targetPc;
+        const stateClass = isRoot ? 'root' : isTarget ? (spec.group === 'compound' ? 'char' : 'active') : '';
+        neckHtml += `
+          <div class="fret-cell js-iv9-cell" data-midi="${midi}" title="Cuerda ${st.label}, Traste ${f}: ${noteName}">
+            <div class="fret-note ${stateClass}">${noteName}</div>
+          </div>
+        `;
+      }
+      neckHtml += `</div>`;
+    });
+    neckHtml += `</div>`;
+    neckHostEl.innerHTML = neckHtml;
+  };
+
+  const playInterval = (mode: 'asc' | 'harm' | 'cmp'): void => {
+    const spec = getSpec();
+    const isBass = neckMode === 'bass';
+    const baseMidi = isBass ? 36 + rootPc : 52 + rootPc;
+    const targetMidi = baseMidi + spec.semi;
+    const simpleMidi = baseMidi + (spec.semi > 12 ? spec.semi - 12 : spec.semi);
+    audio.stopAll();
+
+    const playNote = (m: number, dur: number, delay: number) => {
+      if (isBass) {
+        audio.playElectricBass(m, dur, delay, 0.38, 'finger', false);
+      } else {
+        audio.playPluckedGuitar(m, dur, delay, 0.3, false);
+        audio.playAcousticPiano(m, dur, delay, 0.22, false);
+      }
+    };
+
+    if (mode === 'asc') {
+      playNote(baseMidi, 0.9, 0);
+      playNote(targetMidi, 1.3, 0.55);
+      onStatus(`Intervalo Melódico: ${NOTE_NAMES[rootPc]} → ${NOTE_NAMES[(rootPc + spec.semi) % 12]} (${spec.name})`);
+    } else if (mode === 'harm') {
+      playNote(baseMidi, 1.5, 0);
+      playNote(targetMidi, 1.5, 0.03);
+      onStatus(`Intervalo Armónico: ${NOTE_NAMES[rootPc]} + ${NOTE_NAMES[(rootPc + spec.semi) % 12]} (${spec.name})`);
+    } else {
+      const compMidi = spec.semi <= 12 ? baseMidi + spec.semi + 12 : targetMidi;
+      playNote(baseMidi, 1.0, 0);
+      playNote(simpleMidi, 1.0, 0.04);
+      playNote(baseMidi, 1.3, 0.95);
+      playNote(compMidi, 1.3, 0.99);
+      onStatus(`Comparando Intervalo Simple Cerrado vs. Compuesto Abierto (Octava Superior / 9ª-11ª-13ª)`);
+    }
+  };
+
+  render();
+
+  rootSel.addEventListener('change', () => {
+    rootPc = parseInt(rootSel.value, 10);
+    render();
+    playInterval('asc');
+  });
+
+  polySel.addEventListener('change', () => {
+    polyPresetIdx = parseInt(polySel.value, 10);
+    renderPolygonGraph();
+    const preset = chordPolygonPresets[polyPresetIdx];
+    audio.stopAll();
+    audio.strumChord(preset.offsets.map((o) => 48 + rootPc + o), 'piano', 0, false);
+    onStatus(`Analizando acorde ${NOTE_NAMES[rootPc]}${preset.suffix}`);
+  });
+
+  stage.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const polyPlay = target.closest('.js-iv9-poly-play');
+    if (polyPlay) {
+      const preset = chordPolygonPresets[polyPresetIdx];
+      audio.stopAll();
+      audio.playElectricBass(36 + rootPc, 1.4, 0, 0.36, 'finger', false);
+      audio.strumChord(preset.offsets.map((o) => 48 + rootPc + o), 'piano', 0, false);
+      onStatus(`Acorde completo: ${NOTE_NAMES[rootPc]}${preset.suffix}`);
+      return;
+    }
+    const polyNote = target.closest<HTMLElement>('.js-iv9-poly-note');
+    if (polyNote) {
+      const midi = parseInt(polyNote.getAttribute('data-midi')!, 10);
+      audio.playAcousticPiano(midi, 1.1, 0, 0.35, true);
+      onStatus(`Nota del polígono: ${polyNote.getAttribute('data-name')}`);
+      return;
+    }
+    const pairEdge = target.closest<HTMLElement>('.js-iv9-pair-edge');
+    if (pairEdge) {
+      const ma = parseInt(pairEdge.getAttribute('data-ma')!, 10);
+      const mb = parseInt(pairEdge.getAttribute('data-mb')!, 10);
+      const rawSemi = parseInt(pairEdge.getAttribute('data-semi')!, 10);
+      const desc = pairEdge.getAttribute('data-desc') || '';
+      audio.stopAll();
+      audio.playAcousticPiano(ma, 0.9, 0, 0.32, false);
+      audio.playAcousticPiano(mb, 1.1, 0.35, 0.32, false);
+      audio.playAcousticPiano(ma, 1.2, 0.8, 0.28, false);
+      audio.playAcousticPiano(mb, 1.2, 0.82, 0.28, false);
+      if (intervalsDb.some((it) => it.semi === rawSemi)) {
+        selectedSemi = rawSemi;
+        render();
+      }
+      onStatus(`Intervalo interno del acorde: ${desc}`);
+      return;
+    }
+    const pickBtn = target.closest<HTMLElement>('.js-iv9-pick');
+    if (pickBtn) {
+      selectedSemi = parseInt(pickBtn.getAttribute('data-semi')!, 10);
+      render();
+      playInterval('asc');
+      return;
+    }
+    const modeBtn = target.closest<HTMLElement>('.js-iv9-neck-mode');
+    if (modeBtn) {
+      neckMode = (modeBtn.getAttribute('data-mode') as 'guitar' | 'bass') || 'guitar';
+      render();
+      onStatus(`Visualizador de Intervalos: Mástil cambiado a ${neckMode === 'bass' ? 'Bajo (4 Cuerdas)' : 'Guitarra (6 Cuerdas)'}`);
+      return;
+    }
+    const cell = target.closest<HTMLElement>('.js-iv9-cell, .js-iv9-key');
+    if (cell) {
+      const midi = parseInt(cell.getAttribute('data-midi')!, 10);
+      if (neckMode === 'bass') {
+        audio.playElectricBass(midi, 1.1, 0, 0.38, 'finger', true);
+      } else {
+        audio.playPluckedGuitar(midi, 1.1, 0, 0.3, true);
+      }
+      return;
+    }
+    if (target.closest('.js-iv9-play-asc')) playInterval('asc');
+    else if (target.closest('.js-iv9-play-harm')) playInterval('harm');
+    else if (target.closest('.js-iv9-play-cmp')) playInterval('cmp');
+  });
+}
+
+/**
+ * NEW LAB 18: Interactive Polychords & Upper Structure Triads Visualizer (`X | Y`)
+ * (`data-lab="polychord-visualizer"`)
+ */
+function buildPolychordVisualizerLab(
+  stage: HTMLElement,
+  audio: MusicAudioEngine,
+  onStatus: (msg: string) => void
+): void {
+  interface PolychordPreset {
+    name: string;
+    upperOffset: number;
+    upperMinor: boolean;
+    baseType: 'maj' | 'min' | 'dom7' | 'maj7';
+    resultingSymbol: string;
+    tensions: string;
+    usage: string;
+  }
+
+  const presets: PolychordPreset[] = [
+    {
+      name: '1) II | I  (Ej: D | C → Cmaj9(#11) Lidio Cinematográfico)',
+      upperOffset: 2,
+      upperMinor: false,
+      baseType: 'maj7',
+      resultingSymbol: 'maj9(#11)',
+      tensions: '9ª Mayor (D) + #11 Lidia (F#) + 13ª Mayor (A)',
+      usage: 'Sonoridad de asombro espacial (John Williams / Pat Metheny / Joe Satriani): la tríada mayor del II grado sobre la base del I.',
+    },
+    {
+      name: '2) V | I  (Ej: G | C → Cmaj9 Luminoso y Estable)',
+      upperOffset: 7,
+      upperMinor: false,
+      baseType: 'maj',
+      resultingSymbol: 'maj9',
+      tensions: '5ª (G) + 7ª Mayor (B) + 9ª Mayor (D)',
+      usage: 'La forma más rápida de tocar un acorde Maj9 amplio sin saturar el registro grave.',
+    },
+    {
+      name: '3) vii | I  (Ej: Bm | C → Cmaj9(#11) sin duplicar fundamental)',
+      upperOffset: 11,
+      upperMinor: true,
+      baseType: 'maj',
+      resultingSymbol: 'maj9(#11)',
+      tensions: '7ª Mayor (B) + 9ª Mayor (D) + #11 Lidia (F#)',
+      usage: 'Poliacorde favorito de Bill Evans y Ravel: la tríada menor del 7º grado flota encima de la tríada tónica.',
+    },
+    {
+      name: '4) ii | I  (Ej: Dm | C → C11 / C9sus4 Modal Urbano)',
+      upperOffset: 2,
+      upperMinor: true,
+      baseType: 'maj',
+      resultingSymbol: '9sus4 (11)',
+      tensions: '9ª Mayor (D) + 11ª Justa (F) + 13ª Mayor (A)',
+      usage: 'Clásico del Soul, Gospel y Pop sofisticado (Herbie Hancock / Stevie Wonder).',
+    },
+    {
+      name: '5) #IV | I7  (Ej: F# | C7 → C7(♭9,#11) Dominante Simétrico Disminuido)',
+      upperOffset: 6,
+      upperMinor: false,
+      baseType: 'dom7',
+      resultingSymbol: '7(♭9,#11)',
+      tensions: '#11 (F#) + 13ª Mayor (A#) + ♭9 (C#/Db)',
+      usage: 'Upper Structure Triad estrella del Jazz moderno: superpone dos tritonos a distancia de 6 semitonos (escala octatónica).',
+    },
+    {
+      name: '6) VI | I7  (Ej: A | C7 → C13(♭9) Dominante Dramático)',
+      upperOffset: 9,
+      upperMinor: false,
+      baseType: 'dom7',
+      resultingSymbol: '13(♭9)',
+      tensions: '13ª Mayor (A) + ♭9 (C#/Db) + 3ª Mayor (E)',
+      usage: 'Brillo de metales de Big Band antes de caer al I Mayor o i Menor.',
+    },
+    {
+      name: '7) ♭VI | I7  (Ej: Ab | C7 → C7(#9,♭13) Dominante Alterado Superlocrio)',
+      upperOffset: 8,
+      upperMinor: false,
+      baseType: 'dom7',
+      resultingSymbol: '7(#9,♭13)',
+      tensions: '♭13 (Ab) + Fundamental (C) + #9 (Eb)',
+      usage: 'Máxima tensión alterada para resolver a un acorde menor (Cm9 o Fm9).',
+    },
+    {
+      name: '8) III | I7  (Ej: E | C7 → C7(♭9,#5) Dominante Aumentado Alterado)',
+      upperOffset: 4,
+      upperMinor: false,
+      baseType: 'dom7',
+      resultingSymbol: '7(♭9,#5)',
+      tensions: '3ª Mayor (E) + #5/♭13 (G#) + 7ªM/♭9 cromática',
+      usage: 'Color impresionista que empuja por semitono todas las voces superiores.',
+    },
+  ];
+
+  let rootPc = 0; // C
+  let pIdx = 0;
+  let neckMode: 'guitar' | 'bass' = 'guitar';
+
+  stage.innerHTML = `
+    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
+      <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+        <label style="font-size:0.8rem; font-weight:700; color:var(--accent-gold);">Tónica Base:</label>
+        <select class="js-poly-root">
+          ${NOTE_LABELS.map((l, i) => `<option value="${i}" ${i === rootPc ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+        <label style="font-size:0.8rem; font-weight:700; color:var(--accent-cyan);">Fórmula Poliacorde (Superior | Base):</label>
+        <select class="js-poly-preset" style="max-width:100%;">
+          ${presets.map((p, i) => `<option value="${i}">${p.name}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        <button type="button" class="btn js-poly-neck-mode" data-mode="guitar" style="font-size:0.75rem; padding:4px 10px; background:rgba(245,158,11,0.22); color:#fbbf24; border:1px solid #f59e0b;">🎸 Mástil Guitarra (6c)</button>
+        <button type="button" class="btn js-poly-neck-mode" data-mode="bass" style="font-size:0.75rem; padding:4px 10px; background:rgba(30,41,59,0.9); color:#94a3b8; border:1px solid #334155;">🎸 Mástil Bajo (4c)</button>
+      </div>
+    </div>
+
+    <div class="js-poly-cards" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:14px;"></div>
+
+    <div style="background:rgba(15,23,42,0.92); border:1px solid rgba(56,189,248,0.35); border-radius:10px; padding:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
+        <strong class="js-poly-neck-title" style="color:var(--accent-gold); font-size:0.88rem;">🎸 Mapa Bicolor del Poliacorde en el Mástil (0–12 Trastes)</strong>
+        <span style="font-size:0.74rem; color:#94a3b8;">Dorado = Fundamental Base · Azul = Notas del Acorde Base · Verde Esmeralda = Tríada Superior (Upper Structure)</span>
+      </div>
+      <div class="js-poly-neck-host"></div>
+    </div>
+  `;
+
+  const rootSel = stage.querySelector<HTMLSelectElement>('.js-poly-root')!;
+  const presetSel = stage.querySelector<HTMLSelectElement>('.js-poly-preset')!;
+  const cardsEl = stage.querySelector<HTMLElement>('.js-poly-cards')!;
+  const neckTitleEl = stage.querySelector<HTMLElement>('.js-poly-neck-title')!;
+  const neckHostEl = stage.querySelector<HTMLElement>('.js-poly-neck-host')!;
+  const neckModeBtns = stage.querySelectorAll<HTMLButtonElement>('.js-poly-neck-mode');
+
+  const computeStructures = () => {
+    const pr = presets[pIdx];
+    const baseRootMidi = 48 + rootPc;
+    const baseMidis =
+      pr.baseType === 'dom7'
+        ? [baseRootMidi, baseRootMidi + 4, baseRootMidi + 10] // Shell 1-3-b7
+        : pr.baseType === 'maj7'
+          ? [baseRootMidi, baseRootMidi + 4, baseRootMidi + 11]
+          : pr.baseType === 'min'
+            ? [baseRootMidi, baseRootMidi + 3, baseRootMidi + 7]
+            : [baseRootMidi, baseRootMidi + 4, baseRootMidi + 7];
+
+    const upperRootPc = (rootPc + pr.upperOffset) % 12;
+    const upperRootMidi = 60 + upperRootPc;
+    const upperMidis = [
+      upperRootMidi,
+      upperRootMidi + (pr.upperMinor ? 3 : 4),
+      upperRootMidi + 7,
+    ];
+
+    const baseName = `${NOTE_NAMES[rootPc]}${pr.baseType === 'dom7' ? '7' : pr.baseType === 'maj7' ? 'maj7' : pr.baseType === 'min' ? 'm' : ''}`;
+    const upperName = `${NOTE_NAMES[upperRootPc]}${pr.upperMinor ? 'm' : ''}`;
+    const combinedMidis = [...baseMidis, ...upperMidis];
+
+    return { pr, baseName, upperName, baseMidis, upperMidis, combinedMidis, baseRootMidi, upperRootMidi };
+  };
+
+  const render = (): void => {
+    const { pr, baseName, upperName, baseMidis, upperMidis, combinedMidis, baseRootMidi, upperRootMidi } =
+      computeStructures();
+    const isBass = neckMode === 'bass';
+
+    neckModeBtns.forEach((b) => {
+      const active = b.getAttribute('data-mode') === neckMode;
+      b.style.background = active ? 'rgba(245,158,11,0.24)' : 'rgba(30,41,59,0.9)';
+      b.style.color = active ? '#fbbf24' : '#94a3b8';
+      b.style.borderColor = active ? '#f59e0b' : '#334155';
+    });
+
+    const baseNotes = baseMidis.map((m) => NOTE_NAMES[m % 12]).join('–');
+    const upperNotes = upperMidis.map((m) => NOTE_NAMES[m % 12]).join('–');
+    const allNotes = Array.from(new Set(combinedMidis.map((m) => NOTE_NAMES[m % 12]))).join('–');
+
+    cardsEl.innerHTML = `
+      <div style="background:rgba(30,41,59,0.9); border:1px solid #f59e0b; border-radius:10px; padding:12px; display:flex; flex-direction:column; align-items:center; justify-content:space-between; text-align:center;">
+        <div>
+          <div style="font-size:0.72rem; color:#fbbf24; font-weight:700;">1. ESTRUCTURA BASE INFERIOR</div>
+          <div style="font-size:1.15rem; font-weight:900; color:#f8fafc; margin:2px 0;">${baseName} <span style="font-size:0.8rem; color:#fde68a; font-family:monospace;">[${baseNotes}]</span></div>
+          <div style="font-size:0.72rem; color:#94a3b8;">Cimiento grave y tritono/tercera guía</div>
+        </div>
+        ${renderMiniChordNeckSvg(baseMidis, baseRootMidi - 12, neckMode)}
+        <button type="button" class="btn js-poly-play-base" style="margin-top:6px; width:100%; font-size:0.75rem; background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid #f59e0b;">🔊 1. Escuchar Solo Base (${baseName})</button>
+      </div>
+
+      <div style="background:rgba(30,41,59,0.9); border:1px solid #10b981; border-radius:10px; padding:12px; display:flex; flex-direction:column; align-items:center; justify-content:space-between; text-align:center;">
+        <div>
+          <div style="font-size:0.72rem; color:#34d399; font-weight:700;">2. TRÍADA SUPERIOR (UPPER STRUCTURE)</div>
+          <div style="font-size:1.15rem; font-weight:900; color:#f8fafc; margin:2px 0;">${upperName} <span style="font-size:0.8rem; color:#a7f3d0; font-family:monospace;">[${upperNotes}]</span></div>
+          <div style="font-size:0.72rem; color:#94a3b8;">Aporta: ${pr.tensions}</div>
+        </div>
+        ${renderMiniChordNeckSvg(upperMidis, upperRootMidi - 12, neckMode)}
+        <button type="button" class="btn js-poly-play-upper" style="margin-top:6px; width:100%; font-size:0.75rem; background:rgba(16,185,129,0.2); color:#34d399; border:1px solid #10b981;">🔊 2. Escuchar Solo Tríada Superior (${upperName})</button>
+      </div>
+
+      <div style="background:rgba(15,23,42,0.96); border:2px solid #38bdf8; border-radius:10px; padding:12px; display:flex; flex-direction:column; align-items:center; justify-content:space-between; text-align:center;">
+        <div>
+          <div style="font-size:0.72rem; color:#38bdf8; font-weight:800;">3. POLIACORDE COMPLETO (SUPERIOR | BASE)</div>
+          <div style="font-size:1.2rem; font-weight:900; color:var(--accent-gold); margin:2px 0;">${upperName} | ${baseName} = ${NOTE_NAMES[rootPc]}${pr.resultingSymbol}</div>
+          <div style="font-size:0.72rem; color:#cbd5e1; font-family:monospace;">[${allNotes}]</div>
+          <div style="font-size:0.71rem; color:#bae6fd; margin-top:3px;">${pr.usage}</div>
+        </div>
+        ${renderMiniChordNeckSvg(combinedMidis, baseRootMidi - 12, neckMode)}
+        <button type="button" class="btn btn-primary js-poly-play-both" style="margin-top:6px; width:100%; font-size:0.78rem;">▶ 3. Escuchar Poliacorde Completo (${upperName} | ${baseName})</button>
+      </div>
+    `;
+
+    // 12-Fret Dual-Color Neck
+    const basePcs = new Set(baseMidis.map((m) => m % 12));
+    const upperPcs = new Set(upperMidis.map((m) => m % 12));
+    const stringsConfig = isBass ? BASS_STRINGS : GUITAR_STRINGS;
+    neckTitleEl.textContent = isBass
+      ? `🎸 Poliacorde ${upperName} | ${baseName} (${NOTE_NAMES[rootPc]}${pr.resultingSymbol}) en BAJO ELÉCTRICO (4 Cuerdas: G–D–A–E)`
+      : `🎸 Poliacorde ${upperName} | ${baseName} (${NOTE_NAMES[rootPc]}${pr.resultingSymbol}) en GUITARRA (6 Cuerdas: e–B–G–D–A–E)`;
+
+    let neckHtml = `<div class="fretboard-wrapper">`;
+    neckHtml += `<div class="fretboard-row" style="border-bottom:1px solid rgba(255,255,255,0.16); margin-bottom:4px;"><div class="string-label" style="color:var(--text-muted); font-size:0.7rem;">Traste</div>`;
+    for (let f = 0; f <= 12; f++) {
+      const marker = [3, 5, 7, 9, 12].includes(f) ? '•' : '';
+      neckHtml += `<div class="fret-cell" style="height:20px; border:none; color:var(--text-muted); font-size:0.72rem; font-weight:700;">${f === 0 ? '0' : `${f}${marker}`}</div>`;
+    }
+    neckHtml += `</div>`;
+
+    stringsConfig.forEach((st) => {
+      neckHtml += `<div class="fretboard-row"><div class="string-label" style="color:${isBass ? '#38bdf8' : '#fbbf24'};">${st.label}</div>`;
+      for (let f = 0; f <= 12; f++) {
+        const midi = st.openMidi + f;
+        const pc = midi % 12;
+        const noteName = NOTE_NAMES[pc];
+        const isRoot = pc === rootPc;
+        const isUpper = upperPcs.has(pc);
+        const isBase = basePcs.has(pc);
+        const stateClass = isRoot ? 'root' : isUpper ? 'char' : isBase ? 'active' : '';
+        neckHtml += `
+          <div class="fret-cell js-poly-cell" data-midi="${midi}" title="Cuerda ${st.label}, Traste ${f}: ${noteName}${isUpper ? ` (Tríada Superior ${upperName})` : isBase ? ` (Base ${baseName})` : ''}">
+            <div class="fret-note ${stateClass}">${noteName}</div>
+          </div>
+        `;
+      }
+      neckHtml += `</div>`;
+    });
+    neckHtml += `</div>`;
+    neckHostEl.innerHTML = neckHtml;
+  };
+
+  render();
+
+  rootSel.addEventListener('change', () => {
+    rootPc = parseInt(rootSel.value, 10);
+    render();
+  });
+
+  presetSel.addEventListener('change', () => {
+    pIdx = parseInt(presetSel.value, 10);
+    render();
+  });
+
+  stage.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const modeBtn = target.closest<HTMLElement>('.js-poly-neck-mode');
+    if (modeBtn) {
+      neckMode = (modeBtn.getAttribute('data-mode') as 'guitar' | 'bass') || 'guitar';
+      render();
+      onStatus(`Visualizador de Poliacordes: Mástil cambiado a ${neckMode === 'bass' ? 'Bajo (4 Cuerdas)' : 'Guitarra (6 Cuerdas)'}`);
+      return;
+    }
+
+    const cell = target.closest<HTMLElement>('.js-poly-cell');
+    if (cell) {
+      const midi = parseInt(cell.getAttribute('data-midi')!, 10);
+      if (neckMode === 'bass') {
+        audio.playElectricBass(midi, 1.1, 0, 0.38, 'finger', true);
+      } else {
+        audio.playPluckedGuitar(midi, 1.1, 0, 0.3, true);
+      }
+      return;
+    }
+
+    const { pr, baseName, upperName, baseMidis, upperMidis, baseRootMidi } = computeStructures();
+    if (target.closest('.js-poly-play-base')) {
+      audio.stopAll();
+      audio.playElectricBass(baseRootMidi - 12, 1.3, 0, 0.38, 'finger', false);
+      audio.strumChord(baseMidis, neckMode === 'bass' ? 'guitar' : 'piano', 0, false);
+      onStatus(`Estructura Base Inferior: ${baseName}`);
+    } else if (target.closest('.js-poly-play-upper')) {
+      audio.stopAll();
+      audio.strumChord(upperMidis, neckMode === 'bass' ? 'guitar' : 'piano', 0, false);
+      onStatus(`Tríada Superior (Upper Structure): ${upperName} (${pr.tensions})`);
+    } else if (target.closest('.js-poly-play-both')) {
+      audio.stopAll();
+      audio.playElectricBass(baseRootMidi - 12, 1.6, 0, 0.38, 'finger', false);
+      baseMidis.forEach((m, i) => audio.playAcousticPiano(m, 1.5, i * 0.03, 0.2, false));
+      upperMidis.forEach((m, i) => {
+        audio.playAcousticPiano(m, 1.5, 0.16 + i * 0.04, 0.24, false);
+        audio.playPluckedGuitar(m, 1.4, 0.16 + i * 0.04, 0.22, false);
+      });
+      onStatus(`Poliacorde Completo: ${upperName} | ${baseName} = ${NOTE_NAMES[rootPc]}${pr.resultingSymbol}`);
+    }
+  });
+}
+
+/**
+ * NEW LAB 19: Interactive Neighbor Chords Visualizer (`data-lab="neighbor-chords-visualizer"`)
+ */
+function buildNeighborChordsVisualizerLab(
+  stage: HTMLElement,
+  audio: MusicAudioEngine,
+  onStatus: (msg: string) => void
+): void {
+  interface NeighborFamily {
+    name: string;
+    desc: string;
+    voiceRule: string;
+    buildSteps: (rootPc: number) => {
+      title: string;
+      role: string;
+      midis: number[];
+      bassMidi: number;
+      fretDelta: string;
+    }[];
+  }
+
+  const nName = (pc: number) => NOTE_NAMES[((pc % 12) + 12) % 12];
+
+  const families: NeighborFamily[] = [
+    {
+      name: '1) Vecino Cromático Superior (+1 Semitono / Planing Superior: Imaj7 → ♭IImaj7 → Imaj7)',
+      desc: 'Todo el acorde se desliza 1 traste hacia arriba (+1 semitono paralelo) y regresa inmediatamente al acorde objetivo como una bordadura completa.',
+      voiceRule: 'Las 4 voces suben +1 traste y bajan -1 traste en bloque (Sideslip de Jazz/Neo-Soul).',
+      buildSteps: (r) => {
+        const b = 48 + r;
+        return [
+          { title: `${nName(r)}maj7 (Objetivo)`, role: '1. Acorde Central Estable', midis: [b, b + 4, b + 7, b + 11], bassMidi: 36 + r, fretDelta: 'Posición Base (0)' },
+          { title: `${nName(r + 1)}maj7 (Vecino Superior)`, role: '2. Bordadura Superior (+1 Traste)', midis: [b + 1, b + 5, b + 8, b + 12], bassMidi: 36 + ((r + 1) % 12), fretDelta: 'Todas las cuerdas +1 traste ↑' },
+          { title: `${nName(r)}maj7 (Resolución)`, role: '3. Retorno al Objetivo', midis: [b, b + 4, b + 7, b + 11], bassMidi: 36 + r, fretDelta: 'Todas las cuerdas -1 traste ↓' },
+        ];
+      },
+    },
+    {
+      name: '2) Vecino Cromático Inferior (-1 Semitono / Planing Inferior: Imaj7 → VIImaj7 → Imaj7)',
+      desc: 'El acorde entero baja medio tono (-1 traste) creando un efecto de "resorte" luminoso antes de volver a su sitio.',
+      voiceRule: 'Cada dedo de la mano izquierda retrocede 1 traste y vuelve a avanzar 1 traste.',
+      buildSteps: (r) => {
+        const b = 48 + r;
+        return [
+          { title: `${nName(r)}maj7 (Objetivo)`, role: '1. Acorde Central Estable', midis: [b, b + 4, b + 7, b + 11], bassMidi: 36 + r, fretDelta: 'Posición Base (0)' },
+          { title: `${nName(r + 11)}maj7 (Vecino Inferior)`, role: '2. Bordadura Inferior (-1 Traste)', midis: [b - 1, b + 3, b + 6, b + 10], bassMidi: 36 + ((r + 11) % 12), fretDelta: 'Todas las cuerdas -1 traste ↓' },
+          { title: `${nName(r)}maj7 (Resolución)`, role: '3. Retorno al Objetivo', midis: [b, b + 4, b + 7, b + 11], bassMidi: 36 + r, fretDelta: 'Todas las cuerdas +1 traste ↑' },
+        ];
+      },
+    },
+    {
+      name: '3) Doble Bordadura Cromática Envolvente (+1 Traste → -1 Traste → Objetivo)',
+      desc: 'Rodea al acorde objetivo por arriba (+1 semitono) y por debajo (-1 semitono) antes de aterrizar en el centro tonal.',
+      voiceRule: 'Enclosure armónico de 4 pasos: Centro → Vecino Superior → Vecino Inferior → Centro.',
+      buildSteps: (r) => {
+        const b = 48 + r;
+        return [
+          { title: `${nName(r)}m9 (Objetivo)`, role: '1. Centro Menor', midis: [b, b + 3, b + 7, b + 10, b + 14], bassMidi: 36 + r, fretDelta: 'Posición Base' },
+          { title: `${nName(r + 1)}m9 (Vecino Sup)`, role: '2. +1 Semitono Arriba', midis: [b + 1, b + 4, b + 8, b + 11, b + 15], bassMidi: 36 + ((r + 1) % 12), fretDelta: '+1 traste ↑' },
+          { title: `${nName(r + 11)}m9 (Vecino Inf)`, role: '3. -1 Semitono Abajo', midis: [b - 1, b + 2, b + 6, b + 9, b + 13], bassMidi: 36 + ((r + 11) % 12), fretDelta: '-2 trastes ↓' },
+          { title: `${nName(r)}m9 (Resolución)`, role: '4. Aterrizaje en Casa', midis: [b, b + 3, b + 7, b + 10, b + 14], bassMidi: 36 + r, fretDelta: '+1 traste → Centro' },
+        ];
+      },
+    },
+    {
+      name: '4) Vecinos Diatónicos de Bordadura sobre Bajo Pedal (I → ii/I → IV/I → I)',
+      desc: 'El bajo se queda clavado en la tónica mientras las 3 voces superiores suben por grados vecinos de la escala (ii y IV) y regresan.',
+      voiceRule: 'Bajo inmóvil (0 movimiento); las voces agudas hacen bordadura diatónica 1→2→4→3.',
+      buildSteps: (r) => {
+        const b = 48 + r;
+        return [
+          { title: `${nName(r)} Mayor (I)`, role: '1. Tónica Estable', midis: [b, b + 4, b + 7, b + 12], bassMidi: 36 + r, fretDelta: 'Bajo fijo en Tónica' },
+          { title: `${nName(r + 2)}m/${nName(r)} (ii/I Vecino)`, role: '2. Vecino Diatónico Grado ii', midis: [b, b + 5, b + 9, b + 14], bassMidi: 36 + r, fretDelta: 'Voces agudas suben +1 grado' },
+          { title: `${nName(r + 5)}maj7/${nName(r)} (IV/I Vecino)`, role: '3. Vecino Plagal Grado IV', midis: [b, b + 5, b + 9, b + 16], bassMidi: 36 + r, fretDelta: 'Cima abre a la 3ª aguda' },
+          { title: `${nName(r)} Mayor (I)`, role: '4. Reposo sobre el Pedal', midis: [b, b + 4, b + 7, b + 12], bassMidi: 36 + r, fretDelta: 'Cierre por grado conjunto' },
+        ];
+      },
+    },
+    {
+      name: '5) Vecinos Disminuidos de Aproximación y Auxiliar (vii°7 → Imaj7 → I°7 → Imaj7)',
+      desc: 'Usa el acorde disminuido sensible (1 semitono abajo) y el disminuido auxiliar (misma raíz) donde 3 voces son vecinas a 1 traste.',
+      voiceRule: 'En I°7 → Imaj7 la fundamental se queda quieta y las otras 3 voces suben exactamente 1 semitono.',
+      buildSteps: (r) => {
+        const b = 48 + r;
+        return [
+          { title: `${nName(r + 11)}°7 (Vecino Sensible)`, role: '1. Aproximación por Semitono', midis: [b - 1, b + 2, b + 5, b + 8], bassMidi: 36 + ((r + 11) % 12), fretDelta: 'Sensible a -1 traste de la raíz' },
+          { title: `${nName(r)}maj7 (Objetivo)`, role: '2. Resolución Luminosa', midis: [b, b + 4, b + 7, b + 11], bassMidi: 36 + r, fretDelta: 'Abre al acorde Mayor 7' },
+          { title: `${nName(r)}°7 (Vecino Auxiliar)`, role: '3. Bordadura Disminuida Misma Raíz', midis: [b, b + 3, b + 6, b + 9], bassMidi: 36 + r, fretDelta: '3ª, 5ª y 7ª bajan -1 o -2 trastes' },
+          { title: `${nName(r)}6/9 (Resolución)`, role: '4. Retorno Cálido', midis: [b, b + 4, b + 7, b + 9, b + 14], bassMidi: 36 + r, fretDelta: '3ª y 5ª suben +1 traste' },
+        ];
+      },
+    },
+  ];
+
+  let rootPc = 0; // C
+  let famIdx = 0;
+  let activeStep = 0;
+  let neckMode: 'guitar' | 'bass' = 'guitar';
+
+  stage.innerHTML = `
+    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
+      <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+        <label style="font-size:0.8rem; font-weight:700; color:var(--accent-gold);">Acorde Objetivo:</label>
+        <select class="js-nb-root">
+          ${NOTE_LABELS.map((l, i) => `<option value="${i}" ${i === rootPc ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+        <label style="font-size:0.8rem; font-weight:700; color:var(--accent-cyan);">Tipo de Acorde Vecino:</label>
+        <select class="js-nb-fam" style="max-width:100%;">
+          ${families.map((f, i) => `<option value="${i}">${f.name}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        <button type="button" class="btn js-nb-neck-mode" data-mode="guitar" style="font-size:0.75rem; padding:4px 10px; background:rgba(245,158,11,0.22); color:#fbbf24; border:1px solid #f59e0b;">🎸 Guitarra (6c)</button>
+        <button type="button" class="btn js-nb-neck-mode" data-mode="bass" style="font-size:0.75rem; padding:4px 10px; background:rgba(30,41,59,0.9); color:#94a3b8; border:1px solid #334155;">🎸 Bajo (4c)</button>
+        <button type="button" class="btn btn-primary js-nb-play">▶ Escuchar Bordadura de Acordes Vecinos</button>
+      </div>
+    </div>
+
+    <div class="js-nb-info" style="margin-bottom:12px; padding:10px 12px; background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); border-radius:8px; font-size:0.82rem; color:#e2e8f0;"></div>
+    <div class="js-nb-cards" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(185px, 1fr)); gap:10px; margin-bottom:14px;"></div>
+
+    <div style="background:rgba(15,23,42,0.92); border:1px solid rgba(245,158,11,0.35); border-radius:10px; padding:12px;">
+      <strong class="js-nb-neck-title" style="color:var(--accent-gold); font-size:0.88rem; display:block; margin-bottom:6px;">🎸 Mapa del Acorde Vecino Activo en el Mástil (0–12 Trastes)</strong>
+      <div class="js-nb-neck-host"></div>
+    </div>
+  `;
+
+  const rootSel = stage.querySelector<HTMLSelectElement>('.js-nb-root')!;
+  const famSel = stage.querySelector<HTMLSelectElement>('.js-nb-fam')!;
+  const infoEl = stage.querySelector<HTMLElement>('.js-nb-info')!;
+  const cardsEl = stage.querySelector<HTMLElement>('.js-nb-cards')!;
+  const neckTitleEl = stage.querySelector<HTMLElement>('.js-nb-neck-title')!;
+  const neckHostEl = stage.querySelector<HTMLElement>('.js-nb-neck-host')!;
+  const neckModeBtns = stage.querySelectorAll<HTMLButtonElement>('.js-nb-neck-mode');
+
+  const render = (): void => {
+    const fam = families[famIdx];
+    const steps = fam.buildSteps(rootPc);
+    if (activeStep >= steps.length) activeStep = 0;
+    const isBass = neckMode === 'bass';
+
+    neckModeBtns.forEach((b) => {
+      const active = b.getAttribute('data-mode') === neckMode;
+      b.style.background = active ? 'rgba(245,158,11,0.24)' : 'rgba(30,41,59,0.9)';
+      b.style.color = active ? '#fbbf24' : '#94a3b8';
+      b.style.borderColor = active ? '#f59e0b' : '#334155';
+    });
+
+    infoEl.innerHTML = `<strong>🧭 Cómo funciona este Acorde Vecino:</strong> ${fam.desc}<br><span style="color:#fde047;"><strong>Conducción en el Mástil:</strong> ${fam.voiceRule}</span>`;
+
+    cardsEl.innerHTML = steps
+      .map((st, idx) => {
+        const isSel = idx === activeStep;
+        const notesStr = st.midis.map((m) => NOTE_NAMES[((m % 12) + 12) % 12]).join('–');
+        return `
+          <button type="button" class="js-nb-card" data-idx="${idx}" style="background:${isSel ? 'rgba(30,58,138,0.58)' : 'rgba(30,41,59,0.9)'}; border:2px solid ${isSel ? '#f59e0b' : 'rgba(56,189,248,0.35)'}; border-radius:10px; padding:10px; color:#f8fafc; cursor:pointer; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-size:0.71rem; color:var(--accent-cyan); font-weight:700;">${st.role}</div>
+              <div style="font-size:1.0rem; font-weight:900; color:var(--accent-gold); margin:2px 0;">${st.title}</div>
+              <div style="font-size:0.72rem; color:#cbd5e1; font-family:monospace;">[${notesStr}]</div>
+              <div style="font-size:0.7rem; color:#34d399; margin-top:2px;">${st.fretDelta}</div>
+            </div>
+            ${renderMiniChordNeckSvg(st.midis, st.bassMidi, neckMode)}
+            <div style="font-size:0.68rem; color:#38bdf8; margin-top:4px;">🔊 Escuchar Paso ${idx + 1}</div>
+          </button>
+        `;
+      })
+      .join('');
+
+    const cur = steps[activeStep];
+    const curRootPc = ((cur.bassMidi % 12) + 12) % 12;
+    const pcs = new Set(cur.midis.map((m) => ((m % 12) + 12) % 12));
+    const stringsConfig = isBass ? BASS_STRINGS : GUITAR_STRINGS;
+    const voicing = isBass
+      ? computePlayableBassVoicing(cur.midis, cur.bassMidi)
+      : computePlayableGuitarVoicing(cur.midis, cur.bassMidi);
+
+    neckTitleEl.textContent = isBass
+      ? `🎸 ${cur.title} (${cur.fretDelta}) en BAJO ELÉCTRICO (4 Cuerdas · Digitación: ${voicing.tabText})`
+      : `🎸 ${cur.title} (${cur.fretDelta}) en GUITARRA (6 Cuerdas · Digitación: ${voicing.tabText})`;
+
+    const numStrings = stringsConfig.length;
+    let neckHtml = `<div class="fretboard-wrapper">`;
+    neckHtml += `<div class="fretboard-row" style="border-bottom:1px solid rgba(255,255,255,0.16); margin-bottom:4px;"><div class="string-label" style="color:var(--text-muted); font-size:0.7rem;">Traste</div>`;
+    for (let f = 0; f <= 12; f++) {
+      const marker = [3, 5, 7, 9, 12].includes(f) ? '•' : '';
+      neckHtml += `<div class="fret-cell" style="height:20px; border:none; color:var(--text-muted); font-size:0.72rem; font-weight:700;">${f === 0 ? '0' : `${f}${marker}`}</div>`;
+    }
+    neckHtml += `</div>`;
+
+    stringsConfig.forEach((st, sIdx) => {
+      const voicedFret = voicing.frets[numStrings - 1 - sIdx];
+      neckHtml += `<div class="fretboard-row"><div class="string-label" style="color:${isBass ? '#38bdf8' : '#fbbf24'};">${st.label}</div>`;
+      for (let f = 0; f <= 12; f++) {
+        const midi = st.openMidi + f;
+        const pc = midi % 12;
+        const noteName = NOTE_NAMES[pc];
+        const isRoot = pc === curRootPc;
+        const isTone = pcs.has(pc);
+        const isPrimary = voicedFret === f;
+        const stateClass = isRoot ? 'root' : isTone ? (isBass ? 'char' : 'active') : '';
+        const ringStyle = isPrimary ? 'box-shadow:0 0 0 2.5px #fff, 0 0 12px #f59e0b; transform:scale(1.12);' : '';
+        neckHtml += `
+          <div class="fret-cell js-nb-cell" data-midi="${midi}">
+            <div class="fret-note ${stateClass}" style="${ringStyle}">${isPrimary ? `${noteName}★` : noteName}</div>
+          </div>
+        `;
+      }
+      neckHtml += `</div>`;
+    });
+    neckHtml += `</div>`;
+    neckHostEl.innerHTML = neckHtml;
+  };
+
+  const playStep = (idx: number): void => {
+    const steps = families[famIdx].buildSteps(rootPc);
+    const st = steps[idx];
+    activeStep = idx;
+    render();
+    audio.playElectricBass(st.bassMidi, 1.2, 0, 0.36, 'finger', false);
+    audio.strumChord(st.midis, neckMode === 'bass' ? 'guitar' : 'guitar', 0, false);
+    onStatus(`${st.title} — ${st.fretDelta}`);
+  };
+
+  render();
+
+  rootSel.addEventListener('change', () => {
+    rootPc = parseInt(rootSel.value, 10);
+    activeStep = 0;
+    render();
+  });
+
+  famSel.addEventListener('change', () => {
+    famIdx = parseInt(famSel.value, 10);
+    activeStep = 0;
+    render();
+  });
+
+  stage.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const modeBtn = target.closest<HTMLElement>('.js-nb-neck-mode');
+    if (modeBtn) {
+      neckMode = (modeBtn.getAttribute('data-mode') as 'guitar' | 'bass') || 'guitar';
+      render();
+      onStatus(`Acordes Vecinos: Diagramas cambiados a ${neckMode === 'bass' ? 'Bajo (4 Cuerdas)' : 'Guitarra (6 Cuerdas)'}`);
+      return;
+    }
+    const card = target.closest<HTMLElement>('.js-nb-card');
+    if (card) {
+      audio.stopAll();
+      playStep(parseInt(card.getAttribute('data-idx')!, 10));
+      return;
+    }
+    const cell = target.closest<HTMLElement>('.js-nb-cell');
+    if (cell) {
+      const midi = parseInt(cell.getAttribute('data-midi')!, 10);
+      if (neckMode === 'bass') audio.playElectricBass(midi, 1.1, 0, 0.38, 'finger', true);
+      else audio.playPluckedGuitar(midi, 1.1, 0, 0.3, true);
+      return;
+    }
+    if (target.closest('.js-nb-play')) {
+      audio.stopAll();
+      const steps = families[famIdx].buildSteps(rootPc);
+      steps.forEach((_, idx) => {
+        audio.schedule(() => playStep(idx), idx * 920);
+      });
+    }
+  });
+}
+
+/**
+ * NEW LAB 20: Interactive Fretboard Triads Visualizer (3 Inversions Across String Sets in Guitar 6c & Bass 4c)
+ * (`data-lab="fretboard-triads-visualizer"`)
+ */
+function buildFretboardTriadsVisualizerLab(
+  stage: HTMLElement,
+  audio: MusicAudioEngine,
+  onStatus: (msg: string) => void
+): void {
+  interface TriadQuality {
+    id: string;
+    name: string;
+    suffix: string;
+    intervals: [number, number, number];
+    formula: string;
+  }
+
+  const qualities: TriadQuality[] = [
+    { id: 'maj', name: 'Mayor (1 – 3 – 5)', suffix: '', intervals: [0, 4, 7], formula: '1 – 3M – 5J' },
+    { id: 'min', name: 'Menor (1 – ♭3 – 5)', suffix: 'm', intervals: [0, 3, 7], formula: '1 – 3m – 5J' },
+    { id: 'dim', name: 'Disminuida (1 – ♭3 – ♭5)', suffix: '°', intervals: [0, 3, 6], formula: '1 – 3m – 5d' },
+    { id: 'aug', name: 'Aumentada (1 – 3 – #5)', suffix: '+', intervals: [0, 4, 8], formula: '1 – 3M – 5Aum' },
+    { id: 'sus2', name: 'Suspendida 2 (1 – 2 – 5)', suffix: 'sus2', intervals: [0, 2, 7], formula: '1 – 2M – 5J' },
+    { id: 'sus4', name: 'Suspendida 4 (1 – 4 – 5)', suffix: 'sus4', intervals: [0, 5, 7], formula: '1 – 4J – 5J' },
+  ];
+
+  interface StringSetSpec {
+    id: string;
+    label: string;
+    mode: 'guitar' | 'bass';
+    // Indices in low-to-high openMidis array ([40,45,50,55,59,64] for guitar, [28,33,38,43] for bass)
+    lowToHighStringIndices: [number, number, number];
+  }
+
+  const stringSets: StringSetSpec[] = [
+    { id: 'g-123', label: '🎸 Guitarra · Set 1: Cuerdas 1ª–2ª–3ª (G–B–e · Agudas: Triángulo / Gancho / Ala)', mode: 'guitar', lowToHighStringIndices: [3, 4, 5] },
+    { id: 'g-234', label: '🎸 Guitarra · Set 2: Cuerdas 2ª–3ª–4ª (D–G–B · Registro Medio Vocal)', mode: 'guitar', lowToHighStringIndices: [2, 3, 4] },
+    { id: 'g-345', label: '🎸 Guitarra · Set 3: Cuerdas 3ª–4ª–5ª (A–D–G · Registro Medio-Grave)', mode: 'guitar', lowToHighStringIndices: [1, 2, 3] },
+    { id: 'g-456', label: '🎸 Guitarra · Set 4: Cuerdas 4ª–5ª–6ª (E–A–D · Registro Grave)', mode: 'guitar', lowToHighStringIndices: [0, 1, 2] },
+    { id: 'g-spread', label: '🎸 Guitarra · Spread Triads (Tríadas Abiertas en Cuerdas 5ª–3ª–2ª: A–G–B)', mode: 'guitar', lowToHighStringIndices: [1, 3, 4] },
+    { id: 'b-123', label: '🎸 Bajo (4 Cuerdas) · Set Agudo: Cuerdas 3ª–2ª–1ª (A–D–G)', mode: 'bass', lowToHighStringIndices: [1, 2, 3] },
+    { id: 'b-234', label: '🎸 Bajo (4 Cuerdas) · Set Grave: Cuerdas 4ª–3ª–2ª (E–A–D)', mode: 'bass', lowToHighStringIndices: [0, 1, 2] },
+  ];
+
+  let rootPc = 0; // C
+  let qIdx = 0;
+  let setIdx = 0;
+  let selectedInvIdx = -1; // -1 = show all 3 inversions on 12-fret board
+
+  const renderCustomFixedFretsSvg = (
+    fretsLowToHigh: (number | null)[],
+    rootPitchClass: number,
+    mode: 'guitar' | 'bass'
+  ): string => {
+    const isBass = mode === 'bass';
+    const openLowToHigh = isBass ? [28, 33, 38, 43] : [40, 45, 50, 55, 59, 64];
+    const stringNames = isBass ? ['E', 'A', 'D', 'G'] : ['E', 'A', 'D', 'G', 'B', 'e'];
+    const numStrings = openLowToHigh.length;
+    const nonZero = fretsLowToHigh.filter((f): f is number => f !== null && f > 0);
+    const minFret = nonZero.length > 0 ? Math.min(...nonZero) : 1;
+    const maxFret = nonZero.length > 0 ? Math.max(...nonZero) : 4;
+    const baseFret = maxFret <= 4 ? 1 : minFret;
+    const tabText = fretsLowToHigh.map((f) => (f === null ? 'X' : String(f))).join('-');
+
+    const w = 136;
+    const h = 114;
+    const padL = isBass ? 28 : 22;
+    const padT = 22;
+    const gridW = isBass ? 82 : 95;
+    const gridH = 68;
+    const strGap = gridW / (numStrings - 1);
+    const fretGap = gridH / 4;
+    const lines: string[] = [];
+
+    if (baseFret === 1) {
+      lines.push(`<line x1="${padL}" y1="${padT}" x2="${padL + gridW}" y2="${padT}" stroke="${isBass ? '#38bdf8' : '#f8fafc'}" stroke-width="3.2" />`);
+    } else {
+      lines.push(`<line x1="${padL}" y1="${padT}" x2="${padL + gridW}" y2="${padT}" stroke="#64748b" stroke-width="1.5" />`);
+      lines.push(`<text x="${padL - 5}" y="${padT + fretGap * 0.65}" text-anchor="end" fill="#fbbf24" font-size="9" font-weight="800">${baseFret}fr</text>`);
+    }
+    for (let f = 1; f <= 4; f++) {
+      const y = padT + f * fretGap;
+      lines.push(`<line x1="${padL}" y1="${y}" x2="${padL + gridW}" y2="${y}" stroke="#334155" stroke-width="1.1" />`);
+    }
+    for (let s = 0; s < numStrings; s++) {
+      const x = padL + s * strGap;
+      const sw = isBass ? 2.5 - s * 0.32 : 1.8 - s * 0.16;
+      lines.push(`<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT + gridH}" stroke="${isBass ? '#7dd3fc' : '#94a3b8'}" stroke-width="${sw.toFixed(2)}" />`);
+      lines.push(`<text x="${x}" y="${padT + gridH + 12}" text-anchor="middle" fill="${isBass ? '#38bdf8' : '#94a3b8'}" font-size="8.5" font-weight="800">${stringNames[s]}</text>`);
+      const fVal = fretsLowToHigh[s];
+      if (fVal === null) {
+        lines.push(`<text x="${x}" y="${padT - 6}" text-anchor="middle" fill="#fb7185" font-size="9.5" font-weight="800">×</text>`);
+      } else if (fVal === 0) {
+        const pc = openLowToHigh[s] % 12;
+        const isR = pc === rootPitchClass;
+        lines.push(`<circle cx="${x}" cy="${padT - 8}" r="4.8" fill="${isR ? '#f59e0b' : 'none'}" stroke="${isR ? '#fef08a' : '#38bdf8'}" stroke-width="1.8" />`);
+      } else {
+        const relFret = Math.max(1, Math.min(4, fVal - baseFret + 1));
+        const cy = padT + (relFret - 0.5) * fretGap;
+        const pc = (openLowToHigh[s] + fVal) % 12;
+        const isR = pc === rootPitchClass;
+        const noteName = NOTE_NAMES[pc];
+        lines.push(`<circle cx="${x}" cy="${cy}" r="${isBass ? '7.0' : '6.4'}" fill="${isR ? '#f59e0b' : isBass ? '#059669' : '#0284c7'}" stroke="${isR ? '#fef08a' : '#7dd3fc'}" stroke-width="1.5" />`);
+        lines.push(`<text x="${x}" y="${cy + 2.8}" text-anchor="middle" fill="${isR ? '#0f172a' : '#f8fafc'}" font-size="6.9" font-weight="900">${noteName}</text>`);
+      }
+    }
+    return `
+      <div style="margin-top:6px; display:flex; flex-direction:column; align-items:center;">
+        <svg viewBox="0 0 ${w} ${h}" style="width:128px; height:106px; background:${isBass ? 'rgba(6,24,38,0.88)' : 'rgba(7,10,18,0.75)'}; border:1px solid ${isBass ? 'rgba(56,189,248,0.45)' : 'rgba(148,163,184,0.2)'}; border-radius:6px;">
+          ${lines.join('')}
+        </svg>
+        <div style="font-size:0.68rem; color:#94a3b8; font-family:monospace; margin-top:3px;">${isBass ? 'Bajo (4c)' : 'Guitarra (6c)'}: <strong style="color:${isBass ? '#38bdf8' : '#fde68a'};">${tabText}</strong></div>
+      </div>
+    `;
+  };
+
+  const computeThreeInversions = () => {
+    const q = qualities[qIdx];
+    const sSet = stringSets[setIdx];
+    const isBass = sSet.mode === 'bass';
+    const openLowToHigh = isBass ? [28, 33, 38, 43] : [40, 45, 50, 55, 59, 64];
+    const numStrings = openLowToHigh.length;
+    const [sLow, sMid, sHigh] = sSet.lowToHighStringIndices;
+
+    const pcs = q.intervals.map((iv) => (rootPc + iv) % 12) as [number, number, number];
+    // 3 inversions ordered by which chord member is on the lowest string of the 3-string set:
+    // Inv 0 (Fundamental): [1, 3, 5] -> [pcs[0], pcs[1], pcs[2]]
+    // Inv 1 (1ª Inversión): [3, 5, 1] -> [pcs[1], pcs[2], pcs[0]]
+    // Inv 2 (2ª Inversión): [5, 1, 3] -> [pcs[2], pcs[0], pcs[1]]
+    const invOrders: { title: string; orderLabel: string; shapeName: string; targetPcs: [number, number, number] }[] = [
+      { title: '1. Estado Fundamental (Raíz en grave)', orderLabel: 'Voces: 1ª – 3ª – 5ª', shapeName: 'Figura "Ala / Escalera"', targetPcs: [pcs[0], pcs[1], pcs[2]] },
+      { title: '2. Primera Inversión (3ª en grave)', orderLabel: 'Voces: 3ª – 5ª – 1ª', shapeName: 'Figura "Gancho (Raíz en aguda)"', targetPcs: [pcs[1], pcs[2], pcs[0]] },
+      { title: '3. Segunda Inversión (5ª en grave)', orderLabel: 'Voces: 5ª – 1ª – 3ª', shapeName: 'Figura "Triángulo (Raíz al centro)"', targetPcs: [pcs[2], pcs[0], pcs[1]] },
+    ];
+
+    return invOrders.map((inv, invIdx) => {
+      const fLow = (inv.targetPcs[0] - (openLowToHigh[sLow] % 12) + 12) % 12;
+      let fMid = (inv.targetPcs[1] - (openLowToHigh[sMid] % 12) + 12) % 12;
+      let fHigh = (inv.targetPcs[2] - (openLowToHigh[sHigh] % 12) + 12) % 12;
+
+      // Ensure fMid and fHigh are within an ergonomic hand span of fLow (adjust by +12 if too far below)
+      if (fMid - fLow < -3) fMid += 12;
+      if (fHigh - fMid < -3) fHigh += 12;
+      if (fLow - fMid > 4 && fLow >= 8) {
+        // Keep compact
+      }
+
+      const fretsLowToHigh: (number | null)[] = Array(numStrings).fill(null);
+      fretsLowToHigh[sLow] = fLow;
+      fretsLowToHigh[sMid] = fMid;
+      fretsLowToHigh[sHigh] = fHigh;
+
+      const midis = [
+        openLowToHigh[sLow] + fLow,
+        openLowToHigh[sMid] + fMid,
+        openLowToHigh[sHigh] + fHigh,
+      ];
+
+      return {
+        invIdx,
+        ...inv,
+        fretsLowToHigh,
+        midis,
+        notesStr: midis.map((m) => NOTE_NAMES[m % 12]).join(' – '),
+        avgFret: ((fLow + fMid + fHigh) / 3).toFixed(1),
+      };
+    });
+  };
+
+  stage.innerHTML = `
+    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
+      <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+        <label style="font-size:0.8rem; font-weight:700; color:var(--accent-gold);">Tónica:</label>
+        <select class="js-ft-root">
+          ${NOTE_LABELS.map((l, i) => `<option value="${i}" ${i === rootPc ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+        <label style="font-size:0.8rem; font-weight:700; color:var(--accent-cyan);">Tríada:</label>
+        <select class="js-ft-qual">
+          ${qualities.map((q, i) => `<option value="${i}">${q.name}</option>`).join('')}
+        </select>
+        <label style="font-size:0.8rem; font-weight:700; color:#34d399;">Instrumento y Set de 3 Cuerdas:</label>
+        <select class="js-ft-set" style="max-width:100%;">
+          ${stringSets.map((s, i) => `<option value="${i}">${s.label}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        <button type="button" class="btn btn-primary js-ft-play-all">▶ Tocar las 3 Inversiones por el Mástil</button>
+        <button type="button" class="btn js-ft-show-all" style="background:rgba(56,189,248,0.16); color:#38bdf8; border:1px solid rgba(56,189,248,0.4);">🗺️ Ver las 3 Inversiones Juntas</button>
+      </div>
+    </div>
+
+    <div class="js-ft-cards" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin-bottom:14px;"></div>
+
+    <div style="background:rgba(15,23,42,0.92); border:1px solid rgba(245,158,11,0.35); border-radius:10px; padding:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
+        <strong class="js-ft-neck-title" style="color:var(--accent-gold); font-size:0.88rem;">🎸 Mapa Horizontal de las 3 Inversiones en el Set de Cuerdas (0–15 Trastes)</strong>
+        <span style="font-size:0.74rem; color:#94a3b8;">Dorado = Tónica (1ª) · Azul/Verde = 3ª y 5ª de la Tríada en el Set de 3 Cuerdas Elegido</span>
+      </div>
+      <div class="js-ft-neck-host"></div>
+    </div>
+  `;
+
+  const rootSel = stage.querySelector<HTMLSelectElement>('.js-ft-root')!;
+  const qualSel = stage.querySelector<HTMLSelectElement>('.js-ft-qual')!;
+  const setSel = stage.querySelector<HTMLSelectElement>('.js-ft-set')!;
+  const cardsEl = stage.querySelector<HTMLElement>('.js-ft-cards')!;
+  const neckTitleEl = stage.querySelector<HTMLElement>('.js-ft-neck-title')!;
+  const neckHostEl = stage.querySelector<HTMLElement>('.js-ft-neck-host')!;
+
+  const render = (): void => {
+    const q = qualities[qIdx];
+    const sSet = stringSets[setIdx];
+    const isBass = sSet.mode === 'bass';
+    const invs = computeThreeInversions();
+    const chordTitle = `${NOTE_NAMES[rootPc]}${q.suffix}`;
+
+    cardsEl.innerHTML = invs
+      .map((inv) => {
+        const isSel = selectedInvIdx === inv.invIdx;
+        return `
+          <button type="button" class="js-ft-card" data-idx="${inv.invIdx}" style="background:${isSel ? 'rgba(30,58,138,0.58)' : 'rgba(30,41,59,0.9)'}; border:2px solid ${isSel ? '#f59e0b' : 'rgba(56,189,248,0.35)'}; border-radius:10px; padding:11px; color:#f8fafc; cursor:pointer; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-size:0.72rem; color:var(--accent-cyan); font-weight:700;">${inv.title}</div>
+              <div style="font-size:1.05rem; font-weight:900; color:var(--accent-gold); margin:2px 0;">${chordTitle} · ${inv.orderLabel}</div>
+              <div style="font-size:0.73rem; color:#cbd5e1; font-family:monospace;">[${inv.notesStr}]</div>
+              <div style="font-size:0.7rem; color:#34d399; margin-top:2px;">${inv.shapeName}</div>
+            </div>
+            ${renderCustomFixedFretsSvg(inv.fretsLowToHigh, rootPc, sSet.mode)}
+            <div style="font-size:0.68rem; color:#38bdf8; margin-top:4px;">🔊 Escuchar y Resaltar en Mástil</div>
+          </button>
+        `;
+      })
+      .join('');
+
+    // Render 0–15 Fret Neck highlighting the 3 strings of the active string set
+    const stringsConfig = isBass ? BASS_STRINGS : GUITAR_STRINGS;
+    const numStrings = stringsConfig.length;
+    const activeSetLowToHigh = new Set<number>(sSet.lowToHighStringIndices);
+
+    neckTitleEl.textContent =
+      selectedInvIdx === -1
+        ? `🎸 Las 3 Inversiones de ${chordTitle} (${q.formula}) a lo largo del Mástil — ${sSet.label}`
+        : `🎸 ${chordTitle} — ${invs[selectedInvIdx].title} (${invs[selectedInvIdx].notesStr}) — ${sSet.label}`;
+
+    let neckHtml = `<div class="fretboard-wrapper">`;
+    neckHtml += `<div class="fretboard-row" style="border-bottom:1px solid rgba(255,255,255,0.16); margin-bottom:4px;"><div class="string-label" style="color:var(--text-muted); font-size:0.7rem;">Traste</div>`;
+    for (let f = 0; f <= 15; f++) {
+      const marker = [3, 5, 7, 9, 12, 15].includes(f) ? '•' : '';
+      neckHtml += `<div class="fret-cell" style="height:20px; border:none; color:var(--text-muted); font-size:0.71rem; font-weight:700;">${f === 0 ? '0' : `${f}${marker}`}</div>`;
+    }
+    neckHtml += `</div>`;
+
+    const triadPcs = new Set(q.intervals.map((iv) => (rootPc + iv) % 12));
+
+    stringsConfig.forEach((st, sIdx) => {
+      const lowToHighIdx = numStrings - 1 - sIdx;
+      const isStringInSet = activeSetLowToHigh.has(lowToHighIdx);
+      const matchingInvs =
+        selectedInvIdx === -1 ? invs : [invs[selectedInvIdx]];
+
+      neckHtml += `<div class="fretboard-row" style="opacity:${isStringInSet ? '1' : '0.35'};"><div class="string-label" style="color:${isStringInSet ? (isBass ? '#38bdf8' : '#fbbf24') : '#64748b'};">${st.label}${isStringInSet ? ' ●' : ''}</div>`;
+      for (let f = 0; f <= 15; f++) {
+        const midi = st.openMidi + f;
+        const pc = midi % 12;
+        const noteName = NOTE_NAMES[pc];
+        const isRoot = pc === rootPc;
+        const isTriadNote = triadPcs.has(pc);
+        const isVoicedHere = matchingInvs.some((inv) => inv.fretsLowToHigh[lowToHighIdx] === f);
+
+        let stateClass = '';
+        if (isStringInSet && (isVoicedHere || (selectedInvIdx === -1 && isTriadNote))) {
+          stateClass = isRoot ? 'root' : isBass ? 'char' : 'active';
+        }
+        const ringStyle = isVoicedHere
+          ? 'box-shadow:0 0 0 2px #ffffff, 0 0 12px #f59e0b; font-weight:900;'
+          : '';
+
+        neckHtml += `
+          <div class="fret-cell js-ft-cell" data-midi="${midi}">
+            <div class="fret-note ${stateClass}" style="${ringStyle}">${noteName}</div>
+          </div>
+        `;
+      }
+      neckHtml += `</div>`;
+    });
+    neckHtml += `</div>`;
+    neckHostEl.innerHTML = neckHtml;
+  };
+
+  const playInversion = (inv: ReturnType<typeof computeThreeInversions>[0]): void => {
+    const sSet = stringSets[setIdx];
+    if (sSet.mode === 'bass') {
+      inv.midis.forEach((m, i) => audio.playElectricBass(m, 1.0, i * 0.14, 0.36, 'finger', false));
+    } else {
+      audio.strumChord(inv.midis, 'guitar', 0, false);
+    }
+  };
+
+  render();
+
+  rootSel.addEventListener('change', () => {
+    rootPc = parseInt(rootSel.value, 10);
+    render();
+  });
+  qualSel.addEventListener('change', () => {
+    qIdx = parseInt(qualSel.value, 10);
+    render();
+  });
+  setSel.addEventListener('change', () => {
+    setIdx = parseInt(setSel.value, 10);
+    selectedInvIdx = -1;
+    render();
+  });
+
+  stage.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const card = target.closest<HTMLElement>('.js-ft-card');
+    if (card) {
+      const idx = parseInt(card.getAttribute('data-idx')!, 10);
+      selectedInvIdx = idx;
+      audio.stopAll();
+      render();
+      const invs = computeThreeInversions();
+      playInversion(invs[idx]);
+      onStatus(`${NOTE_NAMES[rootPc]}${qualities[qIdx].suffix} — ${invs[idx].title} [${invs[idx].notesStr}]`);
+      return;
+    }
+    const cell = target.closest<HTMLElement>('.js-ft-cell');
+    if (cell) {
+      const midi = parseInt(cell.getAttribute('data-midi')!, 10);
+      if (stringSets[setIdx].mode === 'bass') audio.playElectricBass(midi, 1.1, 0, 0.38, 'finger', true);
+      else audio.playPluckedGuitar(midi, 1.1, 0, 0.3, true);
+      return;
+    }
+    if (target.closest('.js-ft-show-all')) {
+      selectedInvIdx = -1;
+      render();
+      onStatus('Mostrando simultáneamente las 3 inversiones a lo largo del mástil');
+    } else if (target.closest('.js-ft-play-all')) {
+      audio.stopAll();
+      const invs = computeThreeInversions().sort((a, b) => parseFloat(a.avgFret) - parseFloat(b.avgFret));
+      invs.forEach((inv, i) => {
+        audio.schedule(() => {
+          selectedInvIdx = inv.invIdx;
+          render();
+          playInversion(inv);
+          onStatus(`▶ [${i + 1}/3] ${inv.title} (${inv.notesStr})`);
+        }, i * 880);
+      });
+    }
+  });
+}
+
+/**
+ * NEW LAB 21: Interactive 14-Mode Semitone-Bridge Network (`data-lab="modes-network-14"`)
+ */
+function buildModes14NetworkLab(
+  stage: HTMLElement,
+  audio: MusicAudioEngine,
+  onStatus: (msg: string) => void
+): void {
+  interface Mode14Node {
+    id: string;
+    name: string;
+    family: 'Maj' | 'Me' | 'Ar';
+    toneBand: 'majColor' | 'minColor';
+    extTag: string;
+    col: number; // 0..3
+    row: number; // 0..5
+    offsets: number[]; // 7 pitch-class offsets
+    alteredMask: boolean[]; // highlight altered degrees relative to Ionian
+    triads: { offset: number; suffix: string }[];
+    ingredient: string;
+    emotion: string;
+    neighbors: string[];
+  }
+
+  const majorOffsets = [0, 2, 4, 5, 7, 9, 11];
+  const makeMask = (offs: number[]) => offs.map((v, i) => v !== majorOffsets[i]);
+
+  const modes14: Mode14Node[] = [
+    {
+      id: 'melodica',
+      name: 'Melódica',
+      family: 'Me',
+      toneBand: 'minColor',
+      extTag: '6maj7',
+      col: 0,
+      row: 0,
+      offsets: [0, 2, 3, 5, 7, 9, 11],
+      alteredMask: makeMask([0, 2, 3, 5, 7, 9, 11]),
+      triads: [{ offset: 5, suffix: '' }, { offset: 7, suffix: '' }],
+      ingredient: '♭3 + 6♮ + 7M',
+      emotion: 'Jazz/Noir moderno: mezcla base menor con brillo mayor arriba.',
+      neighbors: ['jonica', 'armonica', 'dorica'],
+    },
+    {
+      id: 'jonica',
+      name: 'Jónica',
+      family: 'Maj',
+      toneBand: 'majColor',
+      extTag: 'maj7',
+      col: 1,
+      row: 0,
+      offsets: [0, 2, 4, 5, 7, 9, 11],
+      alteredMask: makeMask([0, 2, 4, 5, 7, 9, 11]),
+      triads: [{ offset: 5, suffix: '' }, { offset: 7, suffix: '' }, { offset: 11, suffix: '°' }],
+      ingredient: '4J + 7M (Centro de referencia)',
+      emotion: 'Luminoso, estable, claro y hogareño.',
+      neighbors: ['melodica', 'lidia', 'mixo'],
+    },
+    {
+      id: 'lidia',
+      name: 'Lidia',
+      family: 'Maj',
+      toneBand: 'majColor',
+      extTag: 'add#11',
+      col: 2,
+      row: 0,
+      offsets: [0, 2, 4, 6, 7, 9, 11],
+      alteredMask: makeMask([0, 2, 4, 6, 7, 9, 11]),
+      triads: [{ offset: 11, suffix: 'm' }, { offset: 2, suffix: '' }],
+      ingredient: '#4 (#11) mágica',
+      emotion: 'Flotación espacial, asombro cinematográfico y ensueño.',
+      neighbors: ['jonica', 'lidia2', 'lidiab7'],
+    },
+    {
+      id: 'lidia2',
+      name: 'Lidia #2',
+      family: 'Ar',
+      toneBand: 'majColor',
+      extTag: '#9 #11',
+      col: 3,
+      row: 0,
+      offsets: [0, 3, 4, 6, 7, 9, 11],
+      alteredMask: makeMask([0, 3, 4, 6, 7, 9, 11]),
+      triads: [{ offset: 11, suffix: '' }, { offset: 7, suffix: '+' }],
+      ingredient: '#2 (#9) + #4 (#11)',
+      emotion: 'Exotismo hipnótico y místico (6º grado Menor Armónica).',
+      neighbors: ['lidia'],
+    },
+    {
+      id: 'mixo',
+      name: 'Mixo',
+      family: 'Maj',
+      toneBand: 'majColor',
+      extTag: '7',
+      col: 1,
+      row: 1,
+      offsets: [0, 2, 4, 5, 7, 9, 10],
+      alteredMask: makeMask([0, 2, 4, 5, 7, 9, 10]),
+      triads: [{ offset: 7, suffix: 'm' }, { offset: 10, suffix: '' }],
+      ingredient: '3M + ♭7',
+      emotion: 'Épico, aventurero, rock/folk y dominante relajado.',
+      neighbors: ['jonica', 'lidiab7', 'mixob13', 'dorica'],
+    },
+    {
+      id: 'lidiab7',
+      name: 'Lidia ♭7',
+      family: 'Me',
+      toneBand: 'majColor',
+      extTag: '♭7 #11',
+      col: 2,
+      row: 1,
+      offsets: [0, 2, 4, 6, 7, 9, 10],
+      alteredMask: makeMask([0, 2, 4, 6, 7, 9, 10]),
+      triads: [{ offset: 2, suffix: '' }, { offset: 7, suffix: 'm' }, { offset: 7, suffix: '+' }],
+      ingredient: '#4 (#11) + ♭7 (Serie Armónica)',
+      emotion: 'Travieso, elegante, travieso de dibujos/cine (Los Simpson).',
+      neighbors: ['lidia', 'mixo', 'dorica4'],
+    },
+    {
+      id: 'mixob13',
+      name: 'Mixo ♭13',
+      family: 'Me',
+      toneBand: 'majColor',
+      extTag: '7♭13',
+      col: 1,
+      row: 2,
+      offsets: [0, 2, 4, 5, 7, 8, 10],
+      alteredMask: makeMask([0, 2, 4, 5, 7, 8, 10]),
+      triads: [{ offset: 5, suffix: 'm' }, { offset: 7, suffix: 'm' }, { offset: 10, suffix: '' }],
+      ingredient: '3M + ♭6 (♭13) + ♭7',
+      emotion: 'Nostalgia hindú/cinematográfica agridulce (5º Melódica).',
+      neighbors: ['mixo', 'mixob9b13', 'eolica'],
+    },
+    {
+      id: 'mixob9b13',
+      name: 'Mixo ♭9 ♭13',
+      family: 'Ar',
+      toneBand: 'majColor',
+      extTag: '♭7♭9♭13',
+      col: 2,
+      row: 2,
+      offsets: [0, 1, 4, 5, 7, 8, 10],
+      alteredMask: makeMask([0, 1, 4, 5, 7, 8, 10]),
+      triads: [{ offset: 1, suffix: '' }, { offset: 10, suffix: 'm' }],
+      ingredient: '♭2 + 3M + ♭6 (Frigio Mayor)',
+      emotion: 'Flamenco, desierto, rito andaluz y metal neoclásico.',
+      neighbors: ['mixob13', 'frigia'],
+    },
+    {
+      id: 'armonica',
+      name: 'Armónica',
+      family: 'Ar',
+      toneBand: 'minColor',
+      extTag: 'maj7',
+      col: 0,
+      row: 3,
+      offsets: [0, 2, 3, 5, 7, 8, 11],
+      alteredMask: makeMask([0, 2, 3, 5, 7, 8, 11]),
+      triads: [{ offset: 7, suffix: '7' }],
+      ingredient: '♭3 + ♭6 + 7M (Salto de 2ª Aum)',
+      emotion: 'Dramatismo clásico, tango y tensión barroca.',
+      neighbors: ['melodica', 'eolica'],
+    },
+    {
+      id: 'eolica',
+      name: 'Eólica',
+      family: 'Maj',
+      toneBand: 'minColor',
+      extTag: '♭6',
+      col: 1,
+      row: 3,
+      offsets: [0, 2, 3, 5, 7, 8, 10],
+      alteredMask: makeMask([0, 2, 3, 5, 7, 8, 10]),
+      triads: [{ offset: 5, suffix: 'm' }, { offset: 7, suffix: 'm' }],
+      ingredient: '♭3 + ♭6 + ♭7 (Menor Natural)',
+      emotion: 'Melancolía profunda, épica triste y balada.',
+      neighbors: ['mixob13', 'armonica', 'frigia', 'dorica'],
+    },
+    {
+      id: 'frigia',
+      name: 'Frigia',
+      family: 'Maj',
+      toneBand: 'minColor',
+      extTag: '♭9',
+      col: 2,
+      row: 3,
+      offsets: [0, 1, 3, 5, 7, 8, 10],
+      alteredMask: makeMask([0, 1, 3, 5, 7, 8, 10]),
+      triads: [{ offset: 1, suffix: '' }, { offset: 10, suffix: 'm' }],
+      ingredient: '♭2 (Semitono sobre la raíz)',
+      emotion: 'Oscuridad antigua, suspenso visceral y raíz española.',
+      neighbors: ['mixob9b13', 'eolica', 'doricab2'],
+    },
+    {
+      id: 'dorica',
+      name: 'Dórica',
+      family: 'Maj',
+      toneBand: 'minColor',
+      extTag: '6',
+      col: 1,
+      row: 4,
+      offsets: [0, 2, 3, 5, 7, 9, 10],
+      alteredMask: makeMask([0, 2, 3, 5, 7, 9, 10]),
+      triads: [{ offset: 2, suffix: 'm' }, { offset: 5, suffix: '' }],
+      ingredient: '♭3 + 6♮ (Sexta natural)',
+      emotion: 'Menor luminoso, jazz/funk sofisticado y aventura medieval.',
+      neighbors: ['melodica', 'mixo', 'eolica', 'doricab2', 'dorica4'],
+    },
+    {
+      id: 'doricab2',
+      name: 'Dórica ♭2',
+      family: 'Me',
+      toneBand: 'minColor',
+      extTag: '6 ♭9',
+      col: 2,
+      row: 4,
+      offsets: [0, 1, 3, 5, 7, 9, 10],
+      alteredMask: makeMask([0, 1, 3, 5, 7, 9, 10]),
+      triads: [{ offset: 10, suffix: 'm' }, { offset: 5, suffix: '' }, { offset: 1, suffix: '+' }],
+      ingredient: '♭2 + 6♮ (2º Menor Melódica)',
+      emotion: 'Misterio húmedo con luz superior de Jazz moderno.',
+      neighbors: ['frigia', 'dorica'],
+    },
+    {
+      id: 'dorica4',
+      name: 'Dórica #4',
+      family: 'Ar',
+      toneBand: 'minColor',
+      extTag: '6#11',
+      col: 1,
+      row: 5,
+      offsets: [0, 2, 3, 6, 7, 9, 10],
+      alteredMask: makeMask([0, 2, 3, 6, 7, 9, 10]),
+      triads: [{ offset: 2, suffix: '' }, { offset: 10, suffix: '+' }],
+      ingredient: '♭3 + #4 + 6♮ (4º Menor Armónica)',
+      emotion: 'Caravana gitana / Klezmer lleno de fuego dramático.',
+      neighbors: ['dorica', 'lidiab7'],
+    },
+  ];
+
+  let rootPc = 0; // C
+  let activeId = 'jonica';
+  let neckMode: 'guitar' | 'bass' = 'guitar';
+
+  stage.innerHTML = `
+    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
+      <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+        <label style="font-size:0.8rem; font-weight:700; color:var(--accent-gold);">Tónica Modal:</label>
+        <select class="js-m14-root">
+          ${NOTE_LABELS.map((l, i) => `<option value="${i}" ${i === rootPc ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+        <button type="button" class="btn js-m14-neck-mode" data-mode="guitar" style="font-size:0.75rem; padding:4px 10px; background:rgba(245,158,11,0.22); color:#fbbf24; border:1px solid #f59e0b;">🎸 Guitarra (6c)</button>
+        <button type="button" class="btn js-m14-neck-mode" data-mode="bass" style="font-size:0.75rem; padding:4px 10px; background:rgba(30,41,59,0.9); color:#94a3b8; border:1px solid #334155;">🎸 Bajo (4c)</button>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        <button type="button" class="btn btn-primary js-m14-play">▶ Escuchar Acorde + Escala del Modo</button>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto; background:rgba(7,10,18,0.9); border:1px solid rgba(56,189,248,0.28); border-radius:12px; padding:10px; margin-bottom:12px;">
+      <div class="js-m14-svg-host" style="min-width:680px;"></div>
+    </div>
+
+    <div class="js-m14-info" style="background:rgba(15,23,42,0.92); border:1px solid rgba(245,158,11,0.38); border-radius:10px; padding:12px; margin-bottom:12px;"></div>
+
+    <div style="background:rgba(15,23,42,0.92); border:1px solid rgba(56,189,248,0.3); border-radius:10px; padding:10px;">
+      <strong class="js-m14-neck-title" style="display:block; font-size:0.84rem; color:var(--accent-gold); margin-bottom:4px;">🎸 Escala Modal en el Mástil</strong>
+      <div class="js-m14-neck-host"></div>
+    </div>
+  `;
+
+  const rootSel = stage.querySelector<HTMLSelectElement>('.js-m14-root')!;
+  const svgHost = stage.querySelector<HTMLElement>('.js-m14-svg-host')!;
+  const infoEl = stage.querySelector<HTMLElement>('.js-m14-info')!;
+  const neckTitleEl = stage.querySelector<HTMLElement>('.js-m14-neck-title')!;
+  const neckHost = stage.querySelector<HTMLElement>('.js-m14-neck-host')!;
+  const neckModeBtns = stage.querySelectorAll<HTMLButtonElement>('.js-m14-neck-mode');
+
+  const getModeById = (id: string) => modes14.find((m) => m.id === id) || modes14[1];
+
+  const getDiffDesc = (a: Mode14Node, b: Mode14Node): string => {
+    for (let i = 0; i < 7; i++) {
+      if (a.offsets[i] !== b.offsets[i]) {
+        const na = NOTE_NAMES[(rootPc + a.offsets[i]) % 12];
+        const nb = NOTE_NAMES[(rootPc + b.offsets[i]) % 12];
+        return `${na} ↔ ${nb}`;
+      }
+    }
+    return '1 semitono';
+  };
+
+  const render = (): void => {
+    const activeMode = getModeById(activeId);
+    const isBass = neckMode === 'bass';
+
+    neckModeBtns.forEach((b) => {
+      const act = b.getAttribute('data-mode') === neckMode;
+      b.style.background = act ? 'rgba(245,158,11,0.24)' : 'rgba(30,41,59,0.9)';
+      b.style.color = act ? '#fbbf24' : '#94a3b8';
+      b.style.borderColor = act ? '#f59e0b' : '#334155';
+    });
+
+    // Layout geometry for SVG (viewBox 980 x 650)
+    const boxW = 196;
+    const boxH = 78;
+    const colX = [30, 268, 506, 744];
+    const rowY = [24, 128, 232, 336, 440, 544];
+
+    const centerOf = (m: Mode14Node) => ({
+      cx: colX[m.col] + boxW / 2,
+      cy: rowY[m.row] + boxH / 2,
+      x: colX[m.col],
+      y: rowY[m.row],
+    });
+
+    // Draw orthogonal & curved 1-semitone bridge edges (matching Image 1)
+    const drawnPairs = new Set<string>();
+    const edgeSvg: string[] = [];
+
+    modes14.forEach((m) => {
+      m.neighbors.forEach((nbId) => {
+        const pairKey = [m.id, nbId].sort().join('--');
+        if (drawnPairs.has(pairKey)) return;
+        drawnPairs.add(pairKey);
+
+        const nb = getModeById(nbId);
+        const p1 = centerOf(m);
+        const p2 = centerOf(nb);
+        const isHighlighted = m.id === activeId || nb.id === activeId;
+        const strokeCol = isHighlighted ? '#fbbf24' : '#cbd5e1';
+        const strokeW = isHighlighted ? 2.8 : 1.5;
+        const opacity = isHighlighted ? '1' : '0.52';
+
+        // Special long outer loop bridges matching Image 1
+        if ((m.id === 'melodica' && nb.id === 'dorica') || (m.id === 'dorica' && nb.id === 'melodica')) {
+          const leftRail = 12;
+          edgeSvg.push(`<polyline points="${p1.x},${p1.cy} ${leftRail},${p1.cy} ${leftRail},${p2.cy} ${p2.x},${p2.cy}" fill="none" stroke="${strokeCol}" stroke-width="${strokeW}" opacity="${opacity}" stroke-linejoin="round"/>`);
+        } else if ((m.id === 'mixo' && nb.id === 'dorica') || (m.id === 'dorica' && nb.id === 'mixo')) {
+          const railX = p1.x - 16;
+          edgeSvg.push(`<path d="M ${p1.x} ${p1.cy} Q ${railX - 18} ${(p1.cy + p2.cy) / 2} ${p2.x} ${p2.cy}" fill="none" stroke="${strokeCol}" stroke-width="${strokeW}" opacity="${opacity}"/>`);
+        } else if ((m.id === 'lidiab7' && nb.id === 'dorica4') || (m.id === 'dorica4' && nb.id === 'lidiab7')) {
+          const rightRail = 724;
+          edgeSvg.push(`<polyline points="${p1.x + boxW},${p1.cy} ${rightRail},${p1.cy} ${rightRail},${p2.cy} ${p2.x + boxW},${p2.cy}" fill="none" stroke="${strokeCol}" stroke-width="${strokeW}" opacity="${opacity}" stroke-linejoin="round"/>`);
+        } else {
+          edgeSvg.push(`<line x1="${p1.cx}" y1="${p1.cy}" x2="${p2.cx}" y2="${p2.cy}" stroke="${strokeCol}" stroke-width="${strokeW}" opacity="${opacity}"/>`);
+        }
+      });
+    });
+
+    // Draw all 14 mode boxes
+    const nodesSvg = modes14
+      .map((m) => {
+        const pos = centerOf(m);
+        const isSel = m.id === activeId;
+        const isNeighbor = activeMode.neighbors.includes(m.id);
+        const headerFill = m.toneBand === 'majColor' ? '#f3b7d2' : '#93d5f0';
+        const cellFill = m.toneBand === 'majColor' ? '#fce7f3' : '#dbeafe';
+        const altCellFill = m.toneBand === 'majColor' ? '#9d7488' : '#5e889b';
+        const borderCol = isSel ? '#fbbf24' : isNeighbor ? '#38bdf8' : '#0f172a';
+        const borderW = isSel ? 3.5 : isNeighbor ? 2.5 : 1.5;
+        const cellW = boxW / 7;
+
+        const triadLabels = m.triads
+          .map((t, idx) => {
+            const tName = `${NOTE_NAMES[(rootPc + t.offset) % 12]}${t.suffix}`;
+            return `<text x="${pos.x + boxW - 6}" y="${pos.y + 13 + idx * 12}" text-anchor="end" fill="#090c12" font-size="10.5" font-weight="800">${tName}</text>`;
+          })
+          .join('');
+
+        const noteCells = m.offsets
+          .map((off, idx) => {
+            const noteStr = NOTE_NAMES[(rootPc + off) % 12];
+            const isAlt = m.alteredMask[idx];
+            const nx = pos.x + idx * cellW;
+            const ny = pos.y + 49;
+            return `
+              <rect x="${nx}" y="${ny}" width="${cellW}" height="${boxH - 49}" fill="${isAlt ? altCellFill : cellFill}" stroke="#0f172a" stroke-width="1"/>
+              <text x="${nx + cellW / 2}" y="${ny + 19}" text-anchor="middle" fill="${isAlt ? '#f8fafc' : '#090c12'}" font-size="11.5" font-weight="800">${noteStr}</text>
+            `;
+          })
+          .join('');
+
+        return `
+          <g class="js-m14-node" data-id="${m.id}" style="cursor:pointer;">
+            <rect x="${pos.x}" y="${pos.y}" width="${boxW}" height="${boxH}" rx="4" fill="${headerFill}" stroke="${borderCol}" stroke-width="${borderW}"/>
+            <text x="${pos.x + 6}" y="${pos.y + 14}" fill="#090c12" font-size="10.5" font-weight="700">${m.family}</text>
+            <text x="${pos.x + 6}" y="${pos.y + 43}" fill="#1e293b" font-size="9.5" font-weight="700">${m.extTag}</text>
+            <text x="${pos.x + boxW * 0.48}" y="${pos.y + 31}" text-anchor="middle" fill="#090c12" font-size="${m.name.length > 9 ? '15' : '18.5'}" font-weight="900">${m.name}</text>
+            ${triadLabels}
+            ${noteCells}
+          </g>
+        `;
+      })
+      .join('');
+
+    svgHost.innerHTML = `
+      <svg viewBox="0 0 970 672" style="width:100%; height:auto; display:block; user-select:none;">
+        <rect x="0" y="0" width="970" height="672" fill="#121417" rx="8"/>
+        <text x="18" y="652" fill="#94a3b8" font-size="11.5" font-weight="700">Líneas conectan modos separados por exactamente 1 SEMITONO (Rosa = Modo con 3ª Mayor · Celeste = Modo con 3ª Menor · Cuadro oscuro = Nota alterada)</text>
+        ${edgeSvg.join('')}
+        ${nodesSvg}
+      </svg>
+    `;
+
+    // Update active mode inspector
+    const rootName = NOTE_NAMES[rootPc];
+    const scaleNames = activeMode.offsets.map((o) => NOTE_NAMES[(rootPc + o) % 12]).join(' – ');
+    const triadNames = activeMode.triads.map((t) => `${NOTE_NAMES[(rootPc + t.offset) % 12]}${t.suffix}`).join(' · ');
+    const neighborButtons = activeMode.neighbors
+      .map((nbId) => {
+        const nb = getModeById(nbId);
+        return `<button type="button" class="btn js-m14-jump" data-id="${nb.id}" style="font-size:0.74rem; padding:4px 9px; background:rgba(56,189,248,0.16); color:#7dd3fc; border:1px solid rgba(56,189,248,0.45);">🔀 ${rootName} ${nb.name} (cambia solo <strong>${getDiffDesc(activeMode, nb)}</strong>)</button>`;
+      })
+      .join('');
+
+    infoEl.innerHTML = `
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; gap:10px;">
+        <div>
+          <span style="font-size:0.72rem; text-transform:uppercase; color:var(--accent-cyan); font-weight:800;">Familia ${activeMode.family} · Extensión ${activeMode.extTag}</span>
+          <h4 style="margin:2px 0 4px 0; font-size:1.15rem; color:var(--accent-gold);">${rootName} ${activeMode.name} <span style="font-size:0.86rem; color:#e2e8f0; font-family:monospace;">[${scaleNames}]</span></h4>
+          <p style="margin:0 0 6px 0; font-size:0.82rem; color:#cbd5e1;">
+            <strong>Ingrediente Característico:</strong> ${activeMode.ingredient} · <strong>Tríadas Cadenciales ("Por Descarte"):</strong> <code style="color:#fde047;">${triadNames}</code><br>
+            <strong>Emoción:</strong> ${activeMode.emotion}
+          </p>
+        </div>
+      </div>
+      <div style="margin-top:6px;">
+        <div style="font-size:0.76rem; color:#fbbf24; font-weight:700; margin-bottom:5px;">🔗 Puentes a 1 Semitono desde ${rootName} ${activeMode.name} (Haz clic para modular moviendo 1 sola nota):</div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">${neighborButtons}</div>
+      </div>
+    `;
+
+    // Update 12-fret Guitar/Bass Neck
+    const pcs = new Set(activeMode.offsets.map((o) => (rootPc + o) % 12));
+    const charPcs = new Set(activeMode.offsets.filter((_, i) => activeMode.alteredMask[i]).map((o) => (rootPc + o) % 12));
+    const stringsConfig = isBass ? BASS_STRINGS : GUITAR_STRINGS;
+    neckTitleEl.textContent = `🎸 ${rootName} ${activeMode.name} en ${isBass ? 'BAJO ELÉCTRICO (4 Cuerdas)' : 'GUITARRA (6 Cuerdas)'} — Dorado = Tónica · Verde = Notas Alteradas Características`;
+
+    let neckHtml = `<div class="fretboard-wrapper">`;
+    neckHtml += `<div class="fretboard-row" style="border-bottom:1px solid rgba(255,255,255,0.16); margin-bottom:4px;"><div class="string-label" style="color:var(--text-muted); font-size:0.7rem;">Traste</div>`;
+    for (let f = 0; f <= 12; f++) {
+      neckHtml += `<div class="fret-cell" style="height:20px; border:none; color:var(--text-muted); font-size:0.72rem; font-weight:700;">${f}</div>`;
+    }
+    neckHtml += `</div>`;
+    stringsConfig.forEach((st) => {
+      neckHtml += `<div class="fretboard-row"><div class="string-label" style="color:${isBass ? '#38bdf8' : '#fbbf24'};">${st.label}</div>`;
+      for (let f = 0; f <= 12; f++) {
+        const midi = st.openMidi + f;
+        const pc = midi % 12;
+        const stateClass = pc === rootPc ? 'root' : charPcs.has(pc) ? 'char' : pcs.has(pc) ? 'active' : '';
+        neckHtml += `<div class="fret-cell js-m14-cell" data-midi="${midi}"><div class="fret-note ${stateClass}">${NOTE_NAMES[pc]}</div></div>`;
+      }
+      neckHtml += `</div>`;
+    });
+    neckHtml += `</div>`;
+    neckHost.innerHTML = neckHtml;
+  };
+
+  const playActiveMode = (): void => {
+    const m = getModeById(activeId);
+    const rootMidi = neckMode === 'bass' ? 36 + rootPc : 48 + rootPc;
+    const isMin = m.offsets[2] === 3;
+    const tonicChord = [rootMidi, rootMidi + (isMin ? 3 : 4), rootMidi + 7, rootMidi + m.offsets[6]];
+    audio.stopAll();
+    audio.strumChord(tonicChord, neckMode === 'bass' ? 'guitar' : 'piano', 0, false);
+    m.offsets.forEach((off, idx) => {
+      const noteMidi = 60 + rootPc + off;
+      if (neckMode === 'bass') audio.playElectricBass(noteMidi - 12, 0.48, 0.65 + idx * 0.24, 0.35, 'finger', false);
+      else audio.playPluckedGuitar(noteMidi, 0.55, 0.65 + idx * 0.24, 0.26, false);
+    });
+    audio.playAcousticPiano(60 + rootPc + 12, 0.9, 0.65 + 7 * 0.24, 0.26, false);
+    onStatus(`Modo ${NOTE_NAMES[rootPc]} ${m.name} (${m.ingredient})`);
+  };
+
+  render();
+
+  rootSel.addEventListener('change', () => {
+    rootPc = parseInt(rootSel.value, 10);
+    render();
+    playActiveMode();
+  });
+
+  stage.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const modeNode = target.closest<HTMLElement>('.js-m14-node, .js-m14-jump');
+    if (modeNode) {
+      activeId = modeNode.getAttribute('data-id')!;
+      render();
+      playActiveMode();
+      return;
+    }
+    const neckBtn = target.closest<HTMLElement>('.js-m14-neck-mode');
+    if (neckBtn) {
+      neckMode = (neckBtn.getAttribute('data-mode') as 'guitar' | 'bass') || 'guitar';
+      render();
+      return;
+    }
+    const cell = target.closest<HTMLElement>('.js-m14-cell');
+    if (cell) {
+      const midi = parseInt(cell.getAttribute('data-midi')!, 10);
+      if (neckMode === 'bass') audio.playElectricBass(midi, 1.0, 0, 0.36, 'finger', true);
+      else audio.playPluckedGuitar(midi, 1.0, 0, 0.28, true);
+      return;
+    }
+    if (target.closest('.js-m14-play')) {
+      playActiveMode();
+    }
+  });
+}
+
+/**
+ * NEW LAB 22: Interactive Pyramid of Available Tensions 9+11+13 (`data-lab="tension-pyramid-visualizer"`)
+ */
+function buildTensionPyramidLab(
+  stage: HTMLElement,
+  audio: MusicAudioEngine,
+  onStatus: (msg: string) => void
+): void {
+  interface PyrNode {
+    id: string;
+    tier: 1 | 2 | 3 | 4;
+    colIdx: number;
+    rootOffset: number; // relative to selected rootPc
+    minor: boolean;
+    extText: string;
+    voicingOffsets: number[]; // chord pitch classes relative to node's own root
+  }
+
+  // Matches Image 3 exact hierarchy & common-tone links (relative to Root = C = 0)
+  const pyrNodes: PyrNode[] = [
+    // Tier 1 (Apex)
+    { id: 't1-I', tier: 1, colIdx: 0, rootOffset: 0, minor: false, extText: 'Tríada', voicingOffsets: [0, 4, 7] },
+
+    // Tier 2 (3 nodes)
+    { id: 't2-I913', tier: 2, colIdx: 0, rootOffset: 0, minor: false, extText: '9 13', voicingOffsets: [0, 4, 7, 14, 21] },
+    { id: 't2-I9s1113', tier: 2, colIdx: 1, rootOffset: 0, minor: false, extText: '9 #11 13', voicingOffsets: [0, 4, 7, 14, 18, 21] },
+    { id: 't2-bVII', tier: 2, colIdx: 2, rootOffset: 10, minor: false, extText: '9 #11 13', voicingOffsets: [0, 4, 7, 14, 18, 21] },
+
+    // Tier 3 (15 readable chords from Image 3)
+    { id: 't3-vi11', tier: 3, colIdx: 0, rootOffset: 9, minor: true, extText: '11', voicingOffsets: [0, 3, 7, 17] },
+    { id: 't3-vi911', tier: 3, colIdx: 1, rootOffset: 9, minor: true, extText: '9 11', voicingOffsets: [0, 3, 7, 14, 17] },
+    { id: 't3-i11', tier: 3, colIdx: 2, rootOffset: 0, minor: true, extText: '11', voicingOffsets: [0, 3, 7, 17] },
+    { id: 't3-IVs11', tier: 3, colIdx: 3, rootOffset: 5, minor: false, extText: '9 #11 13', voicingOffsets: [0, 4, 7, 14, 18, 21] },
+    { id: 't3-bIII913', tier: 3, colIdx: 4, rootOffset: 3, minor: false, extText: '9 13', voicingOffsets: [0, 4, 7, 14, 21] },
+    { id: 't3-bIIIs11', tier: 3, colIdx: 5, rootOffset: 3, minor: false, extText: '9 #11 13', voicingOffsets: [0, 4, 7, 14, 18, 21] },
+    { id: 't3-v911', tier: 3, colIdx: 6, rootOffset: 7, minor: true, extText: '9 11', voicingOffsets: [0, 3, 7, 14, 17] },
+    { id: 't3-IV913', tier: 3, colIdx: 7, rootOffset: 5, minor: false, extText: '9 13', voicingOffsets: [0, 4, 7, 14, 21] },
+    { id: 't3-iv911', tier: 3, colIdx: 8, rootOffset: 5, minor: true, extText: '9 11', voicingOffsets: [0, 3, 7, 14, 17] },
+    { id: 't3-bVII913', tier: 3, colIdx: 9, rootOffset: 10, minor: false, extText: '9 13', voicingOffsets: [0, 4, 7, 14, 21] },
+    { id: 't3-i911', tier: 3, colIdx: 10, rootOffset: 0, minor: true, extText: '9 11', voicingOffsets: [0, 3, 7, 14, 17] },
+    { id: 't3-iii11', tier: 3, colIdx: 11, rootOffset: 4, minor: true, extText: '11', voicingOffsets: [0, 3, 7, 17] },
+    { id: 't3-iii911', tier: 3, colIdx: 12, rootOffset: 4, minor: true, extText: '9 11', voicingOffsets: [0, 3, 7, 14, 17] },
+    { id: 't3-ii11', tier: 3, colIdx: 13, rootOffset: 2, minor: true, extText: '11', voicingOffsets: [0, 3, 7, 17] },
+    { id: 't3-Vs11', tier: 3, colIdx: 14, rootOffset: 7, minor: false, extText: '9 #11 13', voicingOffsets: [0, 4, 7, 14, 18, 21] },
+    { id: 't3-V913', tier: 3, colIdx: 15, rootOffset: 7, minor: false, extText: '9 13', voicingOffsets: [0, 4, 7, 14, 21] },
+
+    // Tier 4 (15 base chords from Image 3)
+    { id: 't4-bVIs11', tier: 4, colIdx: 0, rootOffset: 8, minor: false, extText: '9 #11 13', voicingOffsets: [0, 4, 7, 14, 18, 21] },
+    { id: 't4-bvii911', tier: 4, colIdx: 1, rootOffset: 10, minor: true, extText: '9 11', voicingOffsets: [0, 3, 7, 14, 17] },
+    { id: 't4-bVI913', tier: 4, colIdx: 2, rootOffset: 8, minor: false, extText: '9 13', voicingOffsets: [0, 4, 7, 14, 21] },
+    { id: 't4-iv11', tier: 4, colIdx: 3, rootOffset: 5, minor: true, extText: '11', voicingOffsets: [0, 3, 7, 17] },
+    { id: 't4-bVs11', tier: 4, colIdx: 4, rootOffset: 6, minor: false, extText: '9 #11 13', voicingOffsets: [0, 4, 7, 14, 18, 21] },
+    { id: 't4-vii11', tier: 4, colIdx: 5, rootOffset: 11, minor: true, extText: '11', voicingOffsets: [0, 3, 7, 17] },
+    { id: 't4-II913', tier: 4, colIdx: 6, rootOffset: 2, minor: false, extText: '9 13', voicingOffsets: [0, 4, 7, 14, 21] },
+    { id: 't4-III913', tier: 4, colIdx: 7, rootOffset: 4, minor: false, extText: '9 13', voicingOffsets: [0, 4, 7, 14, 21] },
+    { id: 't4-VIs11', tier: 4, colIdx: 8, rootOffset: 9, minor: false, extText: '9 #11 13', voicingOffsets: [0, 4, 7, 14, 18, 21] },
+    { id: 't4-bi911', tier: 4, colIdx: 9, rootOffset: 1, minor: true, extText: '11', voicingOffsets: [0, 3, 7, 17] },
+    { id: 't4-IIs11', tier: 4, colIdx: 10, rootOffset: 2, minor: false, extText: '9 #11 13', voicingOffsets: [0, 4, 7, 14, 18, 21] },
+    { id: 't4-VI913', tier: 4, colIdx: 11, rootOffset: 9, minor: false, extText: '9 13', voicingOffsets: [0, 4, 7, 14, 21] },
+    { id: 't4-bi911b', tier: 4, colIdx: 12, rootOffset: 1, minor: true, extText: '9 11', voicingOffsets: [0, 3, 7, 14, 17] },
+    { id: 't4-IIIs11', tier: 4, colIdx: 13, rootOffset: 4, minor: false, extText: '9 #11 13', voicingOffsets: [0, 4, 7, 14, 18, 21] },
+    { id: 't4-bIIs11', tier: 4, colIdx: 14, rootOffset: 1, minor: false, extText: '9 #11 13', voicingOffsets: [0, 4, 7, 14, 18, 21] },
+  ];
+
+  let rootPc = 0; // C
+  let activeId = 't2-I9s1113';
+  let colorFilter: 'all' | 'root' | 'fifth' | 'third' = 'all';
+  let neckMode: 'guitar' | 'bass' = 'guitar';
+
+  stage.innerHTML = `
+    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
+      <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+        <label style="font-size:0.8rem; font-weight:700; color:var(--accent-gold);">Melodía / Tónica Base:</label>
+        <select class="js-pyr-root">
+          ${NOTE_LABELS.map((l, i) => `<option value="${i}" ${i === rootPc ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+        <button type="button" class="btn js-pyr-filter" data-f="all" style="font-size:0.74rem; padding:4px 9px; background:rgba(248,250,252,0.18); color:#f8fafc; border:1px solid #94a3b8;">Todas las Líneas</button>
+        <button type="button" class="btn js-pyr-filter" data-f="root" style="font-size:0.74rem; padding:4px 9px; background:rgba(244,114,182,0.15); color:#f472b6; border:1px solid #f472b6;">Línea Rosa (1ª)</button>
+        <button type="button" class="btn js-pyr-filter" data-f="fifth" style="font-size:0.74rem; padding:4px 9px; background:rgba(251,191,36,0.15); color:#fbbf24; border:1px solid #fbbf24;">Línea Dorada (5ª)</button>
+        <button type="button" class="btn js-pyr-filter" data-f="third" style="font-size:0.74rem; padding:4px 9px; background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid #38bdf8;">Línea Cian (3ª)</button>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        <button type="button" class="btn js-pyr-neck-mode" data-mode="guitar" style="font-size:0.75rem; padding:4px 10px; background:rgba(245,158,11,0.22); color:#fbbf24; border:1px solid #f59e0b;">🎸 Guitarra (6c)</button>
+        <button type="button" class="btn js-pyr-neck-mode" data-mode="bass" style="font-size:0.75rem; padding:4px 10px; background:rgba(30,41,59,0.9); color:#94a3b8; border:1px solid #334155;">🎸 Bajo (4c)</button>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto; background:#090c12; border:1px solid rgba(244,114,182,0.35); border-radius:12px; padding:10px; margin-bottom:12px;">
+      <div class="js-pyr-svg-host" style="min-width:760px;"></div>
+    </div>
+
+    <div class="js-pyr-info" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; align-items:center; background:rgba(15,23,42,0.92); border:1px solid rgba(56,189,248,0.38); border-radius:10px; padding:12px;"></div>
+  `;
+
+  const rootSel = stage.querySelector<HTMLSelectElement>('.js-pyr-root')!;
+  const svgHost = stage.querySelector<HTMLElement>('.js-pyr-svg-host')!;
+  const infoEl = stage.querySelector<HTMLElement>('.js-pyr-info')!;
+  const filterBtns = stage.querySelectorAll<HTMLButtonElement>('.js-pyr-filter');
+  const neckModeBtns = stage.querySelectorAll<HTMLButtonElement>('.js-pyr-neck-mode');
+
+  const getChordInfo = (n: PyrNode) => {
+    const cRootPc = (rootPc + n.rootOffset) % 12;
+    const cRootName = NOTE_NAMES[cRootPc];
+    const pcs = n.voicingOffsets.map((o) => (cRootPc + o) % 12);
+    const noteNames = pcs.map((p) => NOTE_NAMES[p]);
+    const symbol = `${cRootName}${n.minor ? 'm' : ''}${n.tier === 1 ? '' : `(${n.extText})`}`;
+    const shortName = `${cRootName}${n.minor ? 'm' : ''}`;
+    const hasRoot = pcs.includes(rootPc);
+    const hasThird = pcs.includes((rootPc + 4) % 12);
+    const hasFifth = pcs.includes((rootPc + 7) % 12);
+    return { cRootPc, pcs, noteNames, symbol, shortName, hasRoot, hasThird, hasFifth };
+  };
+
+  const render = (): void => {
+    filterBtns.forEach((b) => {
+      const act = b.getAttribute('data-f') === colorFilter;
+      b.style.outline = act ? '2px solid #fff' : 'none';
+    });
+    neckModeBtns.forEach((b) => {
+      const act = b.getAttribute('data-mode') === neckMode;
+      b.style.background = act ? 'rgba(245,158,11,0.24)' : 'rgba(30,41,59,0.9)';
+      b.style.color = act ? '#fbbf24' : '#94a3b8';
+      b.style.borderColor = act ? '#f59e0b' : '#334155';
+    });
+
+    const svgW = 1140;
+    const svgH = 612;
+    const tierY: Record<number, number> = { 1: 56, 2: 184, 3: 358, 4: 538 };
+    const tierCounts: Record<number, number> = { 1: 1, 2: 3, 3: 16, 4: 15 };
+
+    const getPos = (n: PyrNode) => {
+      const count = tierCounts[n.tier];
+      const span = n.tier === 2 ? 220 : svgW - 84;
+      const startX = (svgW - span) / 2;
+      const x = count === 1 ? svgW / 2 : startX + (n.colIdx * span) / (count - 1);
+      return { x, y: tierY[n.tier] };
+    };
+
+    const byTier = (t: number) => pyrNodes.filter((n) => n.tier === t);
+    const t1 = byTier(1);
+    const t2 = byTier(2);
+    const t3 = byTier(3);
+    const t4 = byTier(4);
+
+    // Connect adjacent tiers whenever both share the root (pink), fifth (gold), or third (cyan) of Tier 1 triad!
+    const edgesSvg: string[] = [];
+    const linkTiers = (parents: PyrNode[], children: PyrNode[]) => {
+      parents.forEach((p) => {
+        const pInfo = getChordInfo(p);
+        const pp = getPos(p);
+        children.forEach((c) => {
+          const cInfo = getChordInfo(c);
+          const cp = getPos(c);
+          const isLinkedToActive = activeId === p.id || activeId === c.id;
+          const dimOpacity = isLinkedToActive ? '0.88' : '0.24';
+
+          const bridges: { ok: boolean; kind: 'root' | 'fifth' | 'third'; col: string; dx: number }[] = [
+            { ok: pInfo.hasRoot && cInfo.hasRoot, kind: 'root', col: '#f472b6', dx: -4 },
+            { ok: pInfo.hasFifth && cInfo.hasFifth, kind: 'fifth', col: '#fbbf24', dx: 0 },
+            { ok: pInfo.hasThird && cInfo.hasThird, kind: 'third', col: '#38bdf8', dx: 4 },
+          ];
+
+          bridges.forEach((br) => {
+            if (!br.ok) return;
+            if (colorFilter !== 'all' && colorFilter !== br.kind) return;
+            edgesSvg.push(
+              `<line x1="${(pp.x + br.dx).toFixed(1)}" y1="${pp.y + 24}" x2="${(cp.x + br.dx).toFixed(1)}" y2="${cp.y - 26}" stroke="${br.col}" stroke-width="${isLinkedToActive ? 1.8 : 0.95}" opacity="${dimOpacity}"/>`
+            );
+          });
+        });
+      });
+    };
+
+    linkTiers(t1, t2);
+    linkTiers(t2, t3);
+    linkTiers(t3, t4);
+
+    const nodesSvg = pyrNodes
+      .map((n) => {
+        const pos = getPos(n);
+        const info = getChordInfo(n);
+        const isSel = n.id === activeId;
+        const r = n.tier <= 2 ? 23 : 19;
+        const notesLine = info.noteNames.join(' ');
+        const strokeCol = isSel ? '#fbbf24' : info.hasRoot && info.hasFifth ? '#f472b6' : info.hasThird ? '#38bdf8' : '#e2e8f0';
+
+        return `
+          <g class="js-pyr-node" data-id="${n.id}" style="cursor:pointer;">
+            <circle cx="${pos.x.toFixed(1)}" cy="${pos.y}" r="${r}" fill="${isSel ? 'rgba(245,158,11,0.28)' : '#0f172a'}" stroke="${strokeCol}" stroke-width="${isSel ? 3 : 1.7}"/>
+            <text x="${pos.x.toFixed(1)}" y="${pos.y + 5}" text-anchor="middle" fill="${isSel ? '#fef08a' : '#f8fafc'}" font-size="${n.tier <= 2 ? 15 : 12.5}" font-weight="900">${info.shortName}</text>
+            <text x="${pos.x.toFixed(1)}" y="${pos.y + r + 11}" text-anchor="middle" fill="#cbd5e1" font-size="8.2" font-weight="700">${n.extText}</text>
+            <text x="${pos.x.toFixed(1)}" y="${pos.y - r - 5}" text-anchor="middle" fill="#94a3b8" font-size="7.4" font-family="monospace">${notesLine}</text>
+          </g>
+        `;
+      })
+      .join('');
+
+    const rName = NOTE_NAMES[rootPc];
+    const thirdName = NOTE_NAMES[(rootPc + 4) % 12];
+    const fifthName = NOTE_NAMES[(rootPc + 7) % 12];
+
+    svgHost.innerHTML = `
+      <svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%; height:auto; display:block; user-select:none;">
+        <text x="18" y="28" fill="#f472b6" font-size="14" font-weight="900">La Pirámide de Tensiones Disponibles (${rName}: ${rName}–${thirdName}–${fifthName})</text>
+        <text x="18" y="46" fill="#94a3b8" font-size="11">Rosa = Mantiene 1ª (${rName}) · Dorada = Mantiene 5ª (${fifthName})</text>
+        <text x="18" y="61" fill="#94a3b8" font-size="11">Cian = Mantiene 3ª (${thirdName}) · Haz clic en cualquier círculo</text>
+        ${edgesSvg.join('')}
+        ${nodesSvg}
+      </svg>
+    `;
+
+    // Inspector panel
+    const selNode = pyrNodes.find((n) => n.id === activeId) || pyrNodes[2];
+    const selInfo = getChordInfo(selNode);
+    const midiBase = 48 + selInfo.cRootPc;
+    const voicingMidis = selNode.voicingOffsets.map((o) => midiBase + o);
+    const sharedLabels: string[] = [];
+    if (selInfo.hasRoot) sharedLabels.push(`🌸 Comparte <strong>${rName}</strong> (Línea Rosa)`);
+    if (selInfo.hasFifth) sharedLabels.push(`🌟 Comparte <strong>${fifthName}</strong> (Línea Dorada)`);
+    if (selInfo.hasThird) sharedLabels.push(`💎 Comparte <strong>${thirdName}</strong> (Línea Cian)`);
+
+    infoEl.innerHTML = `
+      <div>
+        <span style="font-size:0.72rem; text-transform:uppercase; color:var(--accent-cyan); font-weight:800;">Nivel ${selNode.tier} de la Pirámide · Acorde Activo</span>
+        <h4 style="margin:2px 0 6px 0; font-size:1.25rem; color:var(--accent-gold);">${selInfo.symbol} <span style="font-size:0.9rem; color:#e2e8f0; font-family:monospace;">[${selInfo.noteNames.join(' – ')}]</span></h4>
+        <p style="font-size:0.82rem; color:#cbd5e1; margin:0 0 8px 0;">
+          <strong>Puentes Melódicos Activos desde ${rName}:</strong> ${sharedLabels.length ? sharedLabels.join(' · ') : 'Acorde puente cromático avanzado'}<br>
+          Cada acorde inferior comparte su tríada base con múltiples tonalidades y modos, permitiendo modular suavemente bajo la misma nota melódica.
+        </p>
+        <button type="button" class="btn btn-primary js-pyr-play">🔊 Escuchar ${selInfo.symbol}</button>
+      </div>
+      <div style="display:flex; justify-content:center;">
+        ${renderMiniChordNeckSvg(voicingMidis, 36 + selInfo.cRootPc, neckMode)}
+      </div>
+    `;
+  };
+
+  const playNode = (n: PyrNode): void => {
+    const cRootPc = (rootPc + n.rootOffset) % 12;
+    const baseMidi = 48 + cRootPc;
+    const midis = n.voicingOffsets.map((o) => baseMidi + o);
+    audio.stopAll();
+    audio.playElectricBass(36 + cRootPc, 1.5, 0, 0.36, 'finger', false);
+    audio.strumChord(midis, 'piano', 0, false);
+    const info = getChordInfo(n);
+    onStatus(`Pirámide 9+11+13: ${info.symbol} [${info.noteNames.join(' – ')}]`);
+  };
+
+  render();
+
+  rootSel.addEventListener('change', () => {
+    rootPc = parseInt(rootSel.value, 10);
+    render();
+    const sel = pyrNodes.find((n) => n.id === activeId);
+    if (sel) playNode(sel);
+  });
+
+  stage.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const node = target.closest<HTMLElement>('.js-pyr-node');
+    if (node) {
+      activeId = node.getAttribute('data-id')!;
+      render();
+      const found = pyrNodes.find((n) => n.id === activeId);
+      if (found) playNode(found);
+      return;
+    }
+    const fBtn = target.closest<HTMLElement>('.js-pyr-filter');
+    if (fBtn) {
+      colorFilter = (fBtn.getAttribute('data-f') as 'all' | 'root' | 'fifth' | 'third') || 'all';
+      render();
+      return;
+    }
+    const mBtn = target.closest<HTMLElement>('.js-pyr-neck-mode');
+    if (mBtn) {
+      neckMode = (mBtn.getAttribute('data-mode') as 'guitar' | 'bass') || 'guitar';
+      render();
+      return;
+    }
+    if (target.closest('.js-pyr-play')) {
+      const found = pyrNodes.find((n) => n.id === activeId);
+      if (found) playNode(found);
+    }
+  });
+}
+
+
 
