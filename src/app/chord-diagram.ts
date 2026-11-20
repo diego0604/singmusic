@@ -156,10 +156,22 @@ import { DiagramModalManager } from './diagram-modal';
             <span class="font-mono text-sky-300 font-bold">Notas: {{ neckState().chordNoteNames.join(' – ') }}</span>
             <span class="mx-2 text-slate-600">|</span>
             <span class="font-mono text-emerald-300 font-bold">Posición: {{ neckState().tabSummary }}</span>
+            @if (instrument() === 'guitar') {
+              <span class="mx-2 text-slate-600">|</span>
+              <span class="font-mono text-amber-300 font-bold">
+                Dedos Izq: {{ neckState().fingerSummary }}
+                @if (neckState().barreFret) {
+                  (Cejilla tr.{{ neckState().barreFret }})
+                }
+              </span>
+            }
           </div>
           <div class="text-slate-400">
             Fórmula: {{ neckState().chord.formula }} · {{ neckState().chord.character }} · Escala guía:
             <strong class="text-slate-200">{{ neckState().scaleGuide.name }}</strong>
+            @if (instrument() === 'guitar') {
+              <span class="ml-2 text-amber-200/90">(1: Índice · 2: Medio · 3: Anular · 4: Meñique · 0: Aire)</span>
+            }
           </div>
         </div>
 
@@ -217,6 +229,7 @@ import { DiagramModalManager } from './diagram-modal';
               @let isChar = charPcSet().has(pc);
               @let isScale = scalePcSet().has(pc);
               @let isGlow = isCellGlowing(sIdx, f);
+              @let fingerNum = getGuitarFinger(sIdx, f);
               <div
                 class="fret-cell js-cd-cell"
                 [attr.data-sidx]="sIdx"
@@ -225,9 +238,9 @@ import { DiagramModalManager } from './diagram-modal';
                 <button
                   type="button"
                   (click)="onFretClick(sIdx, f, cellMidi)"
-                  [attr.aria-label]="'Cuerda ' + st.label + ', Traste ' + f + ': ' + noteNames[pc]"
-                  [title]="'Cuerda ' + st.label + ', Traste ' + f + ': ' + noteNames[pc]"
-                  class="fret-note p-0"
+                  [attr.aria-label]="'Cuerda ' + st.label + ', Traste ' + f + ': ' + noteNames[pc] + (fingerNum > 0 ? ', Dedo ' + fingerNum : '')"
+                  [title]="'Cuerda ' + st.label + ', Traste ' + f + ': ' + noteNames[pc] + (fingerNum > 0 ? ' (Dedo ' + fingerNum + ')' : '')"
+                  class="fret-note p-0 relative"
                   [class.root]="isRoot"
                   [class.char]="!isRoot && isChar"
                   [class.active]="!isRoot && !isChar && isScale"
@@ -235,6 +248,9 @@ import { DiagramModalManager } from './diagram-modal';
                   [class.glow-mode-chord]="isGlow && glowMode() === 'chord'"
                   [class.glow-mode-note]="isGlow && glowMode() === 'note'">
                   {{ noteNames[pc] }}
+                  @if (fingerNum > 0) {
+                    <span class="finger-badge">{{ fingerNum }}</span>
+                  }
                 </button>
               </div>
             }
@@ -286,6 +302,18 @@ export class ChordDiagram implements OnInit {
   readonly chordPosKeySet = computed(
     () => new Set(this.neckState().chordPositions.map((p) => `${p.sIdx}:${p.fret}`))
   );
+  readonly guitarFingerMap = computed(() => {
+    const map = new Map<string, number>();
+    if (this.instrument() !== 'guitar') return map;
+    this.neckState().chordFingers.forEach((p) => {
+      if (p.finger > 0) map.set(`${p.sIdx}:${p.fret}`, p.finger);
+    });
+    return map;
+  });
+
+  getGuitarFinger(sIdx: number, fret: number): number {
+    return this.guitarFingerMap().get(`${sIdx}:${fret}`) || 0;
+  }
 
   readonly singleNoteLabel = computed(() => {
     const pos = this.singleNotePos();

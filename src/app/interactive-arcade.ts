@@ -814,6 +814,12 @@ function hydrateChromeMusicLabArcade(
       renderGrid();
     };
 
+    const unsubStop = audio.onStop(() => {
+      if (timerId || currentStep >= 0) {
+        stopLoop();
+      }
+    });
+
     const startLoop = () => {
       stopLoop();
       const bpm = parseInt(bpmInput?.value || '112', 10);
@@ -827,6 +833,7 @@ function hydrateChromeMusicLabArcade(
       const tick = () => {
         if (!document.body.contains(widget)) {
           stopLoop();
+          unsubStop();
           return;
         }
         for (let r = 0; r < 8; r++) {
@@ -1285,17 +1292,38 @@ function hydrateLyricStudioArcade(
       });
     };
 
-    loopBtn?.addEventListener('click', () => {
+    const stopLyricLoop = () => {
       if (loopTimer) {
         clearInterval(loopTimer);
         loopTimer = null;
-        audio.stopAll();
+      }
+      if (loopBtn) {
         loopBtn.textContent = '▶ Base de Acordes';
         loopBtn.classList.remove('active');
+      }
+    };
+
+    const unsubLyricStop = audio.onStop(() => {
+      if (loopTimer) {
+        stopLyricLoop();
+      }
+    });
+
+    loopBtn?.addEventListener('click', () => {
+      if (loopTimer) {
+        stopLyricLoop();
+        audio.stopAll();
         return;
       }
       playChordLoop();
-      loopTimer = setInterval(playChordLoop, 5000);
+      loopTimer = setInterval(() => {
+        if (!document.body.contains(widget)) {
+          stopLyricLoop();
+          unsubLyricStop();
+          return;
+        }
+        playChordLoop();
+      }, 5000);
       loopBtn.textContent = '⏹ Detener Base';
       loopBtn.classList.add('active');
       onStatus('🎸 Reproduciendo base armónica para tus letras');

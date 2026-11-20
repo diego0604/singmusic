@@ -211,10 +211,10 @@ export const TREATISE_ENRICHMENT_SEARCH_META: TreatiseSearchMeta[] = [
     catId: 'bateria',
     catLabel: '7. Batería y Percusión',
     sectionId: 'd-grooves',
-    sectionTitle: '🥁 Notación de Batería en Pentagrama PAS Sincronizada, Gap Click y Sonido del Kit',
+    sectionTitle: '🥁 Notación de Batería PAS, Gap Click, Sonido del Kit y Ejercicios de Práctica',
     nivel: '1-3',
-    keywords: 'notacion de bateria pentagrama sincronizada entrenador de tempo interno gap click tecnicas y sonido del kit afinacion toms rimshot cross-stick escobillas',
-    snippet: 'Lee y programa grooves sobre el pentagrama oficial PAS sincronizado, entrena tu reloj interno con Gap Click y domina la afinación y técnicas del kit.',
+    keywords: 'notacion de bateria pentagrama sincronizada entrenador de tempo interno gap click tecnicas sonido kit ejercicios practica motricidad',
+    snippet: 'Lee y programa grooves sobre el pentagrama PAS sincronizado, entrena tu reloj interno con Gap Click, explora técnicas del kit y practica rutinas de motricidad.',
   },
   {
     catId: 'bajo',
@@ -229,10 +229,28 @@ export const TREATISE_ENRICHMENT_SEARCH_META: TreatiseSearchMeta[] = [
     catId: 'canto',
     catLabel: '8. Canto y Calentamiento Vocal',
     sectionId: 'v-calentamiento',
-    sectionTitle: '⚡ Gimnasio de Agilidad, Riffs y Melismas + Modificación de Vocales en el Passaggio',
+    sectionTitle: '⚡ Gimnasio de Agilidad, Respiración 4-2-8, SOVT y Modificación de Vocales',
     nivel: '1-3',
-    keywords: 'gimnasio de agilidad riffs melismas trinos modificacion de vocales i e a o u passaggio covering',
-    snippet: 'Entrena velocidad en escalas pentatónicas/blues/armónicas y ajusta tus vocales al cruzar el passaggio sin tensión laríngea.',
+    keywords: 'gimnasio de agilidad riffs melismas trinos modificacion de vocales i e a o u passaggio respiracion appoggio sovt afinacion vibrato',
+    snippet: 'Entrena respiración 4-2-8, calentamiento SOVT, afinación guiada, riffs/melismas por velocidad y modificación de vocales en el passaggio.',
+  },
+  {
+    catId: 'guitarra-ac',
+    catLabel: '4. Guitarra Acústica',
+    sectionId: 'ga-motricidad-memoria',
+    sectionTitle: '⚡ Digitación por BPM (1–4), Ejercicios de Motricidad y Memorizador de Acordes en Mástil',
+    nivel: '1-3',
+    keywords: 'digitacion guitarra motricidad arana 1 2 3 4 permutaciones ligados velocidad bpm memorizador acordes aleatorios mastil dedos mano izquierda',
+    snippet: 'Entrena velocidad y motricidad con los dedos 1–4 al metrónomo (+5 BPM) y memoriza acordes aleatorios tocándolos y reconociéndolos en el mástil.',
+  },
+  {
+    catId: 'guitarra-ac',
+    catLabel: '4. Guitarra Acústica',
+    sectionId: 'entreno-diario',
+    sectionTitle: '⏱️ Sesión Diaria de Entrenamiento Guiada (Guitarra, Bajo, Batería y Canto)',
+    nivel: '1-3',
+    keywords: 'sesion de entrenamiento diario rutina 10 20 30 minutos guitarra bajo bateria canto motricidad temporizador metronomo',
+    snippet: 'Rutinas cronometradas de 10, 20 o 30 minutos con metrónomo guía y bloques progresivos de motricidad, técnica y groove.',
   },
 ];
 
@@ -355,24 +373,30 @@ export function injectTreatiseEnrichmentIntoCategoryHtml(catId: string, html: st
     out = appendInsideSection(out, 'ga-acordes', buildGuitarKuleshovCagedAndColombianHtml());
     out = insertAfterSection(out, 'ga-acordes', buildFretboardTriadsSectionHtml('ga-triadas-mastil', 'guitarra-ac', '2B. Tríadas en el Mástil (Inversiones y Sets de 3 Cuerdas)'));
     out = insertAfterSection(out, 'ga-ritmo-fingerstyle', buildGuitarStrummingSectionHtml());
+    out = insertAfterSection(out, 'ga-rasgueos', buildGuitarDexterityAndMemorySectionHtml());
+    out = insertAfterSection(out, 'ga-motricidad-memoria', buildDailyTrainingSectionHtml());
   }
 
   if (catId === 'guitarra-el' || catId === 'all') {
     out = appendInsideSection(out, 'ge-riffs-solos', buildElectricGuitarGlueTriadsAndOctavesHtml());
+    out = appendInsideSection(out, 'ge-gimnasio', buildInstrumentSessionCalloutHtml('guitarra', 'ge'));
   }
 
   if (catId === 'bajo' || catId === 'all') {
     out = appendInsideSection(out, 'b-bajo-bateria', buildBassLockInAndExpressiveHtml());
+    out = appendInsideSection(out, 'b-gimnasio', buildInstrumentSessionCalloutHtml('bajo', 'bajo'));
     out = appendInsideSection(out, 'b-mutear-articulacion', buildBassExpressiveQuickJumpHtml());
   }
 
   if (catId === 'bateria' || catId === 'all') {
     out = appendInsideSection(out, 'd-grooves', buildDrumProNotationGapAndKitHtml());
+    out = appendInsideSection(out, 'd-gimnasio', buildInstrumentSessionCalloutHtml('bateria', 'bateria'));
   }
 
   if (catId === 'canto' || catId === 'all') {
     out = prependAfterSectionHeader(out, 'v-calentamiento', buildVocalAgilityAndVowelLabHtml());
     out = appendInsideSection(out, 'v-calentamiento', buildVocalDiagnosticAndHygieneHtml());
+    out = appendInsideSection(out, 'v-calentamiento', buildInstrumentSessionCalloutHtml('canto', 'canto'));
     out = appendInsideSection(out, 'v-interpretacion-estilos', buildVocalSixLayersBeltAndMicHtml());
   }
 
@@ -451,8 +475,19 @@ function buildZeroToHeroNotesAndAccidentalsHtml(): string {
       </div>
     </div>
 
+    <div class="card mb-4" style="border-left: 3px solid #10b981;">
+      <h4>🎯 4. ¿Qué significan Mayor, Menor, Aumentado (<code>+</code>) y Disminuido (<code>°</code>)?</h4>
+      <p class="text-xs">
+        Antes de entrar a medir intervalos y acordes, aprende estas cuatro etiquetas simples que verás en toda la música:<br>
+        • <strong>Mayor:</strong> distancia o acorde luminoso y estable (la medida "estándar" abierta).<br>
+        • <strong>Menor:</strong> se reduce <strong>1 semitono</strong>; suena más íntimo, serio o melancólico.<br>
+        • <strong>Aumentado (<code>+</code>):</strong> se estira <strong>+1 semitono</strong> hacia arriba (suena flotante o espacial).<br>
+        • <strong>Disminuido (<code>°</code>):</strong> se encoge <strong>-1 semitono</strong> hacia abajo (suena tenso o apretado y pide resolver).
+      </p>
+    </div>
+
     <div class="card mb-4" style="border-left: 3px solid #f59e0b;">
-      <h4>🕰️ 4. ¿Qué es una Enarmonía, el Becuadro (<code>♮</code>) y la "Regla de Oro de la Enarmonía"?</h4>
+      <h4>🕰️ 5. ¿Qué es una Enarmonía, el Becuadro (<code>♮</code>) y la "Regla de Oro de la Enarmonía"?</h4>
       <p class="text-xs">
         • <strong>¿Qué es una Enarmonía?</strong> Cuando <strong>un mismo sonido físico (la misma tecla o el mismo traste)</strong> puede escribirse con <strong>dos nombres distintos</strong> según la dirección o la escala. Ejemplos clave: <code>Do# = Re♭</code>, <code>Fa# = Sol♭</code>, e incluso entre notas naturales sin tecla negra en medio: <code>Mi# = Fa</code> y <code>Do♭ = Si</code>.<br>
         • <strong>Becuadro (<code>♮</code>):</strong> Borra temporalmente un sostenido o bemol anterior y devuelve la nota a su estado natural.<br>
@@ -1952,37 +1987,121 @@ function buildNeighborChordsSectionHtml(): string {
 
 function buildGuitarStrummingSectionHtml(): string {
   return `
-  <section id="ga-rasgueos" class="module-section" data-cat="guitarra-ac" data-nivel="1-2" data-menu="3B. Rasgueos, Apagados Percusivos y Ejercicios">
+  <section id="ga-rasgueos" class="module-section" data-cat="guitarra-ac" data-nivel="1-2" data-menu="3B. Rasgueos (10 Ritmos) y Dedos 1–4">
     <div class="module-header">
-      <span class="nav-badge badge-lvl1">Niveles 1–2 · Mano Derecha y Ritmo Aplicado</span>
-      <h2 class="module-title">3B. Guitarra Acústica: Rasgueos, Péndulo Continuo, Apagados (<code>✕</code>) y Ejercicios</h2>
-      <p class="module-subtitle">Domina el groove con la mano derecha manteniendo el péndulo constante (sin frenar en los cambios de acorde) y combinando acentos dinámicos con chasquidos percusivos.</p>
+      <span class="nav-badge badge-lvl1">Niveles 1–2 · Mano Derecha, 10 Ritmos y Dedos Mano Izquierda (1–4)</span>
+      <h2 class="module-title">3B. Guitarra Acústica: Rasgueos (Pop, Balada, Funk, Reggae, Vals, Bossa, Rumba, Cumbia)</h2>
+      <p class="module-subtitle">Domina el groove con el péndulo constante de mano derecha, apagados percusivos (<code>✕</code>) y la numeración de dedos de mano izquierda (<code>1</code> Índice · <code>2</code> Medio · <code>3</code> Anular · <code>4</code> Meñique) en el mástil.</p>
     </div>
 
     <div class="grid-cards mb-4">
       <div class="card">
         <h4>1. La Ley del Péndulo Constante</h4>
-        <p class="text-xs">Tu muñeca derecha sube y baja <strong>siempre al mismo pulso constante</strong> (como un limpiaparabrisas): los tiempos fuertes (<code>1, 2, 3, 4</code>) van siempre <strong>hacia abajo (<code>↓</code>)</strong> y los contratiempos (<em>"y"</em>) van <strong>hacia arriba (<code>↑</code>)</strong>. Cuando un paso dice "Aire (<code>·</code>)", sigues moviendo la mano sin tocar las cuerdas.</p>
+        <p class="text-xs">Tu muñeca derecha sube y baja <strong>siempre al mismo pulso constante</strong>: los tiempos fuertes (<code>1, 2, 3, 4</code>) van siempre <strong>hacia abajo (<code>↓</code>)</strong> y los contratiempos (<em>"y"</em>) van <strong>hacia arriba (<code>↑</code>)</strong>. Cuando un paso dice "Aire (<code>·</code>)", sigues moviendo la mano sin tocar las cuerdas.</p>
       </div>
       <div class="card">
-        <h4>2. Dinámica (Cuerdas Graves vs. Agudas) y Apagado (<code>✕</code>)</h4>
-        <p class="text-xs">No rasguees las 6 cuerdas con la misma fuerza en cada golpe: busca un golpe cálido en las graves en el tiempo 1, abre los agudos en el 2 y 4, o frena las cuerdas con el canto de la mano derecha justo al golpear (<code>✕</code>) para imitar la caja de la batería.</p>
+        <h4>2. Dinámica, Apagado (<code>✕</code>) y Cambio al Vuelo</h4>
+        <p class="text-xs">Frena las cuerdas con el canto de la mano derecha justo al golpear (<code>✕</code>) para imitar la caja en Funk, Rumba o Pop. Usa el último movimiento <code>↑</code> al aire para cambiar de acorde sin frenar el pulso.</p>
       </div>
       <div class="card">
-        <h4>3. Regla del Cambio "En el Último Upstroke"</h4>
-        <p class="text-xs">Nunca frenes la mano derecha mientras cambias de acorde en la izquierda. Si el último movimiento del compás es <code>↑</code> al aire, usa esa fracción de segundo para soltar los dedos y caer limpio en el tiempo <code>1</code> del acorde nuevo.</p>
+        <h4>3. Dedos Mano Izquierda en Guitarra (<code>1–2–3–4</code>)</h4>
+        <p class="text-xs">En todos los diagramas de acordes de guitarra verás círculos numerados: <strong><code>1</code> Índice</strong> (incluida cejilla), <strong><code>2</code> Medio</strong>, <strong><code>3</code> Anular</strong> y <strong><code>4</code> Meñique</strong>. Pisa justo detrás del traste metálico para sonar limpio con el mínimo esfuerzo.</p>
       </div>
     </div>
 
     <article class="interactive-widget mt-4" id="lab-rasgueos-guitarra" data-lab="guitar-strumming-lab" data-nivel="1">
       <div class="widget-header">
-        <span class="widget-tag">Entrenador Interactivo de Rasgueos · 4/4, 6/8 y Funk Mute</span>
+        <span class="widget-tag">Entrenador Interactivo de Rasgueos · 10 Estilos + Dedos 1–4</span>
         <h3>🎸 Laboratorio y Secuenciador de Rasgueos en Vivo</h3>
-        <p class="text-sm">Elige un estilo (Pop, 6/8 Folk, Funk con <code>✕</code>, Reggae), personaliza cualquier paso haciendo clic en las flechas <code>↓ / ↑ / ✕</code> y sigue las notas iluminándose en el mástil al ritmo del metrónomo.</p>
+        <p class="text-sm">Elige entre <strong>10 estilos rítmicos</strong> (Pop, Balada, Funk Mute <code>✕</code>, Reggae, Vals 3/4, Folk 6/8, Punk, Bossa, Rumba, Cumbia/Vallenato), personaliza cualquier paso haciendo clic en <code>↓ / ↑ / ✕</code> y observa la posición exacta con dedos <code>1–4</code>.</p>
       </div>
       <div class="lab-stage"></div>
     </article>
   </section>
+  `;
+}
+
+function buildGuitarDexterityAndMemorySectionHtml(): string {
+  return `
+  <section id="ga-motricidad-memoria" class="module-section" data-cat="guitarra-ac" data-nivel="1-3" data-menu="3C. Digitación BPM, Motricidad y Memorizador de Acordes">
+    <div class="module-header">
+      <span class="nav-badge badge-lvl1">Niveles 1–3 · Motricidad, Velocidad y Memoria en el Mástil</span>
+      <h2 class="module-title">3C. Digitación por BPM, Ejercicios de Motricidad y Memorizador Aleatorio de Acordes</h2>
+      <p class="module-subtitle">Dos entrenamientos prácticos diarios: independiza tus 4 dedos con el metrónomo progresivo (+5 BPM) y memoriza posiciones y nombres de acordes tocando sobre secuencias aleatorias.</p>
+    </div>
+
+    <div class="grid-cards mb-4">
+      <div class="card">
+        <h4>🖐️ Motricidad e Independencia (Dedos 1–2–3–4)</h4>
+        <p class="text-xs">La velocidad real no nace de apretar más fuerte sino de relajar el pulgar trasero y mover solo el dedo que toca. Empieza lento (60–75 BPM) buscando cero trasteos y activa <strong>+5 BPM por vuelta</strong> cuando suene limpio.</p>
+      </div>
+      <div class="card">
+        <h4>🧠 Método de 2 Fases para Recordar Acordes</h4>
+        <p class="text-xs">En la <strong>Fase 1</strong> miras el nombre, ves los dedos <code>1–4</code> en el mástil y tocas encima. En la <strong>Fase 2</strong> desaparece el nombre del acorde: escúchalo, búscalo en tu guitarra y selecciona qué acorde está sonando.</p>
+      </div>
+    </div>
+
+    <article class="interactive-widget mt-4" id="lab-digitacion-guitarra" data-lab="guitar-dexterity-lab" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Motricidad y Velocidad · 6 Ejercicios + Mástil 1–4 + BPM Progresivo</span>
+        <h3>⚡ Gimnasio de Digitación en Guitarra (Araña, Permutaciones y Ligados)</h3>
+        <p class="text-sm">Elige el patrón (<code>1-2-3-4</code>, <code>1-3-2-4</code>, <code>1-4-2-3</code>, cruce en terceras, ligados H/P o cambio de posición), ajusta tu BPM de 50 a 180 y sigue cada dedo iluminado en el mástil.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+
+    <article class="interactive-widget mt-5" id="lab-memoria-acordes" data-lab="chord-memory-lab" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Memoria Motora + Oído · Secuencias Aleatorias en Mástil</span>
+        <h3>🎯 Entrenador y Memorizador Aleatorio de Acordes en el Mástil</h3>
+        <p class="text-sm">Genera secuencias aleatorias (básicos, cejillas o jazz), repásalas en <strong>Fase 1</strong> con dedos <code>1–4</code> y luego pon a prueba tu memoria en <strong>Fase 2</strong> tocando encima mientras ocultamos el nombre del acorde.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </section>
+  `;
+}
+
+function buildDailyTrainingSectionHtml(): string {
+  return `
+  <section id="entreno-diario" class="module-section" data-cat="guitarra-ac" data-nivel="1-3" data-menu="3D. Sesión Diaria de Entrenamiento (4 Instrumentos)">
+    <div class="module-header">
+      <span class="nav-badge badge-lvl2">Rutina Completa · Guitarra, Bajo, Batería y Canto</span>
+      <h2 class="module-title">3D. Sesión de Entrenamiento Guiada (10, 20 o 30 Minutos)</h2>
+      <p class="module-subtitle">Alterna entre <strong>Guitarra, Bajo Eléctrico, Batería y Canto</strong> para seguir una sesión cronometrada con metrónomo guía y bloques de motricidad, técnica, oído y groove.</p>
+    </div>
+
+    <article class="interactive-widget mt-3" id="lab-sesion-entrenamiento" data-lab="daily-training-session-lab" data-preset="guitarra" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Entrenador Cronometrado · 4 Instrumentos + Metrónomo por Bloque</span>
+        <h3>⏱️ Planificador y Temporizador de Práctica Diaria</h3>
+        <p class="text-sm">Elige tu instrumento y duración, activa el metrónomo integrado y completa cada bloque paso a paso sin perder el foco.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </section>
+  `;
+}
+
+function buildInstrumentSessionCalloutHtml(inst: 'guitarra' | 'bajo' | 'bateria' | 'canto', suffix: string): string {
+  const labels: Record<string, string> = {
+    guitarra: 'Guitarra Eléctrica (Motricidad, Púa Alternada y Riffs)',
+    bajo: 'Bajo Eléctrico (Alternancia I–M, Lock-In y Walking)',
+    bateria: 'Batería (Rudimentos, Gap Click, Ghost Notes y Fills)',
+    canto: 'Canto (Appoggio 4-2-8, SOVT, Passaggio y Agilidad)',
+  };
+  return `
+  <div class="callout-box mt-5" style="border-left:4px solid #10b981;" data-nivel="1">
+    <h3>⏱️ Sesión Guiada de Entrenamiento — ${labels[inst]}</h3>
+    <p class="text-xs mb-2">Practica con reloj real por bloques (10, 20 o 30 minutos) y metrónomo integrado adaptado a este instrumento:</p>
+    <article class="interactive-widget mt-2" id="lab-sesion-${suffix}" data-lab="daily-training-session-lab" data-preset="${inst}" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Sesión de Práctica Diaria · ${inst.toUpperCase()}</span>
+        <h4>Rutina Cronometrada Paso a Paso</h4>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </div>
   `;
 }
 
@@ -2038,15 +2157,15 @@ function buildBandChartAndVoicesSectionHtml(): string {
 function buildDrumProNotationGapAndKitHtml(): string {
   return `
   <div class="callout-box mt-6" style="border-left: 4px solid #38bdf8;" data-nivel="1">
-    <h3>🥁 Notación de Batería en Pentagrama Sincronizada, Entrenador de Tempo Interno (<em>Gap Click</em>) y Técnicas del Kit</h3>
+    <h3>🥁 Notación de Batería en Pentagrama PAS Sincronizada, Gap Click, Sonido del Kit y Ejercicios de Práctica</h3>
     <p class="text-sm mb-3">
-      Domina el estándar internacional PAS de lectura (<code>✕</code> arriba = Hi-Hat/Crash, espacio 3 = Caja/Tarola, espacio 1 = Bombo), pon a prueba tu reloj interno cuando desaparece el metrónomo y escucha la diferencia entre afinación por intervalos, <em>Rimshot</em>, <em>Cross-Stick</em>, <em>Ghost Notes</em> y escobillas.
+      Domina el estándar internacional PAS de lectura (<code>✕</code> arriba = Hi-Hat/Crash, espacio 3 = Caja/Tarola, espacio 1 = Bombo), pon a prueba tu reloj interno cuando desaparece el metrónomo, explora técnicas del kit y practica <strong>4 ejercicios de motricidad y coordinación</strong> en la pestaña 4.
     </p>
     <article class="interactive-widget mt-3" id="lab-bateria-pro" data-lab="drum-pro-lab" data-preset="staff" data-nivel="1">
       <div class="widget-header">
-        <span class="widget-tag">Batería Completa · Pentagrama PAS + Gap Click + Sonido del Kit</span>
-        <h3>🥁 Pentagrama de Batería Sincronizado, Gap Click y Laboratorio del Kit</h3>
-        <p class="text-sm">Edita cualquier golpe en la rejilla para verlo y oírlo en el pentagrama, o cambia a las pestañas <strong>Gap Click</strong> (mide tu precisión en ms) y <strong>Sonido del Kit</strong>.</p>
+        <span class="widget-tag">Batería Completa · Pentagrama PAS + Gap Click + Sonido del Kit + Práctica</span>
+        <h3>🥁 Pentagrama de Batería Sincronizado, Gap Click, Kit y Ejercicios de Práctica</h3>
+        <p class="text-sm">Edita golpes en la rejilla PAS, entrena tu precisión en ms en <strong>Gap Click</strong>, prueba <strong>Sonido del Kit</strong> o practica singles, paradiddles e independencia en <strong>Ejercicios de Práctica</strong>.</p>
       </div>
       <div class="lab-stage"></div>
     </article>
@@ -2065,7 +2184,7 @@ function buildBassLockInAndExpressiveHtml(): string {
       <div class="widget-header">
         <span class="widget-tag">Groove Engine · Bombo + Bajo 4c/5c + Recursos Expresivos</span>
         <h3>🔒 Secuenciador "Lock-In" Bajo + Bombo y Técnicas Expresivas</h3>
-        <p class="text-sm">Cambia entre 4 y 5 cuerdas (con <code>B0</code>), alterna <em>Staccato vs. Sustain</em>, activa la anticipación <code>-1/16</code> o explora Armónicos, Décimas y Fretless en la 2ª pestaña.</p>
+        <p class="text-sm">Cambia entre 4 y 5 cuerdas (con <code>B0</code>), ajusta el BPM en vivo, alterna <em>Staccato vs. Sustain</em>, activa la anticipación <code>-1/16</code> o explora Armónicos, Décimas y Fretless en la 2ª pestaña.</p>
       </div>
       <div class="lab-stage"></div>
     </article>
@@ -2086,16 +2205,30 @@ function buildBassExpressiveQuickJumpHtml(): string {
 
 function buildVocalAgilityAndVowelLabHtml(): string {
   return `
-  <div class="callout-box mb-5" style="border-left: 4px solid #ec4899;" data-nivel="2">
-    <h3>⚡ Gimnasio de Agilidad, Riffs y Melismas + Modificación de Vocales en el <em>Passaggio</em></h3>
-    <p class="text-sm mb-3">
-      Para lograr runs limpios y agudos libres sin tensión de garganta necesitas dos entrenamientos complementarios: <strong>precisión escalonada por subdivisiones</strong> en velocidad progresiva, y <strong>modificación acústica de vocales</strong> (<code>/i/ → /ɪ/</code>, <code>/e/ → /œ/</code>, <code>/a/ → /ɔ/</code>) al subir hacia el puente vocal.
+  <div class="callout-box mb-5" style="border-left: 4px solid #ec4899;" data-nivel="1">
+    <h3>🎤 Entrenamiento Vocal Completo: Respiración 4-2-8, SOVT, Agilidad y Modificación de Vocales</h3>
+    <p class="text-sm mb-2">
+      Todo cantante avanza seguro siguiendo este orden desde cero hasta avanzado:
     </p>
-    <article class="interactive-widget mt-3" id="lab-canto-agilidad-vocales" data-lab="vocal-agility-lab" data-preset="agility" data-nivel="2">
+    <div class="grid-cards mb-3">
+      <div class="card">
+        <h4>Paso 1 · Motor y SOVT (Principiante)</h4>
+        <p class="text-xs">Controla la salida del aire con el ciclo <strong>4–2–8 (Appoggio)</strong> y calienta con vibración de labios/pajilla (<strong>SOVT</strong>) para unir pecho y cabeza sin apretar la garganta.</p>
+      </div>
+      <div class="card">
+        <h4>Paso 2 · Afinación y Vocales (Intermedio)</h4>
+        <p class="text-xs">Entrena saltos limpios (<code>1–3–5–8</code>) y aprende a redondear las vocales (<code>/i/ → /ɪ/</code>, <code>/a/ → /ɔ/</code>) al subir al <em>Passaggio</em> para cantar agudos con libertad.</p>
+      </div>
+      <div class="card">
+        <h4>Paso 3 · Agilidad y Melismas (Avanzado)</h4>
+        <p class="text-xs">Dispara riffs y melismas en Pentatónica, Blues y Menor Armónica subiendo gradualmente de 60 a 145 BPM con limpieza nota por nota.</p>
+      </div>
+    </div>
+    <article class="interactive-widget mt-3" id="lab-canto-agilidad-vocales" data-lab="vocal-agility-lab" data-preset="agility" data-nivel="1">
       <div class="widget-header">
-        <span class="widget-tag">Entrenamiento Vocal · Melismas + Formantes por Registro</span>
-        <h3>🎤 Gimnasio de Melismas / Agilidad y Laboratorio de Modificación de Vocales</h3>
-        <p class="text-sm">Entrena riffs en escalas Pentatónica, Blues y Menor Armónica de 60 a 145 BPM o desliza la altura en la 2ª pestaña para escuchar cómo redondear cada vocal en tu passaggio.</p>
+        <span class="widget-tag">Entrenamiento Vocal · Melismas + Vocales + Respiración 4-2-8 & SOVT</span>
+        <h3>🎤 Gimnasio de Melismas, Vocales en Passaggio, Respiración 4-2-8 y Afinación</h3>
+        <p class="text-sm">Usa las 3 pestañas del laboratorio: <strong>1) Agilidad y Melismas</strong>, <strong>2) Modificación de Vocales</strong> y <strong>3) Temporizador Appoggio 4-2-8 + Ejercicios SOVT y Vibrato</strong>.</p>
       </div>
       <div class="lab-stage"></div>
     </article>

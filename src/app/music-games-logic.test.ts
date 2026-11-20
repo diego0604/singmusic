@@ -4,14 +4,26 @@ import {
   analyzePedalInterval,
   analyzeSpanishLyricLine,
   applyEnharmonicGoldenRule,
+  assignGuitarChordFingers,
+  BASS_TRAINING_BLOCKS,
+  buildChordMemorySequence,
+  buildStructuredVocalTrainingSeries,
   buildScaleFretboardPath,
   classifyVocalRangeDetailed,
   computeChordNeckState,
   convertProgressionToNashville,
   createPitchAcuityRound,
+  CHORD_DIAGRAM_CATALOG,
+  CHORD_MEMORY_LIBRARY,
+  DRUM_LIMB_META,
+  DRUM_TRAINING_BLOCKS,
+  evaluateChordMemoryAnswer,
   evaluateGapClickTiming,
+  GUITAR_TRAINING_BLOCKS,
   harmonizeMelodyVoices,
+  identifyGuitarChordFromFrets,
   reduceLatchGlowState,
+  renderTopViewDrumKitSvg,
   resolvePlayableChordVoicing,
   verifySimonStep,
 } from './music-games-logic';
@@ -311,6 +323,285 @@ test('reduceLatchGlowState atomically swaps chordBatch without intermediate stru
   assert.equal(g13Batch.kind, 'chord');
   assert.deepEqual(g13Batch.entries.map((e) => e.midi), [43, 53, 59, 64]);
 });
+
+test('assignGuitarChordFingers assigns idiomatic 1-4 left-hand fingers for open, barre, and jazz guitar chords', () => {
+  const guitarOpen = [64, 59, 55, 50, 45, 40];
+  const bassOpen = [43, 38, 33, 28];
+
+  // Open C Major: x-3-2-0-1-0 -> fingers x-3-2-0-1-0
+  const cState = computeChordNeckState({
+    rootPc: 0,
+    chordId: 'maj',
+    scaleId: 'major',
+    openMidisHighToLow: guitarOpen,
+    maxFret: 12,
+  });
+  assert.equal(cState.tabSummary, 'x - 3 - 2 - 0 - 1 - 0');
+  assert.equal(cState.fingerSummary, 'x - 3 - 2 - 0 - 1 - 0');
+  assert.equal(cState.barreFret, null);
+
+  // Barre F Major: 1-3-3-2-1-1 -> barre at fret 1 (finger 1) + 3, 4, 2
+  const fState = computeChordNeckState({
+    rootPc: 5,
+    chordId: 'maj',
+    scaleId: 'major',
+    openMidisHighToLow: guitarOpen,
+    maxFret: 12,
+  });
+  assert.equal(fState.tabSummary, '1 - 3 - 3 - 2 - 1 - 1');
+  assert.equal(fState.fingerSummary, '1 - 3 - 4 - 2 - 1 - 1');
+  assert.equal(fState.barreFret, 1);
+
+  // Movable Dm9 shape [50, 53, 60, 64] -> X-5-3-5-5-X -> fingers 2, 1, 3, 4
+  const dm9Voicing = resolvePlayableChordVoicing([50, 53, 60, 64], guitarOpen, 12);
+  const dm9Fingers = assignGuitarChordFingers(dm9Voicing, true);
+  assert.ok(dm9Fingers.positions.every((p) => p.fret === 0 || (p.finger >= 1 && p.finger <= 4)));
+
+  // Bass neck omits guitar finger numbers (finger = 0)
+  const bassState = computeChordNeckState({
+    rootPc: 0,
+    chordId: 'maj',
+    scaleId: 'major',
+    openMidisHighToLow: bassOpen,
+    maxFret: 12,
+  });
+  assert.ok(bassState.chordFingers.every((p) => p.finger === 0));
+});
+
+test('Chord Memory helpers produce non-repeating sequences and track answer streaks cleanly', () => {
+  const seq = buildChordMemorySequence('basic', 5, 42);
+  assert.equal(seq.length, 5);
+  for (let i = 1; i < seq.length; i++) {
+    assert.notEqual(seq[i].id, seq[i - 1].id);
+  }
+  const allSeq = buildChordMemorySequence('all', 6, 99);
+  assert.equal(allSeq.length, 6);
+
+  const hit1 = evaluateChordMemoryAnswer('C', 'C', 2);
+  assert.equal(hit1.correct, true);
+  assert.equal(hit1.nextStreak, 3);
+
+  const miss = evaluateChordMemoryAnswer('Am', 'Em', 3);
+  assert.equal(miss.correct, false);
+  assert.equal(miss.nextStreak, 0);
+});
+
+test('renderTopViewDrumKitSvg renders multiple simultaneous limb hits with limb badges and click targets', () => {
+  const svg = renderTopViewDrumKitSvg({
+    title: 'Test Kit',
+    limbHits: [
+      { piece: 'HH', limb: 'R' },
+      { piece: 'BD', limb: 'RF' },
+      { piece: 'SD', limb: 'L' },
+      { piece: 'HHP', limb: 'LF' },
+    ],
+  });
+
+  assert.ok(svg.includes('<svg'));
+  assert.ok(svg.includes('data-piece="BD"'));
+  assert.ok(svg.includes('data-piece="HH"'));
+  assert.ok(svg.includes('data-piece="SD"'));
+  assert.ok(svg.includes('data-piece="HHP"'));
+  assert.ok(svg.includes(`>${DRUM_LIMB_META.R.short}<`));
+  assert.ok(svg.includes(`>${DRUM_LIMB_META.L.short}<`));
+  assert.ok(svg.includes(`>${DRUM_LIMB_META.RF.short}<`));
+  assert.ok(svg.includes(`>${DRUM_LIMB_META.LF.short}<`));
+});
+
+test('buildStructuredVocalTrainingSeries is deterministic by level, puts breathing first, scales counts across 4 phases by duration, and covers all vocal skills', () => {
+  const levels = [1, 2, 3] as const;
+  const expectedCounts = [
+    { mins: 10, total: 6, byPhase: [2, 1, 2, 1] },
+    { mins: 20, total: 10, byPhase: [3, 3, 2, 2] },
+    { mins: 30, total: 12, byPhase: [4, 3, 3, 2] },
+  ];
+
+  for (const lv of levels) {
+    for (const cfg of expectedCounts) {
+      const a = buildStructuredVocalTrainingSeries(lv, cfg.mins);
+      const b = buildStructuredVocalTrainingSeries(lv, cfg.mins);
+
+      // Deterministic (not randomized)
+      assert.deepEqual(
+        a.map((x) => x.id),
+        b.map((x) => x.id)
+      );
+      assert.equal(a.length, cfg.total);
+
+      // Always starts with dedicated breathing exercise(s) before singing
+      assert.equal(a[0].phaseOrder, 1);
+      assert.equal(a[0].category, 'breathing_support');
+      assert.equal(a[0].isBreathingOnly, true);
+      assert.ok((a[0].breathSteps?.length ?? 0) >= 2);
+      if (cfg.mins >= 20) {
+        assert.equal(a[1].category, 'breathing_support');
+        assert.equal(a[1].isBreathingOnly, true);
+      }
+
+      // Non-decreasing phase order across all 4 phases
+      for (let i = 1; i < a.length; i++) {
+        assert.ok(a[i].phaseOrder >= a[i - 1].phaseOrder);
+      }
+      const countsPerPhase = [1, 2, 3, 4].map((p) => a.filter((x) => x.phaseOrder === p).length);
+      assert.deepEqual(countsPerPhase, cfg.byPhase);
+
+      // Normalized ratios sum to 1
+      const ratioSum = a.reduce((acc, x) => acc + x.ratio, 0);
+      assert.ok(Math.abs(ratioSum - 1) < 0.001);
+
+      // Every exercise has complete instructional guidance
+      for (const ex of a) {
+        assert.equal(ex.level, lv);
+        assert.ok(ex.howToSteps.length >= 3);
+        assert.ok(ex.postureCue.length > 10);
+        assert.ok(ex.syllableCue.length > 5);
+        assert.ok(ex.focusTag.length > 4);
+      }
+    }
+
+    // Full 30-min curriculum for each level explicitly covers every requested vocal skill
+    const full30 = buildStructuredVocalTrainingSeries(lv, 30);
+    const joinedTagsAndTitles = full30.map((x) => `${x.focusTag} ${x.title}`).join(' ').toLowerCase();
+    for (const keyword of [
+      'respiraci',
+      'calentamiento',
+      'vibraci',
+      'nasalidad',
+      'pecho',
+      'cabeza',
+      'passaggio',
+      'entonaci',
+      'afinaci',
+      'agilidad',
+      'canto',
+    ]) {
+      assert.ok(joinedTagsAndTitles.includes(keyword), `Missing "${keyword}" in level ${lv}`);
+    }
+  }
+});
+
+test('Guitar, Bass, and Drum training block datasets have valid fingerings, frets, and limb assignments', () => {
+  assert.equal(GUITAR_TRAINING_BLOCKS.length, 4);
+  for (const blk of GUITAR_TRAINING_BLOCKS) {
+    assert.ok(blk.steps.length >= 4);
+    for (const st of blk.steps) {
+      for (const pos of st.positions) {
+        assert.ok(pos.sIdx >= 0 && pos.sIdx <= 5);
+        assert.ok(pos.fret >= 0 && pos.fret <= 12);
+        assert.ok(pos.finger >= 0 && pos.finger <= 4);
+        if (pos.fret > 0) assert.ok(pos.finger >= 1 && pos.finger <= 4);
+      }
+    }
+  }
+
+  assert.equal(BASS_TRAINING_BLOCKS.length, 4);
+  for (const blk of BASS_TRAINING_BLOCKS) {
+    assert.ok(blk.steps.length >= 4);
+    for (const st of blk.steps) {
+      assert.ok(st.sIdx >= 0 && st.sIdx <= 3);
+      assert.ok(st.fret >= 0 && st.fret <= 12);
+    }
+  }
+
+  assert.equal(DRUM_TRAINING_BLOCKS.length, 4);
+  for (const blk of DRUM_TRAINING_BLOCKS) {
+    assert.ok(blk.steps.length === 8);
+    for (const st of blk.steps) {
+      assert.ok(st.hits.length >= 1);
+      for (const h of st.hits) {
+        assert.ok(DRUM_LIMB_META[h.limb] !== undefined);
+      }
+    }
+  }
+});
+
+test('identifyGuitarChordFromFrets detects James Bond Em(Maj9), Hendrix E7#9, So What Dm11, assigns 1-4 fingers, and flags unplayable 5-finger grips', () => {
+  // Correct open James Bond Em(Maj9): 0-2-1-0-0-2 (high-to-low: [2, 0, 0, 1, 2, 0])
+  const jbOpen = identifyGuitarChordFromFrets([2, 0, 0, 1, 2, 0]);
+  assert.equal(jbOpen.title, 'Em(Maj9)');
+  assert.equal(jbOpen.notesText, 'E2 – B2 – D#3 – G3 – B3 – F#4');
+  assert.equal(jbOpen.formulaText, '1 – 2/9 – b3/#9 – 5J – 7M');
+  assert.equal(jbOpen.tabLowToHigh, '0-2-1-0-0-2');
+  assert.equal(jbOpen.fingerLowToHigh, '0-2-1-0-0-3');
+  assert.equal(jbOpen.fingersUsed, 3);
+  assert.equal(jbOpen.playable, true);
+
+  // Classic Vic Flick James Bond high-register Em(Maj9): 0-10-9-8-7-x (high-to-low: [-1, 7, 8, 9, 10, 0])
+  const jbClassic = identifyGuitarChordFromFrets([-1, 7, 8, 9, 10, 0]);
+  assert.equal(jbClassic.title, 'Em(Maj9)');
+  assert.equal(jbClassic.fingerLowToHigh, '0-4-3-2-1-X');
+  assert.equal(jbClassic.fingersUsed, 4);
+  assert.equal(jbClassic.playable, true);
+
+  // Old broken 5-finger Esus2 shape ([2, 4, 4, 1, 2, 0] = 0-2-1-4-4-2) MUST be flagged unplayable!
+  const brokenOld = identifyGuitarChordFromFrets([2, 4, 4, 1, 2, 0]);
+  assert.equal(brokenOld.playable, false);
+  assert.equal(brokenOld.fingersUsed, 5);
+  assert.ok(brokenOld.warning && brokenOld.warning.includes('5 dedos'));
+
+  // Hendrix Chord E7#9: 0-7-6-7-8-0 (high-to-low: [0, 8, 7, 6, 7, 0])
+  const hendrix = identifyGuitarChordFromFrets([0, 8, 7, 6, 7, 0]);
+  assert.equal(hendrix.title, 'E7(#9)');
+  assert.equal(hendrix.tabLowToHigh, '0-7-6-7-8-0');
+  assert.equal(hendrix.fingerLowToHigh, '0-2-1-3-4-0');
+  assert.equal(hendrix.fingersUsed, 4);
+  assert.equal(hendrix.playable, true);
+
+  // So What Dm11 quartal: x-5-5-5-6-5 (high-to-low: [5, 6, 5, 5, 5, -1])
+  const soWhat = identifyGuitarChordFromFrets([5, 6, 5, 5, 5, -1]);
+  assert.equal(soWhat.title, 'Dm11');
+  assert.equal(soWhat.fingerLowToHigh, 'X-1-1-1-2-1');
+  assert.equal(soWhat.barreFret, 5);
+  assert.equal(soWhat.playable, true);
+
+  // C9 mini-barre x-3-2-3-3-3 (high-to-low: [3, 3, 3, 2, 3, -1])
+  const c9 = identifyGuitarChordFromFrets([3, 3, 3, 2, 3, -1]);
+  assert.equal(c9.title, 'C9');
+  assert.equal(c9.fingerLowToHigh, 'X-2-1-3-3-3');
+  assert.equal(c9.playable, true);
+});
+
+test('Full playability audit: every chord in CHORD_DIAGRAM_CATALOG and CHORD_MEMORY_LIBRARY resolves to a playable <=4-finger guitar shape', () => {
+  const guitarOpen = [64, 59, 55, 50, 45, 40];
+
+  for (const rootPc of [0, 2, 4, 7, 9]) {
+    for (const chord of CHORD_DIAGRAM_CATALOG) {
+      const state = computeChordNeckState({
+        rootPc,
+        chordId: chord.id,
+        scaleId: 'none',
+        openMidisHighToLow: guitarOpen,
+        maxFret: 12,
+      });
+      const fingerCheck = assignGuitarChordFingers(state.chordPositions, true);
+      assert.equal(
+        fingerCheck.playable,
+        true,
+        `Unplayable catalog chord ${state.chordTitle} (${state.tabSummary}): ${fingerCheck.warning}`
+      );
+      assert.ok(state.chordPositions.length >= 3, `Expected >=3 strings for ${state.chordTitle}`);
+    }
+  }
+
+  for (const item of CHORD_MEMORY_LIBRARY) {
+    const posList = item.fretsLowToHigh
+      .map((fret, lowIdx) =>
+        fret < 0 ? null : { sIdx: 5 - lowIdx, fret, midi: guitarOpen[5 - lowIdx] + fret }
+      )
+      .filter((x): x is { sIdx: number; fret: number; midi: number } => x !== null);
+    const fingerCheck = assignGuitarChordFingers(posList, true);
+    assert.equal(fingerCheck.playable, true, `CHORD_MEMORY_LIBRARY ${item.id} must be playable`);
+    item.fingersLowToHigh.forEach((f, lowIdx) => {
+      if (f >= 0) {
+        const matched = fingerCheck.positions.find((p) => p.sIdx === 5 - lowIdx);
+        assert.equal(matched?.finger, f, `Finger mismatch for ${item.id} on string ${6 - lowIdx}`);
+      }
+    });
+  }
+});
+
+
+
 
 
 

@@ -1,12 +1,17 @@
 import {
+  DRUM_LIMB_META,
   SCALE_GUIDE_CATALOG,
   analyzePedalInterval,
+  assignGuitarChordFingers,
   buildScaleFretboardPath,
   classifyVocalRangeDetailed,
   computeChordNeckState,
   createPitchAcuityRound,
+  identifyGuitarChordFromFrets,
   midiToNoteName,
+  renderTopViewDrumKitSvg,
   resolvePlayableChordVoicing,
+  type DrumLimbHit,
 } from './music-games-logic';
 import {
   type NoteGlowHint,
@@ -298,8 +303,17 @@ export const CHORDS_DB: ChordDefinition[] = [
     symbol: 'm(Maj7)',
     intervals: [0, 3, 7, 11],
     formula: '1 - b3 - 5 - 7',
-    character: 'Misterioso, cine noir ("acorde de James Bond" / Hitchcock).',
-    frets: [-1, 0, 2, 1, 1, 0],
+    character: 'Misterioso, cine noir ("acorde Hitchcock").',
+    frets: [0, 2, 1, 0, 0, 0],
+  },
+  {
+    id: 'mMaj9',
+    name: 'Menor Mayor 9 — "James Bond"',
+    symbol: 'm(Maj9)',
+    intervals: [0, 3, 7, 11, 14],
+    formula: '1 - b3 - 5 - 7 - 9',
+    character: 'Cinemático, acorde icónico de espionaje (007) en menor melódica.',
+    frets: [0, 2, 1, 0, 0, 2],
   },
   {
     id: 'add9',
@@ -318,6 +332,15 @@ export const CHORDS_DB: ChordDefinition[] = [
     formula: '1 - 3 - 5 - b7 - 9',
     character: 'Funk, soul y blues con color extendido.',
     frets: [-1, 3, 2, 3, 3, 3],
+  },
+  {
+    id: '7#9',
+    name: 'Dominante 7(#9) — "Hendrix"',
+    symbol: '7(#9)',
+    intervals: [0, 4, 7, 10, 15],
+    formula: '1 - 3 - 5 - b7 - #9',
+    character: 'Disonancia eléctrica agresiva (#9 sobre 3M), sello del blues-rock.',
+    frets: [0, 7, 6, 7, 8, 0],
   },
   {
     id: '7b9',
@@ -344,12 +367,21 @@ export class MusicAudioEngine {
   private activeTimers: ReturnType<typeof setTimeout>[] = [];
   private droneHandle: ActiveVoiceHandle | null = null;
   private noteListeners = new Set<(ev: NotePlayEvent | null) => void>();
+  private stopListeners = new Set<() => void>();
+  private isRunningStopListeners = false;
   private nextChordGroup = 1;
 
   onNoteEvent(cb: (ev: NotePlayEvent | null) => void): () => void {
     this.noteListeners.add(cb);
     return () => {
       this.noteListeners.delete(cb);
+    };
+  }
+
+  onStop(cb: () => void): () => void {
+    this.stopListeners.add(cb);
+    return () => {
+      this.stopListeners.delete(cb);
     };
   }
 
@@ -488,6 +520,21 @@ export class MusicAudioEngine {
     this.activeTimers.forEach((t) => clearTimeout(t));
     this.activeTimers = [];
     this.emitNoteEvent(null);
+
+    if (!this.isRunningStopListeners) {
+      this.isRunningStopListeners = true;
+      try {
+        [...this.stopListeners].forEach((cb) => {
+          try {
+            cb();
+          } catch {
+            // ignore broken listener
+          }
+        });
+      } finally {
+        this.isRunningStopListeners = false;
+      }
+    }
 
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
@@ -1907,11 +1954,16 @@ function buildMultiInstrumentExplorer(
 
       const chord = CHORDS_DB.find((c) => c.id === currentChordId) || CHORDS_DB[0];
       const noteNames = chord.intervals.map((i) => NOTE_NAMES[(currentRoot + i) % 12]).join(' – ');
+      const fingerLabelHtml =
+        !useBassNeck && computedChordState.fingerSummary
+          ? `<span style="margin-left:8px; font-family:monospace; color:#fde047; font-weight:700;">[Dedos Izq: ${computedChordState.fingerSummary}]</span>`
+          : '';
       formulaInfo.innerHTML = `
         <strong>Notas de ${rootName}${chord.symbol} (${chord.name}):</strong>
         <span style="color:var(--accent-gold); font-weight:700;"> ${noteNames}</span>
-        <span style="margin-left:8px; font-family:monospace; color:#38bdf8; font-weight:700;">[Posición: ${computedChordState.tabSummary}]</span><br>
-        <span style="color:var(--text-muted);">Fórmula: ${chord.formula} — ${chord.character} · Guía de Escala: <strong>${computedChordState.scaleGuide.name}</strong></span>
+        <span style="margin-left:8px; font-family:monospace; color:#38bdf8; font-weight:700;">[Posición: ${computedChordState.tabSummary}]</span>
+        ${fingerLabelHtml}<br>
+        <span style="color:var(--text-muted);">Fórmula: ${chord.formula} — ${chord.character} · Guía de Escala: <strong>${computedChordState.scaleGuide.name}</strong>${!useBassNeck ? ' · Dedos: 1=Índice, 2=Medio, 3=Anular, 4=Meñique' : ''}</span>
       `;
     } else {
       const intervals = getActiveIntervals();
@@ -1950,6 +2002,14 @@ function buildMultiInstrumentExplorer(
     const chordPosKeys = new Set(
       (computedChordState?.chordPositions || []).map((p) => `${p.sIdx}:${p.fret}`)
     );
+    const guitarFingerMap = new Map<string, number>();
+    if (!useBassNeck && computedChordState?.chordFingers) {
+      computedChordState.chordFingers.forEach((f) => {
+        if (f.finger > 0 && f.fret > 0) {
+          guitarFingerMap.set(`${f.sIdx}:${f.fret}`, f.finger);
+        }
+      });
+    }
 
     let fretHeaderHtml = `<div class="fretboard-row" style="border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:4px;"><div class="string-label" style="color:var(--text-muted); font-size:0.7rem;">Traste</div>`;
     for (let f = 0; f <= 12; f++) {
@@ -1970,9 +2030,11 @@ function buildMultiInstrumentExplorer(
         const noteClass = isRoot ? 'root' : isChar ? 'char' : inScale ? 'active' : '';
         const isChordFret = isChordMode && chordPosKeys.has(`${sIdx}:${fret}`);
         const glowClasses = isChordFret ? 'playing-glow glow-mode-chord' : '';
+        const fingerNum = isChordMode && !useBassNeck ? guitarFingerMap.get(`${sIdx}:${fret}`) || 0 : 0;
+        const fingerBadge = fingerNum > 0 ? `<span class="finger-badge" title="Dedo ${fingerNum}">${fingerNum}</span>` : '';
         fretRowsHtml += `
-          <div class="fret-cell" data-sidx="${sIdx}" data-fret="${fret}" data-midi="${midi}" title="Cuerda ${str.label}, Traste ${fret}: ${NOTE_NAMES[pc]} (${audio.midiToFreq(midi).toFixed(1)} Hz)">
-            <div class="fret-note ${noteClass} ${glowClasses}">${NOTE_NAMES[pc]}</div>
+          <div class="fret-cell" data-sidx="${sIdx}" data-fret="${fret}" data-midi="${midi}" title="Cuerda ${str.label}, Traste ${fret}: ${NOTE_NAMES[pc]}${fingerNum > 0 ? ` · Dedo ${fingerNum}` : ''} (${audio.midiToFreq(midi).toFixed(1)} Hz)">
+            <div class="fret-note ${noteClass} ${glowClasses}">${NOTE_NAMES[pc]}${fingerBadge}</div>
           </div>
         `;
       }
@@ -2490,6 +2552,14 @@ function buildDedicatedBassLab(
     });
   });
 
+  const unsubBassStop = audio.onStop(() => {
+    if (!document.body.contains(stage)) {
+      unsubBassStop();
+      return;
+    }
+    renderNeck();
+  });
+
   stopBtn.addEventListener('click', () => {
     audio.stopAll();
     renderNeck();
@@ -2873,125 +2943,16 @@ export function renderPlayableTopViewDrumSvg(
   title: string,
   activePieces: DrumKitPieceCode[] = ['BD', 'SD', 'HH', 'HHP', 'T1', 'T2', 'FT', 'RD', 'CR'],
   highlightedPiece: DrumKitPieceCode | null = null,
-  note = 'Haz clic o toca cualquier pieza (o usa las teclas B, S, H, W, T, Y, U, C, R) para tocar en tiempo real'
+  note = 'Haz clic o toca cualquier pieza (o usa las teclas B, S, H, W, T, Y, U, C, R) para tocar en tiempo real',
+  limbHits: DrumLimbHit[] = []
 ): string {
-  const activeSet = new Set<DrumKitPieceCode>(activePieces);
-  const fillCol = (code: DrumKitPieceCode, base: string, active: string): string => {
-    if (highlightedPiece === code) return '#fef08a';
-    return activeSet.has(code) ? active : base;
-  };
-  const strokeCol = (code: DrumKitPieceCode): string => {
-    if (highlightedPiece === code) return '#f59e0b';
-    return activeSet.has(code) ? '#0f172a' : '#94a3b8';
-  };
-  const strokeWidth = (code: DrumKitPieceCode, def: string): string =>
-    highlightedPiece === code ? '3.6' : def;
-
-  const w = 680;
-  const h = 235;
-  return `
-    <figure class="svg-fig" style="margin:0 auto; max-width:680px; width:100%;">
-      <svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; display:block; user-select:none; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.35);">
-        <rect x="1" y="1" width="${w - 2}" height="${h - 2}" rx="6" fill="#fcfaf5" stroke="#cbd5e1"/>
-        <text x="${w / 2}" y="19" text-anchor="middle" font-size="11" font-weight="bold" fill="#0f172a">${title}</text>
-        <!-- Alfombra acústica -->
-        <rect x="115" y="28" width="450" height="182" rx="8" fill="#f1f5f9" stroke="#cbd5e1" stroke-dasharray="4,3"/>
-
-        <!-- Pedales (HHP y BD Pedal) -->
-        <g class="js-svg-drum-piece" data-piece="HHP" role="button" tabindex="0" aria-label="Pedal Hi-Hat (Tecla W)" style="cursor:pointer;">
-          <rect x="212" y="132" width="18" height="42" rx="3" fill="${fillCol('HHP', '#e2e8f0', '#fde68a')}" stroke="#475569" stroke-width="${strokeWidth('HHP', '1.5')}"/>
-          <text x="221" y="185" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#334155">Pedal HH [W]</text>
-        </g>
-
-        <g class="js-svg-drum-piece" data-piece="BD" role="button" tabindex="0" aria-label="Pedal Bombo (Tecla B)" style="cursor:pointer;">
-          <rect x="332" y="112" width="20" height="44" rx="3" fill="${fillCol('BD', '#e2e8f0', '#fca5a5')}" stroke="#475569" stroke-width="${strokeWidth('BD', '1.5')}"/>
-          <text x="342" y="167" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#334155">Pedal BD [B]</text>
-        </g>
-
-        <!-- Bombo (BD) visto desde arriba (cilindro horizontal) -->
-        <g class="js-svg-drum-piece" data-piece="BD" role="button" tabindex="0" aria-label="Bombo BD (Tecla B)" style="cursor:pointer;">
-          <rect x="295" y="42" width="94" height="66" rx="10" fill="${fillCol('BD', '#e2e8f0', '#ef4444')}" stroke="${strokeCol('BD')}" stroke-width="${strokeWidth('BD', '2.2')}"/>
-          <text x="342" y="79" text-anchor="middle" font-size="10" font-weight="bold" fill="${highlightedPiece === 'BD' ? '#0f172a' : '#ffffff'}">BOMBO (BD)</text>
-        </g>
-
-        <!-- Caja (SD) -->
-        <g class="js-svg-drum-piece" data-piece="SD" role="button" tabindex="0" aria-label="Caja Snare SD (Tecla S)" style="cursor:pointer;">
-          <circle cx="272" cy="138" r="34" fill="${fillCol('SD', '#f8fafc', '#3b82f6')}" stroke="${strokeCol('SD')}" stroke-width="${strokeWidth('SD', '2.2')}"/>
-          <circle cx="272" cy="138" r="24" fill="none" stroke="#dbeafe" stroke-dasharray="3,2"/>
-          <text x="272" y="141" text-anchor="middle" font-size="9.5" font-weight="bold" fill="${highlightedPiece === 'SD' ? '#0f172a' : activeSet.has('SD') ? '#ffffff' : '#334155'}">CAJA (SD)</text>
-        </g>
-
-        <!-- Tom 1 (T1) -->
-        <g class="js-svg-drum-piece" data-piece="T1" role="button" tabindex="0" aria-label="Tom 1 Agudo (Tecla T)" style="cursor:pointer;">
-          <circle cx="305" cy="76" r="24" fill="${fillCol('T1', '#f8fafc', '#60a5fa')}" stroke="${strokeCol('T1')}" stroke-width="${strokeWidth('T1', '2')}"/>
-          <text x="305" y="79" text-anchor="middle" font-size="8.5" font-weight="bold" fill="${highlightedPiece === 'T1' ? '#0f172a' : activeSet.has('T1') ? '#ffffff' : '#334155'}">TOM 1</text>
-        </g>
-
-        <!-- Tom 2 (T2) -->
-        <g class="js-svg-drum-piece" data-piece="T2" role="button" tabindex="0" aria-label="Tom 2 Medio (Tecla Y)" style="cursor:pointer;">
-          <circle cx="366" cy="76" r="26" fill="${fillCol('T2', '#f8fafc', '#2563eb')}" stroke="${strokeCol('T2')}" stroke-width="${strokeWidth('T2', '2')}"/>
-          <text x="366" y="79" text-anchor="middle" font-size="8.5" font-weight="bold" fill="${highlightedPiece === 'T2' ? '#0f172a' : activeSet.has('T2') ? '#ffffff' : '#334155'}">TOM 2</text>
-        </g>
-
-        <!-- Tom de Piso (FT) -->
-        <g class="js-svg-drum-piece" data-piece="FT" role="button" tabindex="0" aria-label="Floor Tom de Piso (Tecla U)" style="cursor:pointer;">
-          <circle cx="422" cy="136" r="35" fill="${fillCol('FT', '#f8fafc', '#1d4ed8')}" stroke="${strokeCol('FT')}" stroke-width="${strokeWidth('FT', '2.2')}"/>
-          <text x="422" y="139" text-anchor="middle" font-size="9" font-weight="bold" fill="${highlightedPiece === 'FT' ? '#0f172a' : activeSet.has('FT') ? '#ffffff' : '#334155'}">FLOOR TOM</text>
-        </g>
-
-        <!-- Hi-Hat (HH) -->
-        <g class="js-svg-drum-piece" data-piece="HH" role="button" tabindex="0" aria-label="Hi-Hat Charles (Tecla H)" style="cursor:pointer;">
-          <circle cx="195" cy="112" r="27" fill="${fillCol('HH', '#fef9c3', '#f59e0b')}" stroke="${strokeCol('HH')}" stroke-width="${strokeWidth('HH', '2')}"/>
-          <circle cx="195" cy="112" r="5" fill="#78350f"/>
-          <text x="195" y="102" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#0f172a">HI-HAT</text>
-        </g>
-
-        <!-- Crash (CR) -->
-        <g class="js-svg-drum-piece" data-piece="CR" role="button" tabindex="0" aria-label="Plato Crash (Tecla C)" style="cursor:pointer;">
-          <circle cx="235" cy="58" r="30" fill="${fillCol('CR', '#fef9c3', '#fbbf24')}" stroke="${strokeCol('CR')}" stroke-width="${strokeWidth('CR', '2')}" fill-opacity="0.88"/>
-          <circle cx="235" cy="58" r="5" fill="#78350f"/>
-          <text x="235" y="47" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#0f172a">CRASH</text>
-        </g>
-
-        <!-- Ride (RD) -->
-        <g class="js-svg-drum-piece" data-piece="RD" role="button" tabindex="0" aria-label="Plato Ride (Tecla R)" style="cursor:pointer;">
-          <circle cx="445" cy="74" r="36" fill="${fillCol('RD', '#fef9c3', '#d97706')}" stroke="${strokeCol('RD')}" stroke-width="${strokeWidth('RD', '2')}" fill-opacity="0.88"/>
-          <circle cx="445" cy="74" r="7" fill="#78350f"/>
-          <text x="445" y="61" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#0f172a">RIDE</text>
-        </g>
-
-        <!-- Sillín (Throne) -->
-        <circle cx="312" cy="190" r="20" fill="#334155" stroke="#0f172a" stroke-width="2"/>
-        <text x="312" y="193" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#ffffff">SILLÍN</text>
-
-        <!-- Leyenda lateral izquierda -->
-        <rect x="14" y="34" width="94" height="170" rx="5" fill="#ffffff" stroke="#cbd5e1"/>
-        <text x="61" y="49" text-anchor="middle" font-size="8" font-weight="bold" fill="#0f172a">Ergonomía Base</text>
-        <text x="20" y="66" font-size="7.2" fill="#334155">• Cadera &gt; Rodilla</text>
-        <text x="20" y="80" font-size="7.2" fill="#334155">• Ángulo muslo: 100°</text>
-        <text x="20" y="94" font-size="7.2" fill="#334155">• Caja al ombligo/cintura</text>
-        <text x="20" y="108" font-size="7.2" fill="#334155">• Pies en V natural</text>
-        <text x="20" y="122" font-size="7.2" fill="#334155">• Hombros sueltos</text>
-        <text x="20" y="136" font-size="7.2" fill="#334155">• Codos cerca al torso</text>
-        <text x="20" y="150" font-size="7.2" fill="#b45309" font-weight="bold">• Protección auditiva</text>
-        <text x="20" y="164" font-size="7.2" fill="#b45309">  obligatoria (-15/25dB)</text>
-
-        <!-- Leyenda lateral derecha -->
-        <rect x="572" y="34" width="94" height="170" rx="5" fill="#ffffff" stroke="#cbd5e1"/>
-        <text x="619" y="49" text-anchor="middle" font-size="8" font-weight="bold" fill="#0f172a">Código Color</text>
-        <rect x="580" y="60" width="10" height="10" fill="#f59e0b"/><text x="595" y="68" font-size="7.2" fill="#334155">Metales / Platos</text>
-        <rect x="580" y="78" width="10" height="10" fill="#3b82f6"/><text x="595" y="86" font-size="7.2" fill="#334155">Caja / Toms</text>
-        <rect x="580" y="96" width="10" height="10" fill="#ef4444"/><text x="595" y="104" font-size="7.2" fill="#334155">Bombo (Graves)</text>
-        <rect x="580" y="114" width="10" height="10" fill="#e2e8f0" stroke="#94a3b8"/><text x="595" y="122" font-size="7.2" fill="#334155">En silencio</text>
-        <text x="580" y="142" font-size="7" font-weight="bold" fill="#0f172a">Atajos Teclado:</text>
-        <text x="580" y="154" font-size="6.8" fill="#334155">B:Bombo | S:Caja</text>
-        <text x="580" y="165" font-size="6.8" fill="#334155">H:HiHat | W:PedalHH</text>
-        <text x="580" y="176" font-size="6.8" fill="#334155">T/Y/U:Toms | C/R:Platos</text>
-
-        <text x="${w / 2}" y="224" text-anchor="middle" font-size="8" fill="#475569">${note}</text>
-      </svg>
-    </figure>
-  `;
+  return renderTopViewDrumKitSvg({
+    title,
+    activePieces,
+    highlightedPiece,
+    limbHits,
+    note,
+  });
 }
 
 /**
@@ -3007,48 +2968,96 @@ export function buildDrumRudimentAndPadsLab(
       name: '1. Single Paradiddle (R L R R - L R L L)',
       sticking: ['>R', 'L', 'R', 'R', '>L', 'R', 'L', 'L'],
       pieces: ['SD', 'HH', 'HH', 'HH', 'SD', 'HH', 'BD', 'BD'] as DrumKitPieceCode[],
+      limbs: [
+        [{ piece: 'SD', limb: 'R', accent: true }, { piece: 'BD', limb: 'RF' }],
+        [{ piece: 'SD', limb: 'L' }],
+        [{ piece: 'HH', limb: 'R' }],
+        [{ piece: 'HH', limb: 'R' }],
+        [{ piece: 'SD', limb: 'L', accent: true }],
+        [{ piece: 'HH', limb: 'R' }],
+        [{ piece: 'BD', limb: 'RF' }, { piece: 'SD', limb: 'L' }],
+        [{ piece: 'BD', limb: 'RF' }, { piece: 'SD', limb: 'L' }],
+      ] as DrumLimbHit[][],
       desc: 'El golpe doble final invierte automáticamente la mano líder. Al orquestar R en Hi-Hat y >L en Caja nace el groove funk lineal.',
     },
     {
       name: '2. Fill Descendente por Toms (SD → T1 → T2 → FT → CR+BD)',
       sticking: ['>R', 'L', '>R', 'L', '>R', 'L', '>R', '💥'],
       pieces: ['SD', 'SD', 'T1', 'T1', 'T2', 'T2', 'FT', 'CR'] as DrumKitPieceCode[],
+      limbs: [
+        [{ piece: 'SD', limb: 'R', accent: true }],
+        [{ piece: 'SD', limb: 'L' }],
+        [{ piece: 'T1', limb: 'R', accent: true }],
+        [{ piece: 'T1', limb: 'L' }],
+        [{ piece: 'T2', limb: 'R', accent: true }],
+        [{ piece: 'T2', limb: 'L' }],
+        [{ piece: 'FT', limb: 'R', accent: true }],
+        [{ piece: 'CR', limb: 'R', accent: true }, { piece: 'BD', limb: 'RF', accent: true }],
+      ] as DrumLimbHit[][],
       desc: 'Recorrido ergonómico en sentido horario alrededor de la batería cenital, cerrando en el pulso 1 con Crash + Bombo.',
     },
     {
       name: '3. Groove Jazz Swing en Ride + Pedal HH en 2 y 4',
       sticking: ['RD', 'RD+HHP', 'RD', 'RD', 'RD+HHP', 'RD', 'BD', 'SD'],
       pieces: ['RD', 'HHP', 'RD', 'RD', 'HHP', 'RD', 'BD', 'SD'] as DrumKitPieceCode[],
-      desc: 'El plato Ride lleva el patrón de swing mientras el pie izquierdo cierra el Pedal HH (HHP) con precisión en los tiempos 2 y 4.',
+      limbs: [
+        [{ piece: 'RD', limb: 'R' }],
+        [{ piece: 'RD', limb: 'R' }, { piece: 'HHP', limb: 'LF', accent: true }],
+        [{ piece: 'RD', limb: 'R' }],
+        [{ piece: 'RD', limb: 'R' }],
+        [{ piece: 'RD', limb: 'R' }, { piece: 'HHP', limb: 'LF', accent: true }],
+        [{ piece: 'RD', limb: 'R' }],
+        [{ piece: 'BD', limb: 'RF' }, { piece: 'RD', limb: 'R' }],
+        [{ piece: 'SD', limb: 'L' }, { piece: 'RD', limb: 'R' }],
+      ] as DrumLimbHit[][],
+      desc: 'El plato Ride (Mano Der) lleva el patrón de swing mientras el Pie Izquierdo cierra el Pedal HH con precisión en los tiempos 2 y 4.',
     },
     {
       name: '4. Six-Stroke Roll (R l l r r L - R l l r r L)',
       sticking: ['>R', 'l', 'l', 'r', 'r', '>L', 'T1', 'CR'],
       pieces: ['BD', 'SD', 'SD', 'HH', 'HH', 'SD', 'T1', 'CR'] as DrumKitPieceCode[],
+      limbs: [
+        [{ piece: 'BD', limb: 'RF' }, { piece: 'CR', limb: 'R', accent: true }],
+        [{ piece: 'SD', limb: 'L' }],
+        [{ piece: 'SD', limb: 'L' }],
+        [{ piece: 'HH', limb: 'R' }],
+        [{ piece: 'HH', limb: 'R' }],
+        [{ piece: 'SD', limb: 'L', accent: true }],
+        [{ piece: 'T1', limb: 'R' }],
+        [{ piece: 'CR', limb: 'R', accent: true }, { piece: 'BD', limb: 'RF' }],
+      ] as DrumLimbHit[][],
       desc: 'Dos golpes simples acentuados enmarcando dos dobles fantasma: el fill favorito del rock, gospel y jazz fusión.',
     },
   ];
 
   const pieceMeta: Record<DrumKitPieceCode, { label: string; key: string; freqInfo: string }> = {
-    BD: { label: 'Bombo (BD)', key: 'B', freqInfo: 'Subgrave 50–90 Hz (Pie Derecho)' },
-    SD: { label: 'Caja / Snare (SD)', key: 'S', freqInfo: 'Cuerpo 180 Hz + Bordona (Mano Izq)' },
-    HH: { label: 'Hi-Hat (HH)', key: 'H', freqInfo: 'Subdivisión Metálica (Mano Der)' },
-    HHP: { label: 'Pedal Hi-Hat (HHP)', key: 'W', freqInfo: 'Chick de Pie Izquierdo en 2 y 4' },
-    T1: { label: 'Tom 1 Agudo (T1)', key: 'T', freqInfo: 'Tom Aéreo 10"/12" (225 Hz)' },
-    T2: { label: 'Tom 2 Medio (T2)', key: 'Y', freqInfo: 'Tom Aéreo 12"/13" (168 Hz)' },
-    FT: { label: 'Floor Tom (FT)', key: 'U', freqInfo: 'Tom de Piso 16" Profundo (115 Hz)' },
-    CR: { label: 'Plato Crash (CR)', key: 'C', freqInfo: 'Explosión de Acento Climático' },
-    RD: { label: 'Plato Ride (RD)', key: 'R', freqInfo: 'Campana y Cuerpo Cristalino' },
+    BD: { label: 'Bombo (BD)', key: 'B', freqInfo: 'Pie Derecho · Subgrave 50–90 Hz' },
+    SD: { label: 'Caja / Snare (SD)', key: 'S', freqInfo: 'Mano Izquierda · Cuerpo 180 Hz + Bordona' },
+    HH: { label: 'Hi-Hat (HH)', key: 'H', freqInfo: 'Mano Derecha · Subdivisión Metálica' },
+    HHP: { label: 'Pedal Hi-Hat (HHP)', key: 'W', freqInfo: 'Pie Izquierdo · Chick en 2 y 4' },
+    T1: { label: 'Tom 1 Agudo (T1)', key: 'T', freqInfo: 'Manos R/L · Tom Aéreo 10"/12"' },
+    T2: { label: 'Tom 2 Medio (T2)', key: 'Y', freqInfo: 'Manos R/L · Tom Aéreo 12"/13"' },
+    FT: { label: 'Floor Tom (FT)', key: 'U', freqInfo: 'Mano Derecha · Tom de Piso 16"' },
+    CR: { label: 'Plato Crash (CR)', key: 'C', freqInfo: 'Mano Der/Izq · Acento Climático' },
+    RD: { label: 'Plato Ride (RD)', key: 'R', freqInfo: 'Mano Derecha · Pulso y Campana' },
   };
 
   let rIdx = 0;
+  let drumBpm = 88;
   let activeHighlight: DrumKitPieceCode | null = null;
+  let activeLimbHits: DrumLimbHit[] = [];
 
   stage.innerHTML = `
     <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
-      <select class="js-rud-sel" aria-label="Seleccionar patrón o rudimento de batería" style="max-width:100%;">
-        ${rudiments.map((r, i) => `<option value="${i}">${r.name}</option>`).join('')}
-      </select>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+        <select class="js-rud-sel" aria-label="Seleccionar patrón o rudimento de batería" style="max-width:100%;">
+          ${rudiments.map((r, i) => `<option value="${i}">${r.name}</option>`).join('')}
+        </select>
+        <label style="font-size:0.78rem; color:#cbd5e1; display:flex; align-items:center; gap:6px;">
+          Metrónomo: <strong class="js-rud-bpm-val" style="color:#fbbf24;">${drumBpm}</strong> BPM
+          <input type="range" class="js-rud-bpm" min="50" max="150" value="${drumBpm}" style="width:100px;" />
+        </label>
+      </div>
       <div style="display:flex; gap:6px; flex-wrap:wrap;">
         <button type="button" class="btn btn-primary js-rud-play">▶ Reproducir Patrón</button>
         <button type="button" class="btn js-rud-challenge" style="background:rgba(16,185,129,0.18); color:#34d399; border:1px solid rgba(16,185,129,0.4);">🎯 Reto: Repite el Ritmo</button>
@@ -3083,6 +3092,8 @@ export function buildDrumRudimentAndPadsLab(
   const descEl = stage.querySelector<HTMLElement>('.js-rud-desc')!;
   const svgHost = stage.querySelector<HTMLElement>('.js-topview-drum-host')!;
   const stepsEl = stage.querySelector<HTMLElement>('.js-rud-steps')!;
+  const bpmInput = stage.querySelector<HTMLInputElement>('.js-rud-bpm')!;
+  const bpmValEl = stage.querySelector<HTMLElement>('.js-rud-bpm-val')!;
 
   let challengeSeq: DrumKitPieceCode[] = [];
   let userStep = 0;
@@ -3094,20 +3105,22 @@ export function buildDrumRudimentAndPadsLab(
       descEl.textContent = r.desc;
     }
     svgHost.innerHTML = renderPlayableTopViewDrumSvg(
-      'Batería Acústica Interactiva — Vista Cenital Ergonómica (Haz clic en cada pieza o usa teclado B, S, H, W, T, Y, U, C, R)',
+      'Batería Acústica Interactiva — Vista Cenital (Colores por Mano / Pie · Clic para tocar)',
       ['BD', 'SD', 'HH', 'HHP', 'T1', 'T2', 'FT', 'RD', 'CR'],
       activeHighlight,
-      noteMsg || 'Toca directamente sobre el Bombo, Caja, Toms, Platos o Pedales en el diagrama SVG'
+      noteMsg || 'Toca directamente sobre Bombo, Caja, Toms, Platos o Pedales en el diagrama SVG',
+      activeLimbHits
     );
 
     stepsEl.innerHTML = r.sticking
       .map((st, idx) => {
         const isCurrent = idx === activeStep;
         const piece = r.pieces[idx];
+        const limbBadge = (r.limbs[idx] || []).map((h) => DRUM_LIMB_META[h.limb].short).join('+');
         return `
           <div style="padding:8px 4px; text-align:center; border-radius:8px; border:1px solid ${isCurrent ? '#fef08a' : 'rgba(56,189,248,0.4)'}; background:${isCurrent ? '#f59e0b' : 'rgba(15,23,42,0.85)'}; color:${isCurrent ? '#090d16' : '#f8fafc'};">
             <div style="font-size:0.9rem; font-weight:900;">${st}</div>
-            <div style="font-size:0.65rem; color:${isCurrent ? '#090d16' : 'var(--accent-cyan)'}; font-weight:700;">${piece}</div>
+            <div style="font-size:0.65rem; color:${isCurrent ? '#090d16' : 'var(--accent-cyan)'}; font-weight:700;">${piece} (${limbBadge})</div>
           </div>
         `;
       })
@@ -3117,6 +3130,7 @@ export function buildDrumRudimentAndPadsLab(
   const triggerPiece = (code: DrumKitPieceCode, isUser = true): void => {
     audio.playDrumPiece(code);
     activeHighlight = code;
+    activeLimbHits = [];
     const meta = pieceMeta[code];
 
     if (isUser && challengeActive && challengeSeq.length > 0) {
@@ -3165,11 +3179,29 @@ export function buildDrumRudimentAndPadsLab(
     });
   }
 
+  const unsubRudStop = audio.onStop(() => {
+    if (!document.body.contains(stage)) {
+      unsubRudStop();
+      return;
+    }
+    activeHighlight = null;
+    activeLimbHits = [];
+    if (!challengeActive) {
+      renderKitAndSticking();
+    }
+  });
+
+  bpmInput.addEventListener('input', () => {
+    drumBpm = parseInt(bpmInput.value, 10);
+    bpmValEl.textContent = String(drumBpm);
+  });
+
   sel.addEventListener('change', () => {
     rIdx = parseInt(sel.value, 10);
     audio.stopAll();
     challengeActive = false;
     activeHighlight = null;
+    activeLimbHits = [];
     renderKitAndSticking();
   });
 
@@ -3193,6 +3225,7 @@ export function buildDrumRudimentAndPadsLab(
       audio.stopAll();
       challengeActive = false;
       activeHighlight = null;
+      activeLimbHits = [];
       renderKitAndSticking();
       return;
     }
@@ -3207,11 +3240,13 @@ export function buildDrumRudimentAndPadsLab(
       challengeSeq.forEach((piece, idx) => {
         audio.schedule(() => {
           activeHighlight = piece;
+          activeLimbHits = [];
           audio.playDrumPiece(piece);
           renderKitAndSticking(-1, `Reto Paso ${idx + 1}/4: ${pieceMeta[piece].label}`);
           if (idx === challengeSeq.length - 1) {
             audio.schedule(() => {
               activeHighlight = null;
+              activeLimbHits = [];
               renderKitAndSticking(-1, '🥁 ¡Tu turno! Haz clic en las 4 piezas del SVG en el mismo orden.');
               descEl.textContent = '🥁 ¡Tu turno! Toca las 4 piezas en el mismo orden.';
             }, 340);
@@ -3225,16 +3260,18 @@ export function buildDrumRudimentAndPadsLab(
       audio.stopAll();
       challengeActive = false;
       const r = rudiments[rIdx];
+      const stepMs = Math.max(130, Math.round(60000 / drumBpm / 2));
       for (let bar = 0; bar < 2; bar++) {
         r.pieces.forEach((piece, idx) => {
           const total = bar * 8 + idx;
           audio.schedule(() => {
-            activeHighlight = piece;
-            audio.playDrumPiece(piece);
-            if (piece === 'CR') audio.playDrumPiece('BD');
-            renderKitAndSticking(idx, `Paso ${idx + 1}/8: ${r.sticking[idx]} → ${pieceMeta[piece].label}`);
-            onStatus(`Batería: ${r.sticking[idx]} (${pieceMeta[piece].label})`);
-          }, total * 200);
+            activeHighlight = null;
+            activeLimbHits = r.limbs[idx] || [{ piece, limb: 'R' }];
+            activeLimbHits.forEach((h) => audio.playDrumPiece(h.piece));
+            const limbText = activeLimbHits.map((h) => DRUM_LIMB_META[h.limb].label).join(' + ');
+            renderKitAndSticking(idx, `Paso ${idx + 1}/8: ${limbText} → ${pieceMeta[piece].label}`);
+            onStatus(`Batería (${drumBpm} BPM): ${limbText}`);
+          }, total * stepMs);
         });
       }
     }
@@ -4110,6 +4147,17 @@ function buildSequencerWidget(
     onStatus(`Reproduciendo secuencia: ${presets[currentPreset].name} (${currentBpm} BPM)`);
   });
 
+  const unsubSeqStop = audio.onStop(() => {
+    if (!document.body.contains(container)) {
+      unsubSeqStop();
+      return;
+    }
+    if (playingStep !== -1) {
+      playingStep = -1;
+      renderGrid();
+    }
+  });
+
   stopBtn.addEventListener('click', () => {
     audio.stopAll();
     playingStep = -1;
@@ -4546,7 +4594,13 @@ const PROGRESSION_SETS_BY_CONTEXT: Record<string, ProgressionItem[]> = {
 function computePlayableGuitarVoicing(
   chordMidis: number[],
   bassMidi: number
-): { frets: (number | null)[]; baseFret: number; tabText: string } {
+): {
+  frets: (number | null)[];
+  fingers: (number | null)[];
+  baseFret: number;
+  tabText: string;
+  fingerText: string;
+} {
   const openHighToLow = GUITAR_STRINGS.map((s) => s.openMidi);
   const lowestNote = Math.min(...chordMidis);
   const bassPc = (((bassMidi ?? lowestNote) % 12) + 12) % 12;
@@ -4558,11 +4612,19 @@ function computePlayableGuitarVoicing(
     orderedMidis = [bassAnchor, ...chordMidis];
   }
   const positions = resolvePlayableChordVoicing(orderedMidis, openHighToLow, 12);
+  const fingerInfo = assignGuitarChordFingers(positions, true);
   const frets: (number | null)[] = [null, null, null, null, null, null];
+  const fingers: (number | null)[] = [null, null, null, null, null, null];
   positions.forEach((pos) => {
     const lowToHighIdx = 5 - pos.sIdx;
     if (lowToHighIdx >= 0 && lowToHighIdx < 6) {
       frets[lowToHighIdx] = pos.fret;
+    }
+  });
+  fingerInfo.positions.forEach((fp) => {
+    const lowToHighIdx = 5 - fp.sIdx;
+    if (lowToHighIdx >= 0 && lowToHighIdx < 6) {
+      fingers[lowToHighIdx] = fp.finger;
     }
   });
   const nonZero = frets.filter((f): f is number => f !== null && f > 0);
@@ -4570,7 +4632,8 @@ function computePlayableGuitarVoicing(
   const maxFret = nonZero.length > 0 ? Math.max(...nonZero) : 4;
   const baseFret = maxFret <= 4 ? 1 : minFret;
   const tabText = frets.map((f) => (f === null ? 'X' : String(f))).join('-');
-  return { frets, baseFret, tabText };
+  const fingerText = fingers.map((f) => (f === null ? 'X' : String(f))).join('-');
+  return { frets, fingers, baseFret, tabText, fingerText };
 }
 
 function computePlayableBassVoicing(
@@ -4610,9 +4673,11 @@ function renderMiniChordNeckSvg(
   const stringNames = isBass ? ['E', 'A', 'D', 'G'] : ['E', 'A', 'D', 'G', 'B', 'e'];
   const numStrings = openLowToHigh.length;
   const rootPc = (((bassMidi ?? chordMidis[0]) % 12) + 12) % 12;
-  const { frets, baseFret, tabText } = isBass
-    ? computePlayableBassVoicing(chordMidis, bassMidi)
-    : computePlayableGuitarVoicing(chordMidis, bassMidi);
+  const guitarVoicing = !isBass ? computePlayableGuitarVoicing(chordMidis, bassMidi) : null;
+  const bassVoicing = isBass ? computePlayableBassVoicing(chordMidis, bassMidi) : null;
+  const frets = isBass ? bassVoicing!.frets : guitarVoicing!.frets;
+  const baseFret = isBass ? bassVoicing!.baseFret : guitarVoicing!.baseFret;
+  const tabText = isBass ? bassVoicing!.tabText : guitarVoicing!.tabText;
 
   const w = 136;
   const h = 114;
@@ -4624,7 +4689,6 @@ function renderMiniChordNeckSvg(
   const fretGap = gridH / 4;
 
   const lines: string[] = [];
-  // Nut or base fret indicator
   if (baseFret === 1) {
     lines.push(`<line x1="${padL}" y1="${padT}" x2="${padL + gridW}" y2="${padT}" stroke="${isBass ? '#38bdf8' : '#f8fafc'}" stroke-width="3.2" />`);
   } else {
@@ -4634,13 +4698,11 @@ function renderMiniChordNeckSvg(
     );
   }
 
-  // 4 Fret horizontal wires
   for (let f = 1; f <= 4; f++) {
     const y = padT + f * fretGap;
     lines.push(`<line x1="${padL}" y1="${y}" x2="${padL + gridW}" y2="${y}" stroke="#334155" stroke-width="1.1" />`);
   }
 
-  // Vertical strings + top status + dots
   for (let s = 0; s < numStrings; s++) {
     const x = padL + s * strGap;
     const sw = isBass ? 2.5 - s * 0.32 : 1.8 - s * 0.16;
@@ -4650,6 +4712,7 @@ function renderMiniChordNeckSvg(
     );
 
     const fVal = frets[s];
+    const fingerVal = !isBass && guitarVoicing ? guitarVoicing.fingers[s] || 0 : 0;
     if (fVal === null) {
       lines.push(
         `<text x="${x}" y="${padT - 6}" text-anchor="middle" fill="#fb7185" font-size="9.5" font-weight="800">×</text>`
@@ -4672,6 +4735,12 @@ function renderMiniChordNeckSvg(
       lines.push(
         `<text x="${x}" y="${cy + 2.8}" text-anchor="middle" fill="${isRoot ? '#0f172a' : '#f8fafc'}" font-size="6.9" font-weight="900">${noteName}</text>`
       );
+      if (!isBass && fingerVal > 0) {
+        lines.push(
+          `<circle cx="${x + 6.4}" cy="${cy - 5.2}" r="4.3" fill="#fde047" stroke="#090c12" stroke-width="0.9" />` +
+            `<text x="${x + 6.4}" y="${cy - 2.9}" text-anchor="middle" fill="#090c12" font-size="5.8" font-weight="900">${fingerVal}</text>`
+        );
+      }
     }
   }
 
@@ -4681,6 +4750,7 @@ function renderMiniChordNeckSvg(
         ${lines.join('')}
       </svg>
       <div style="font-size:0.68rem; color:#94a3b8; font-family:monospace; margin-top:3px;">${isBass ? 'Bajo (4c)' : 'Guitarra (6c)'}: <strong style="color:${isBass ? '#38bdf8' : '#fde68a'};">${tabText}</strong></div>
+      ${!isBass && guitarVoicing ? `<div style="font-size:0.64rem; color:#fde047; font-family:monospace;">Dedos: <strong>${guitarVoicing.fingerText}</strong></div>` : ''}
     </div>
   `;
 }
@@ -4779,13 +4849,14 @@ function buildProgressionWidget(
 
     const isBass = neckViewMode === 'bass';
     const stringsConfig = isBass ? BASS_STRINGS : GUITAR_STRINGS;
-    const voicing = isBass
-      ? computePlayableBassVoicing(chordMidis, bassMidi)
-      : computePlayableGuitarVoicing(chordMidis, bassMidi);
+    const guitarVoicing = !isBass ? computePlayableGuitarVoicing(chordMidis, bassMidi) : null;
+    const bassVoicing = isBass ? computePlayableBassVoicing(chordMidis, bassMidi) : null;
+    const voicingFrets = isBass ? bassVoicing!.frets : guitarVoicing!.frets;
+    const tabText = isBass ? bassVoicing!.tabText : guitarVoicing!.tabText;
 
     neckTitleEl.textContent = isBass
-      ? `🎸 Mapa en el Mástil de BAJO ELÉCTRICO (4 Cuerdas: G–D–A–E · 0–12 Trastes) — Paso ${cIdx + 1}: ${label} [Digitación Bajo: ${voicing.tabText}]`
-      : `🎸 Mapa en el Mástil de GUITARRA (6 Cuerdas: e–B–G–D–A–E · 0–12 Trastes) — Paso ${cIdx + 1}: ${label} [Digitación Guitarra: ${voicing.tabText}]`;
+      ? `🎸 Mapa en el Mástil de BAJO ELÉCTRICO (4 Cuerdas: G–D–A–E · 0–12 Trastes) — Paso ${cIdx + 1}: ${label} [Digitación Bajo: ${tabText}]`
+      : `🎸 Mapa en el Mástil de GUITARRA (6 Cuerdas: e–B–G–D–A–E · 0–12 Trastes) — Paso ${cIdx + 1}: ${label} [Digitación: ${tabText} · Dedos Izq: ${guitarVoicing!.fingerText}]`;
 
     const numStrings = stringsConfig.length;
     let html = `<div class="fretboard-wrapper">`;
@@ -4797,9 +4868,9 @@ function buildProgressionWidget(
     html += `</div>`;
 
     stringsConfig.forEach((st, sIdx) => {
-      // stringsConfig is ordered 1st string (highest pitch, idx 0) down to lowest string (idx numStrings - 1)
-      // voicing.frets is ordered lowest string (idx 0) to highest string (idx numStrings - 1)
-      const voicedFret = voicing.frets[numStrings - 1 - sIdx];
+      const lowToHighIdx = numStrings - 1 - sIdx;
+      const voicedFret = voicingFrets[lowToHighIdx];
+      const voicedFinger = !isBass && guitarVoicing ? guitarVoicing.fingers[lowToHighIdx] || 0 : 0;
 
       html += `<div class="fretboard-row"><div class="string-label" style="color:${isBass ? '#38bdf8' : '#fbbf24'};">${st.label}</div>`;
       for (let f = 0; f <= 12; f++) {
@@ -4826,10 +4897,14 @@ function buildProgressionWidget(
         const ringStyle = isPrimaryVoicingFret
           ? 'box-shadow:0 0 0 2.5px #ffffff, 0 0 14px #f59e0b; transform:scale(1.12); font-weight:900;'
           : '';
+        const fingerBadge =
+          !isBass && isPrimaryVoicingFret && voicedFinger > 0 && f > 0
+            ? `<span class="finger-badge" title="Dedo ${voicedFinger}">${voicedFinger}</span>`
+            : '';
 
         html += `
-          <div class="fret-cell js-prog-neck-cell" data-sidx="${sIdx}" data-fret="${f}" data-midi="${midi}" data-note="${noteName}" title="Cuerda ${st.label}, Traste ${f}: ${noteName}${isPrimaryVoicingFret ? ' (★ Posición del Voicing)' : ''}">
-            <div class="fret-note ${stateClass}" style="${ringStyle}">${isPrimaryVoicingFret ? `${noteName}★` : noteName}</div>
+          <div class="fret-cell js-prog-neck-cell" data-sidx="${sIdx}" data-fret="${f}" data-midi="${midi}" data-note="${noteName}" title="Cuerda ${st.label}, Traste ${f}: ${noteName}${isPrimaryVoicingFret ? ` (★ Posición del Voicing${!isBass && voicedFinger > 0 ? ` · Dedo ${voicedFinger}` : ''})` : ''}">
+            <div class="fret-note ${stateClass}" style="${ringStyle}">${isPrimaryVoicingFret ? `${noteName}★` : noteName}${fingerBadge}</div>
           </div>
         `;
       }
@@ -6331,86 +6406,14 @@ function buildReverseChordFinderLab(
 
   const presets = [
     { name: 'C Mayor Abierto (x-3-2-0-1-0)', frets: [0, 1, 0, 2, 3, -1] },
-    { name: 'Hendrix Chord E7#9 (0-8-7-6-7-0)', frets: [0, 8, 7, 6, 7, 0] },
-    { name: 'Acorde "So What" Dm11 Cuartal', frets: [5, 6, 5, 5, 5, -1] },
+    { name: 'Hendrix Chord E7#9 (0-7-6-7-8-0)', frets: [0, 8, 7, 6, 7, 0] },
+    { name: 'Acorde "So What" Dm11 (x-5-5-5-6-5)', frets: [5, 6, 5, 5, 5, -1] },
     { name: 'Gmaj9 Acústico (x-10-9-11-10-x)', frets: [-1, 10, 11, 9, 10, -1] },
-    { name: 'James Bond Em(Maj9) (0-3-4-4-2-0)', frets: [2, 4, 4, 1, 2, 0] },
+    { name: 'James Bond Em(Maj9) Abierto (0-2-1-0-0-2)', frets: [2, 0, 0, 1, 2, 0] },
+    { name: 'James Bond Em(Maj9) Clásico (0-10-9-8-7-x)', frets: [-1, 7, 8, 9, 10, 0] },
   ];
 
-  const identifyChord = (): { title: string; notesText: string; formulaText: string; midis: number[] } => {
-    const active: { sIdx: number; fret: number; midi: number; pc: number }[] = [];
-    for (let s = 5; s >= 0; s--) {
-      if (stringFrets[s] >= 0) {
-        const midi = GUITAR_STRINGS[s].openMidi + stringFrets[s];
-        active.push({ sIdx: s, fret: stringFrets[s], midi, pc: midi % 12 });
-      }
-    }
-    if (active.length === 0) {
-      return {
-        title: 'Ninguna cuerda activa (Haz clic en los trastes para pisar notas)',
-        notesText: '—',
-        formulaText: '—',
-        midis: [],
-      };
-    }
-
-    const bass = active[0];
-    const uniquePcs = [...new Set(active.map((a) => a.pc))];
-    const noteNames = active.map((a) => `${NOTE_NAMES[a.pc]}${Math.floor(a.midi / 12) - 1}`).join(' – ');
-
-    // Try matching each unique pitch class as potential root
-    let bestName = `${NOTE_NAMES[bass.pc]} (Intervalo / Cluster)`;
-    let bestFormula = '';
-
-    for (const candidateRoot of uniquePcs) {
-      const relSet = new Set(uniquePcs.map((pc) => (pc - candidateRoot + 12) % 12));
-      const has3M = relSet.has(4);
-      const has3m = relSet.has(3);
-      const has5 = relSet.has(7);
-      const hasb5 = relSet.has(6);
-      const has7M = relSet.has(11);
-      const hasb7 = relSet.has(10);
-      const has6 = relSet.has(9);
-      const has9 = relSet.has(2);
-      const has4 = relSet.has(5);
-
-      let suffix = '';
-      if (has3M && has7M && has9) suffix = 'Maj9';
-      else if (has3M && has7M) suffix = 'Maj7';
-      else if (has3m && has7M) suffix = 'm(Maj7)';
-      else if (has3M && hasb7 && relSet.has(3)) suffix = '7(#9)';
-      else if (has3M && hasb7 && has9) suffix = '9';
-      else if (has3M && hasb7) suffix = '7';
-      else if (has3m && hasb7 && has4 && has9) suffix = 'm11';
-      else if (has3m && hasb7 && has9) suffix = 'm9';
-      else if (has3m && hasb7 && hasb5) suffix = 'm7b5';
-      else if (has3m && hasb7) suffix = 'm7';
-      else if (has3M && has6 && has9) suffix = '6/9';
-      else if (has3M && has9 && !has7M && !hasb7) suffix = 'add9';
-      else if (has3M && (has5 || uniquePcs.length >= 2)) suffix = ' Mayor';
-      else if (has3m && (has5 || uniquePcs.length >= 2)) suffix = 'm';
-      else if (!has3M && !has3m && has4 && has5) suffix = 'sus4';
-      else if (!has3M && !has3m && has9 && has5) suffix = 'sus2';
-
-      if (suffix) {
-        const rootName = NOTE_NAMES[candidateRoot];
-        const slash = candidateRoot !== bass.pc ? ` / ${NOTE_NAMES[bass.pc]} (Inversión con ${NOTE_NAMES[bass.pc]} en el bajo)` : '';
-        bestName = `${rootName}${suffix}${slash}`;
-        bestFormula = [...relSet]
-          .sort((a, b) => a - b)
-          .map((st) => ['1', 'b2/b9', '2/9', 'b3/#9', '3M', '4/11', 'b5/#11', '5J', 'b6/b13', '6/13', 'b7', '7M'][st])
-          .join(' – ');
-        if (candidateRoot === bass.pc) break;
-      }
-    }
-
-    return {
-      title: bestName,
-      notesText: noteNames,
-      formulaText: bestFormula || 'Conjunto libre de notas',
-      midis: active.map((a) => a.midi),
-    };
-  };
+  const openMidisHighToLow = GUITAR_STRINGS.map((s) => s.openMidi);
 
   stage.innerHTML = `
     <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px;">
@@ -6433,11 +6436,32 @@ function buildReverseChordFinderLab(
   const readout = stage.querySelector<HTMLElement>('.js-rcf-readout')!;
   const neck = stage.querySelector<HTMLElement>('.js-rcf-neck')!;
 
+  const identifyChord = () => identifyGuitarChordFromFrets(stringFrets, openMidisHighToLow);
+
   const render = (): void => {
     const info = identifyChord();
+    const fingerMap = new Map<string, number>();
+    info.activePositions.forEach((fp) => {
+      fingerMap.set(`${fp.sIdx}:${fp.fret}`, fp.finger);
+    });
+
     readout.innerHTML = `
-      <div style="font-size:1.25rem; font-weight:900; color:var(--accent-gold); margin-bottom:4px;">Acorde Detectado: ${info.title}</div>
-      <div style="font-size:0.84rem; color:#cbd5e1;"><strong>Notas (de grave a agudo):</strong> <span style="color:#38bdf8;">${info.notesText}</span> | <strong>Estructura Interválica:</strong> ${info.formulaText}</div>
+      <div style="font-size:1.2rem; font-weight:900; color:var(--accent-gold); margin-bottom:4px;">Acorde Detectado: ${info.title}</div>
+      <div style="font-size:0.84rem; color:#cbd5e1; margin-bottom:5px;">
+        <strong>Notas (de grave a agudo):</strong> <span style="color:#38bdf8;">${info.notesText}</span>
+        | <strong>Estructura Interválica:</strong> ${info.formulaText}
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; font-size:0.8rem; color:#e2e8f0; background:rgba(15,23,42,0.75); border:1px solid rgba(148,163,184,0.22); border-radius:6px; padding:6px 10px;">
+        <span style="white-space:nowrap;"><strong>Trastes (6ª→1ª):</strong> <code style="color:#38bdf8; white-space:nowrap;">${info.tabLowToHigh}</code></span>
+        <span style="white-space:nowrap;"><strong>✋ Dedos Mano Izq (6ª→1ª):</strong> <code style="color:#fde047; font-weight:800; white-space:nowrap;">${info.fingerLowToHigh}</code></span>
+        ${info.barreFret ? `<span style="color:#34d399; font-weight:800; white-space:nowrap;">• Cejilla Dedo 1 en traste ${info.barreFret}</span>` : ''}
+        <span style="color:#94a3b8; font-size:0.74rem;">(1 Índice · 2 Medio · 3 Anular · 4 Meñique · 0 Aire · X Mudo)</span>
+      </div>
+      ${
+        !info.playable && info.warning
+          ? `<div style="margin-top:8px; padding:8px 10px; border-radius:6px; background:rgba(244,63,94,0.18); border:1px solid rgba(251,113,133,0.55); color:#fecdd3; font-size:0.8rem; font-weight:700;">⚠️ ${info.warning}</div>`
+          : ''
+      }
     `;
 
     let html = `<div class="fretboard-row" style="border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:4px;"><div class="string-label" style="font-size:0.7rem; color:var(--text-muted);">Cuerda</div>`;
@@ -6448,14 +6472,20 @@ function buildReverseChordFinderLab(
 
     GUITAR_STRINGS.forEach((str, sIdx) => {
       const selectedFret = stringFrets[sIdx];
-      html += `<div class="fretboard-row"><div class="string-label">${str.label} ${selectedFret === -1 ? '(X)' : ''}</div>`;
+      const statusTag = selectedFret === -1 ? ' ×' : selectedFret === 0 ? ' ○' : '';
+      html += `<div class="fretboard-row"><div class="string-label" style="font-size:0.68rem; white-space:nowrap;">${str.label}${statusTag}</div>`;
       for (let f = 0; f <= 12; f++) {
         const midi = str.openMidi + f;
         const pc = midi % 12;
         const isSelected = selectedFret === f;
+        const fingerNum = isSelected ? fingerMap.get(`${sIdx}:${f}`) || 0 : 0;
+        const fingerBadge =
+          isSelected && fingerNum > 0 && f > 0
+            ? `<span class="finger-badge" title="Dedo ${fingerNum}">${fingerNum}</span>`
+            : '';
         html += `
-          <div class="fret-cell js-rcf-cell" data-s="${sIdx}" data-f="${f}" data-midi="${midi}">
-            <div class="fret-note ${isSelected ? 'root' : ''}">${NOTE_NAMES[pc]}</div>
+          <div class="fret-cell js-rcf-cell" data-s="${sIdx}" data-f="${f}" data-midi="${midi}" title="${str.label}, Traste ${f}: ${NOTE_NAMES[pc]}${fingerNum > 0 ? ` · Dedo ${fingerNum}` : ''}">
+            <div class="fret-note ${isSelected ? 'root' : ''}">${NOTE_NAMES[pc]}${fingerBadge}</div>
           </div>
         `;
       }
@@ -6982,26 +7012,35 @@ function buildDrumIndependenceLab(
 
   let fIdx = 0;
   let hIdx = 0;
+  let indepBpm = 88;
 
   stage.innerHTML = `
     <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+      <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
         <select class="js-di-feet">${feetPatterns.map((f, i) => `<option value="${i}">${f.name}</option>`).join('')}</select>
         <select class="js-di-hands">${handPatterns.map((h, i) => `<option value="${i}">${h.name}</option>`).join('')}</select>
+        <label style="font-size:0.78rem; color:#cbd5e1; display:flex; align-items:center; gap:6px;">
+          BPM: <strong class="js-di-bpm-val" style="color:#fbbf24;">${indepBpm}</strong>
+          <input type="range" class="js-di-bpm" min="50" max="145" value="${indepBpm}" style="width:95px;" />
+        </label>
       </div>
       <div style="display:flex; gap:8px;">
         <button type="button" class="btn btn-primary js-di-play">▶ Escuchar Combinación de 4 Extremidades</button>
         <button type="button" class="btn js-di-stop" style="background:rgba(244,63,94,0.2); color:#fb7185;">⏹ Detener</button>
       </div>
     </div>
-    <div style="overflow-x:auto; max-width:100%;">
+    <div style="overflow-x:auto; max-width:100%; margin-bottom:12px;">
       <div class="js-di-grid" style="min-width:500px;"></div>
     </div>
+    <div class="js-di-kit-svg"></div>
   `;
 
   const fSel = stage.querySelector<HTMLSelectElement>('.js-di-feet')!;
   const hSel = stage.querySelector<HTMLSelectElement>('.js-di-hands')!;
   const grid = stage.querySelector<HTMLElement>('.js-di-grid')!;
+  const kitHost = stage.querySelector<HTMLElement>('.js-di-kit-svg')!;
+  const bpmInput = stage.querySelector<HTMLInputElement>('.js-di-bpm')!;
+  const bpmValEl = stage.querySelector<HTMLElement>('.js-di-bpm-val')!;
 
   const render = (step = -1): void => {
     const f = feetPatterns[fIdx];
@@ -7025,9 +7064,32 @@ function buildDrumIndependenceLab(
         ${f.hhFoot.map((v, i) => `<div style="height:24px; border-radius:4px; background:${v ? '#10b981' : 'rgba(30,41,59,0.7)'}; outline:${i === step ? '2px solid #fff' : 'none'};"></div>`).join('')}
       </div>
     `;
+
+    const hits: DrumLimbHit[] = [];
+    if (step >= 0 && step < 8) {
+      if (h.rh[step]) hits.push({ piece: 'HH', limb: 'R' });
+      if (h.lh[step]) hits.push({ piece: 'SD', limb: 'L', accent: h.lh[step] === 2 });
+      if (f.kick[step]) hits.push({ piece: 'BD', limb: 'RF', accent: true });
+      if (f.hhFoot[step]) hits.push({ piece: 'HHP', limb: 'LF' });
+    }
+    kitHost.innerHTML = renderTopViewDrumKitSvg({
+      title: `Coordinación de 4 Extremidades en el Kit (${indepBpm} BPM)`,
+      limbHits: hits,
+    });
   };
 
   render();
+  const unsubDiStop = audio.onStop(() => {
+    if (!document.body.contains(stage)) {
+      unsubDiStop();
+      return;
+    }
+    render();
+  });
+  bpmInput.addEventListener('input', () => {
+    indepBpm = parseInt(bpmInput.value, 10);
+    bpmValEl.textContent = String(indepBpm);
+  });
   fSel.addEventListener('change', () => {
     fIdx = parseInt(fSel.value, 10);
     audio.stopAll();
@@ -7041,6 +7103,12 @@ function buildDrumIndependenceLab(
 
   stage.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
+    const svgPiece = target.closest<HTMLElement>('.js-svg-drum-piece');
+    if (svgPiece) {
+      const code = svgPiece.getAttribute('data-piece') as DrumKitPieceCode | null;
+      if (code) audio.playDrumPiece(code);
+      return;
+    }
     if (target.closest('.js-di-stop')) {
       audio.stopAll();
       render();
@@ -7050,6 +7118,7 @@ function buildDrumIndependenceLab(
       audio.stopAll();
       const f = feetPatterns[fIdx];
       const h = handPatterns[hIdx];
+      const subMs = Math.max(105, Math.round(60000 / indepBpm / 4));
       for (let bar = 0; bar < 3; bar++) {
         for (let s = 0; s < 8; s++) {
           const total = bar * 8 + s;
@@ -7059,11 +7128,11 @@ function buildDrumIndependenceLab(
             if (h.lh[s] === 2) audio.playDrumHit('snare');
             else if (h.lh[s] === 1) audio.playDrumHit('ghost');
             if (f.kick[s]) audio.playDrumHit('kick');
-            if (f.hhFoot[s]) audio.playDrumHit('clap');
-          }, total * 165);
+            if (f.hhFoot[s]) audio.playDrumPiece('HHP');
+          }, total * subMs);
         }
       }
-      onStatus(`Independencia 4 Extremidades: ${f.name} + ${h.name}`);
+      onStatus(`Independencia 4 Extremidades (${indepBpm} BPM): ${f.name} + ${h.name}`);
     }
   });
 }
@@ -8201,13 +8270,14 @@ function buildNeighborChordsVisualizerLab(
     const curRootPc = ((cur.bassMidi % 12) + 12) % 12;
     const pcs = new Set(cur.midis.map((m) => ((m % 12) + 12) % 12));
     const stringsConfig = isBass ? BASS_STRINGS : GUITAR_STRINGS;
-    const voicing = isBass
-      ? computePlayableBassVoicing(cur.midis, cur.bassMidi)
-      : computePlayableGuitarVoicing(cur.midis, cur.bassMidi);
+    const guitarVoicing = !isBass ? computePlayableGuitarVoicing(cur.midis, cur.bassMidi) : null;
+    const bassVoicing = isBass ? computePlayableBassVoicing(cur.midis, cur.bassMidi) : null;
+    const voicingFrets = isBass ? bassVoicing!.frets : guitarVoicing!.frets;
+    const tabText = isBass ? bassVoicing!.tabText : guitarVoicing!.tabText;
 
     neckTitleEl.textContent = isBass
-      ? `🎸 ${cur.title} (${cur.fretDelta}) en BAJO ELÉCTRICO (4 Cuerdas · Digitación: ${voicing.tabText})`
-      : `🎸 ${cur.title} (${cur.fretDelta}) en GUITARRA (6 Cuerdas · Digitación: ${voicing.tabText})`;
+      ? `🎸 ${cur.title} (${cur.fretDelta}) en BAJO ELÉCTRICO (4 Cuerdas · Digitación: ${tabText})`
+      : `🎸 ${cur.title} (${cur.fretDelta}) en GUITARRA (6 Cuerdas · Digitación: ${tabText} · Dedos Izq: ${guitarVoicing!.fingerText})`;
 
     const numStrings = stringsConfig.length;
     let neckHtml = `<div class="fretboard-wrapper">`;
@@ -8219,7 +8289,9 @@ function buildNeighborChordsVisualizerLab(
     neckHtml += `</div>`;
 
     stringsConfig.forEach((st, sIdx) => {
-      const voicedFret = voicing.frets[numStrings - 1 - sIdx];
+      const lowToHighIdx = numStrings - 1 - sIdx;
+      const voicedFret = voicingFrets[lowToHighIdx];
+      const voicedFinger = !isBass && guitarVoicing ? guitarVoicing.fingers[lowToHighIdx] || 0 : 0;
       neckHtml += `<div class="fretboard-row"><div class="string-label" style="color:${isBass ? '#38bdf8' : '#fbbf24'};">${st.label}</div>`;
       for (let f = 0; f <= 12; f++) {
         const midi = st.openMidi + f;
@@ -8230,9 +8302,13 @@ function buildNeighborChordsVisualizerLab(
         const isPrimary = voicedFret === f;
         const stateClass = isRoot ? 'root' : isTone ? (isBass ? 'char' : 'active') : '';
         const ringStyle = isPrimary ? 'box-shadow:0 0 0 2.5px #fff, 0 0 12px #f59e0b; transform:scale(1.12);' : '';
+        const fingerBadge =
+          !isBass && isPrimary && voicedFinger > 0 && f > 0
+            ? `<span class="finger-badge" title="Dedo ${voicedFinger}">${voicedFinger}</span>`
+            : '';
         neckHtml += `
           <div class="fret-cell js-nb-cell" data-sidx="${sIdx}" data-fret="${f}" data-midi="${midi}">
-            <div class="fret-note ${stateClass}" style="${ringStyle}">${isPrimary ? `${noteName}★` : noteName}</div>
+            <div class="fret-note ${stateClass}" style="${ringStyle}">${isPrimary ? `${noteName}★` : noteName}${fingerBadge}</div>
           </div>
         `;
       }
@@ -8374,6 +8450,28 @@ function buildFretboardTriadsVisualizerLab(
     const fretGap = gridH / 4;
     const lines: string[] = [];
 
+    let fingerSummaryText = '';
+    const fingerByStringLowToHigh = new Map<number, number>();
+    if (!isBass) {
+      const chordPos: { sIdx: number; fret: number; midi: number }[] = [];
+      fretsLowToHigh.forEach((fv, lowIdx) => {
+        if (fv !== null) {
+          chordPos.push({
+            sIdx: numStrings - 1 - lowIdx,
+            fret: fv,
+            midi: openLowToHigh[lowIdx] + fv,
+          });
+        }
+      });
+      const assigned = assignGuitarChordFingers(chordPos, true);
+      assigned.positions.forEach((p) => {
+        fingerByStringLowToHigh.set(numStrings - 1 - p.sIdx, p.finger);
+      });
+      fingerSummaryText = fretsLowToHigh
+        .map((fv, lowIdx) => (fv === null ? 'X' : String(fingerByStringLowToHigh.get(lowIdx) ?? 0)))
+        .join('-');
+    }
+
     if (baseFret === 1) {
       lines.push(`<line x1="${padL}" y1="${padT}" x2="${padL + gridW}" y2="${padT}" stroke="${isBass ? '#38bdf8' : '#f8fafc'}" stroke-width="3.2" />`);
     } else {
@@ -8390,6 +8488,7 @@ function buildFretboardTriadsVisualizerLab(
       lines.push(`<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT + gridH}" stroke="${isBass ? '#7dd3fc' : '#94a3b8'}" stroke-width="${sw.toFixed(2)}" />`);
       lines.push(`<text x="${x}" y="${padT + gridH + 12}" text-anchor="middle" fill="${isBass ? '#38bdf8' : '#94a3b8'}" font-size="8.5" font-weight="800">${stringNames[s]}</text>`);
       const fVal = fretsLowToHigh[s];
+      const fingerVal = !isBass ? fingerByStringLowToHigh.get(s) || 0 : 0;
       if (fVal === null) {
         lines.push(`<text x="${x}" y="${padT - 6}" text-anchor="middle" fill="#fb7185" font-size="9.5" font-weight="800">×</text>`);
       } else if (fVal === 0) {
@@ -8404,6 +8503,12 @@ function buildFretboardTriadsVisualizerLab(
         const noteName = NOTE_NAMES[pc];
         lines.push(`<circle cx="${x}" cy="${cy}" r="${isBass ? '7.0' : '6.4'}" fill="${isR ? '#f59e0b' : isBass ? '#059669' : '#0284c7'}" stroke="${isR ? '#fef08a' : '#7dd3fc'}" stroke-width="1.5" />`);
         lines.push(`<text x="${x}" y="${cy + 2.8}" text-anchor="middle" fill="${isR ? '#0f172a' : '#f8fafc'}" font-size="6.9" font-weight="900">${noteName}</text>`);
+        if (!isBass && fingerVal > 0) {
+          lines.push(
+            `<circle cx="${x + 6.4}" cy="${cy - 5.2}" r="4.3" fill="#fde047" stroke="#090c12" stroke-width="0.9" />` +
+              `<text x="${x + 6.4}" y="${cy - 2.9}" text-anchor="middle" fill="#090c12" font-size="5.8" font-weight="900">${fingerVal}</text>`
+          );
+        }
       }
     }
     return `
@@ -8412,6 +8517,7 @@ function buildFretboardTriadsVisualizerLab(
           ${lines.join('')}
         </svg>
         <div style="font-size:0.68rem; color:#94a3b8; font-family:monospace; margin-top:3px;">${isBass ? 'Bajo (4c)' : 'Guitarra (6c)'}: <strong style="color:${isBass ? '#38bdf8' : '#fde68a'};">${tabText}</strong></div>
+        ${!isBass && fingerSummaryText ? `<div style="font-size:0.64rem; color:#fde047; font-family:monospace;">Dedos: <strong>${fingerSummaryText}</strong></div>` : ''}
       </div>
     `;
   };
@@ -8539,6 +8645,24 @@ function buildFretboardTriadsVisualizerLab(
     const numStrings = stringsConfig.length;
     const activeSetLowToHigh = new Set<number>(sSet.lowToHighStringIndices);
 
+    const focusedFingerMap = new Map<string, number>();
+    if (!isBass && selectedInvIdx !== -1 && invs[selectedInvIdx]) {
+      const selInv = invs[selectedInvIdx];
+      const posList: { sIdx: number; fret: number; midi: number }[] = [];
+      selInv.fretsLowToHigh.forEach((fv, lowIdx) => {
+        if (fv !== null) {
+          posList.push({
+            sIdx: numStrings - 1 - lowIdx,
+            fret: fv,
+            midi: stringsConfig[numStrings - 1 - lowIdx].openMidi + fv,
+          });
+        }
+      });
+      assignGuitarChordFingers(posList, true).positions.forEach((p) => {
+        if (p.finger > 0 && p.fret > 0) focusedFingerMap.set(`${p.sIdx}:${p.fret}`, p.finger);
+      });
+    }
+
     neckTitleEl.textContent =
       selectedInvIdx === -1
         ? `🎸 Las 3 Inversiones de ${chordTitle} (${q.formula}) a lo largo del Mástil — ${sSet.label}`
@@ -8576,10 +8700,13 @@ function buildFretboardTriadsVisualizerLab(
         const ringStyle = isVoicedHere
           ? 'box-shadow:0 0 0 2px #ffffff, 0 0 12px #f59e0b; font-weight:900;'
           : '';
+        const fingerNum = isVoicedHere ? focusedFingerMap.get(`${sIdx}:${f}`) || 0 : 0;
+        const fingerBadge =
+          fingerNum > 0 ? `<span class="finger-badge" title="Dedo ${fingerNum}">${fingerNum}</span>` : '';
 
         neckHtml += `
           <div class="fret-cell js-ft-cell" data-sidx="${sIdx}" data-fret="${f}" data-midi="${midi}">
-            <div class="fret-note ${stateClass}" style="${ringStyle}">${noteName}</div>
+            <div class="fret-note ${stateClass}" style="${ringStyle}">${noteName}${fingerBadge}</div>
           </div>
         `;
       }
