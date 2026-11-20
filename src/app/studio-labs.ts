@@ -5,9 +5,12 @@ import {
   evaluateGapClickTiming,
   harmonizeMelodyVoices,
   midiToNoteName,
+  reduceLatchGlowState,
   resolvePlayableChordVoicing,
+  type LatchedGlowState,
   type NashvilleChordInput,
 } from './music-games-logic';
+import type { DiagramModalManager } from './diagram-modal';
 
 export interface NoteGlowHint {
   isChord?: boolean;
@@ -1955,78 +1958,86 @@ let unsubscribeGlobalHighlighter: (() => void) | null = null;
 
 export function attachStudioEnhancements(
   root: HTMLElement,
-  audio: StudioAudioPort
+  audio: StudioAudioPort,
+  modalManager?: DiagramModalManager
 ): void {
-  // 1. Subscribe live note illumination (exact-note for maps/scales; multi-note only for simultaneous chords)
+  // 1. Subscribe live note illumination (latched until next note/chord/stop, distinct classes for note vs chord)
   if (unsubscribeGlobalHighlighter) {
     unsubscribeGlobalHighlighter();
     unsubscribeGlobalHighlighter = null;
   }
 
-  interface ActiveGlowEntry {
-    id: number;
-    ev: NotePlayEvent;
-  }
+  let latchState: LatchedGlowState<NotePlayEvent> = { kind: 'idle', entries: [] };
 
-  let nextGlowId = 1;
-  let activeEntries: ActiveGlowEntry[] = [];
+  const stripGlowClasses = () => {
+    document
+      .querySelectorAll('.playing-glow, .playing-pc-glow, .glow-mode-note, .glow-mode-chord')
+      .forEach((el) => {
+        if (el.closest('[data-angular-fretboard="true"]')) return;
+        el.classList.remove('playing-glow', 'playing-pc-glow', 'glow-mode-note', 'glow-mode-chord');
+      });
+  };
 
   const clearAllGlow = () => {
-    activeEntries = [];
-    document.querySelectorAll('.playing-glow, .playing-pc-glow').forEach((el) => {
-      el.classList.remove('playing-glow', 'playing-pc-glow');
-    });
-    window.dispatchEvent(new CustomEvent('enciclopedia:live-notes', { detail: { notes: [] } }));
+    latchState = { kind: 'idle', entries: [] };
+    stripGlowClasses();
+    window.dispatchEvent(
+      new CustomEvent('enciclopedia:live-notes', { detail: { notes: [], midis: [], kind: 'idle' } })
+    );
   };
 
   const syncDomGlow = () => {
-    document.querySelectorAll('.playing-glow, .playing-pc-glow').forEach((el) => {
-      el.classList.remove('playing-glow', 'playing-pc-glow');
-    });
+    stripGlowClasses();
 
-    if (activeEntries.length === 0) {
-      window.dispatchEvent(new CustomEvent('enciclopedia:live-notes', { detail: { notes: [] } }));
+    if (latchState.entries.length === 0 || latchState.kind === 'idle') {
+      window.dispatchEvent(
+        new CustomEvent('enciclopedia:live-notes', { detail: { notes: [], midis: [], kind: 'idle' } })
+      );
       return;
     }
 
-    const activeMidis = [...new Set(activeEntries.map((a) => Math.round(a.ev.midi)))];
+    const modeClass = latchState.kind === 'chord' ? 'glow-mode-chord' : 'glow-mode-note';
+    const activeMidis = [...new Set(latchState.entries.map((ev) => Math.round(ev.midi)))];
     const activeMidiSet = new Set(activeMidis);
-    const hasChordPlay = activeEntries.some((a) => a.ev.isChord);
+    const hasChordPlay = latchState.kind === 'chord';
 
-    // Illuminate Fretboards without dimming pre-painted notes:
+    // Illuminate Fretboards without erasing pre-painted scale guide markers:
     // 1) Explicit (sIdx, fret) scope when provided
-    // 2) Single compact idiomatic playable voicing when strumming/playing a chord
+    // 2) Single compact idiomatic playable voicing when playing a chord
     // 3) Single best fret position per MIDI on monotonic necks (no duplicate octave/unison clutter)
     document.querySelectorAll<HTMLElement>('.fretboard-wrapper').forEach((wrapper) => {
-      const scopedForWrapper = activeEntries.filter(
-        (a) =>
-          a.ev.scopeEl &&
-          a.ev.sIdx !== undefined &&
-          a.ev.fret !== undefined &&
-          (a.ev.scopeEl === wrapper ||
-            a.ev.scopeEl.contains(wrapper) ||
-            wrapper.contains(a.ev.scopeEl))
+      if (wrapper.getAttribute('data-angular-fretboard') === 'true') return;
+
+      const scopedForWrapper = latchState.entries.filter(
+        (ev) =>
+          ev.scopeEl &&
+          ev.sIdx !== undefined &&
+          ev.fret !== undefined &&
+          (ev.scopeEl === wrapper ||
+            ev.scopeEl.contains(wrapper) ||
+            wrapper.contains(ev.scopeEl))
       );
 
       if (scopedForWrapper.length > 0) {
-        scopedForWrapper.forEach(({ ev }) => {
+        scopedForWrapper.forEach((ev) => {
           const cells = wrapper.querySelectorAll<HTMLElement>(
             `.fret-cell[data-sidx="${ev.sIdx}"][data-fret="${ev.fret}"], .fret-cell[data-s="${ev.sIdx}"][data-f="${ev.fret}"]`
           );
           if (cells.length > 0) {
             cells.forEach((cell) => {
               const targetEl = cell.querySelector<HTMLElement>('.fret-note') || cell;
-              targetEl.classList.add('playing-glow');
+              targetEl.classList.add('playing-glow', modeClass);
             });
           } else {
-            const stringRows = Array.from(wrapper.querySelectorAll<HTMLElement>('.fretboard-row')).filter(
-              (r) => r.querySelector('.fret-cell[data-midi]') !== null
-            );
-            const rowCells = stringRows[ev.sIdx!]?.querySelectorAll<HTMLElement>('.fret-cell[data-midi]');
+            const stringRows = Array.from(
+              wrapper.querySelectorAll<HTMLElement>('.fretboard-row')
+            ).filter((r) => r.querySelector('.fret-cell[data-midi]') !== null);
+            const rowCells =
+              stringRows[ev.sIdx!]?.querySelectorAll<HTMLElement>('.fret-cell[data-midi]');
             const cell = rowCells?.[ev.fret!];
             if (cell) {
               const targetEl = cell.querySelector<HTMLElement>('.fret-note') || cell;
-              targetEl.classList.add('playing-glow');
+              targetEl.classList.add('playing-glow', modeClass);
             }
           }
         });
@@ -2054,11 +2065,12 @@ export function attachStudioEnhancements(
           const voicing = resolvePlayableChordVoicing(activeMidis, openMidis, maxFret);
           if (voicing.length > 0) {
             voicing.forEach((pos) => {
-              const rowCells = stringRows[pos.sIdx]?.querySelectorAll<HTMLElement>('.fret-cell[data-midi]');
+              const rowCells =
+                stringRows[pos.sIdx]?.querySelectorAll<HTMLElement>('.fret-cell[data-midi]');
               const cell = rowCells?.[pos.fret];
               if (cell) {
                 const targetEl = cell.querySelector<HTMLElement>('.fret-note') || cell;
-                targetEl.classList.add('playing-glow');
+                targetEl.classList.add('playing-glow', modeClass);
               }
             });
             return;
@@ -2083,8 +2095,9 @@ export function attachStudioEnhancements(
             });
           });
           if (bestCell) {
-            const targetEl = (bestCell as HTMLElement).querySelector<HTMLElement>('.fret-note') || bestCell;
-            targetEl.classList.add('playing-glow');
+            const targetEl =
+              (bestCell as HTMLElement).querySelector<HTMLElement>('.fret-note') || bestCell;
+            targetEl.classList.add('playing-glow', modeClass);
           }
         });
         return;
@@ -2095,23 +2108,27 @@ export function attachStudioEnhancements(
         const m = parseInt(cell.getAttribute('data-midi') || '-1', 10);
         if (m >= 0 && activeMidiSet.has(m)) {
           const targetEl = cell.querySelector<HTMLElement>('.fret-note') || cell;
-          targetEl.classList.add('playing-glow');
+          targetEl.classList.add('playing-glow', modeClass);
         }
       });
     });
 
-    // Illuminate Piano Keys: exact MIDI match without dimming unplayed scale keys
+    // Illuminate Piano Keys with exact MIDI match and distinct note vs chord mode class
     document.querySelectorAll<HTMLElement>('.piano-keys').forEach((piano) => {
       piano.querySelectorAll<HTMLElement>('.key-white[data-midi], .key-black[data-midi]').forEach((keyEl) => {
         const m = parseInt(keyEl.getAttribute('data-midi') || '-1', 10);
         if (m >= 0 && activeMidiSet.has(m)) {
-          keyEl.classList.add('playing-glow');
+          keyEl.classList.add('playing-glow', modeClass);
         }
       });
     });
 
     const uniqueNames = [...new Set(activeMidis.map((m) => midiToNoteName(m)))];
-    window.dispatchEvent(new CustomEvent('enciclopedia:live-notes', { detail: { notes: uniqueNames, midis: activeMidis } }));
+    window.dispatchEvent(
+      new CustomEvent('enciclopedia:live-notes', {
+        detail: { notes: uniqueNames, midis: activeMidis, kind: latchState.kind },
+      })
+    );
   };
 
   unsubscribeGlobalHighlighter = audio.onNoteEvent((ev) => {
@@ -2119,152 +2136,12 @@ export function attachStudioEnhancements(
       clearAllGlow();
       return;
     }
-    const normalizedMidi = Math.round(ev.midi);
-    if (!ev.isChord) {
-      // Single-note scale/map playback replaces prior note immediately for crisp tracking
-      activeEntries = activeEntries.filter((a) => a.ev.isChord);
-    } else if (ev.chordGroup !== undefined) {
-      // Consecutive chord strums cleanly replace older chord groups while keeping notes of the same chord together
-      activeEntries = activeEntries.filter(
-        (a) => a.ev.isChord && a.ev.chordGroup === ev.chordGroup
-      );
-    }
-
-    const id = nextGlowId++;
-    activeEntries.push({ id, ev: { ...ev, midi: normalizedMidi } });
+    latchState = reduceLatchGlowState(latchState, ev);
     syncDomGlow();
-
-    const holdMs = ev.isChord
-      ? Math.max(520, Math.min(1250, Math.round(ev.durationSec * 720)))
-      : Math.max(185, Math.min(620, Math.round(ev.durationSec * 580)));
-
-    setTimeout(() => {
-      const prevLen = activeEntries.length;
-      activeEntries = activeEntries.filter((entry) => entry.id !== id);
-      if (activeEntries.length !== prevLen) {
-        syncDomGlow();
-      }
-    }, holdMs);
   });
 
-  // 2. Attach "🔍 Agrandar Diagrama" modal trigger + context framing to all node/graph diagrams
-  const DIAGRAM_FRAME: Record<string, { what: string; how: string; why: string }> = {
-    'interval-9th-visualizer': {
-      what: 'Mapa radial que conecta cada nota del acorde para mostrar todos los intervalos que se forman entre ellas.',
-      how: 'Apilando terceras o subiendo una nota una octava (+12 semitonos): la 2ª se vuelve 9ª, la 4ª se vuelve 11ª y la 6ª se vuelve 13ª.',
-      why: 'Para detectar tensiones ricas o choques antes de tocar el acorde en guitarra, bajo o piano.',
-    },
-    'neo-riemann': {
-      what: 'Árbol genealógico y red fractal que enlaza tríadas moviendo solo UNA nota (Glue 2/3) mediante P, L, R y Slide.',
-      how: 'Partiendo de una tríada raíz (C), aplicas transformaciones de 1 o 2 semitonos para ramificar 3 generaciones sin usar cadencias tradicionales.',
-      why: 'Para componer progresiones cinematográficas y épicas enlazando acordes lejanos con total suavidad.',
-    },
-    'modes-network-14': {
-      what: 'Cartografía de los 14 modos ordenados de más luminoso a más oscuro y conectados por líneas continuas.',
-      how: 'Moviendo una sola nota 1 semitono (1 traste) saltas de un modo a su vecino (Lidio → Jónico → Mixolidio → Dórico → Eólico → Frigio).',
-      why: 'Para cambiar de atmósfera emocional al instante o elegir por descarte los 3 acordes clave de cualquier modo.',
-    },
-    'tension-pyramid-visualizer': {
-      what: 'Pirámide jerárquica que muestra todos los acordes compatibles cuando una melodía sostiene una nota específica.',
-      how: 'Siguiendo los hilos de color (Rosa = Tónica, Dorado = 5ª, Cian = 3ª) hacia acordes inferiores con 9, 11 o 13.',
-      why: 'Para rearmonizar melodías conocidas o modular de forma orgánica manteniendo una nota común en el agudo.',
-    },
-    'cof-legacy': {
-      what: 'Reloj de 12 horas ordenado por quintas justas (+7 semitonos) que muestra parentescos armónicos y simetrías.',
-      how: 'Sumando 1 sostenido por paso hacia la derecha y 1 bemol hacia la izquierda, con el tritono diametralmente opuesto a 180°.',
-      why: 'Para deducir armaduras al instante, encontrar relativos menores, cadenas 6–2–5–1 y sustitutos tritonales.',
-    },
-  };
-
-  root.querySelectorAll<HTMLElement>('.interactive-widget').forEach((widget) => {
-    const key = widget.getAttribute('data-lab') || widget.getAttribute('data-usar') || '';
-    const info = DIAGRAM_FRAME[key];
-    if (!info) return;
-
-    // Inject crisp What/How/Why framing banner once if not present
-    if (!widget.querySelector('.js-diagram-framing')) {
-      const framing = document.createElement('div');
-      framing.className = 'js-diagram-framing diagram-framing-grid';
-      framing.innerHTML = `
-        <div class="diagram-framing-item"><strong class="df-what">❓ ¿Qué es?</strong><span>${info.what}</span></div>
-        <div class="diagram-framing-item"><strong class="df-how">🧭 ¿Cómo llegamos ahí?</strong><span>${info.how}</span></div>
-        <div class="diagram-framing-item"><strong class="df-why">🎯 ¿Para qué se usa?</strong><span>${info.why}</span></div>
-      `;
-      const header = widget.querySelector('.widget-header');
-      if (header && header.nextSibling) {
-        widget.insertBefore(framing, header.nextSibling);
-      } else {
-        widget.prepend(framing);
-      }
-    }
-
-    // Add "🔍 Agrandar Diagrama" button
-    if (!widget.querySelector('.js-expand-diagram')) {
-      const controls = widget.querySelector('.widget-controls') || widget.querySelector('.widget-header');
-      if (controls) {
-        const expBtn = document.createElement('button');
-        expBtn.type = 'button';
-        expBtn.className = 'btn js-expand-diagram';
-        expBtn.style.cssText =
-          'background:rgba(56,189,248,0.18); color:#7dd3fc; border:1px solid rgba(56,189,248,0.45); font-size:0.78rem;';
-        expBtn.textContent = '🔍 Agrandar Diagrama';
-        controls.appendChild(expBtn);
-
-        expBtn.addEventListener('click', () => openDiagramFullscreenModal(widget));
-      }
-    }
-  });
-}
-
-function openDiagramFullscreenModal(widget: HTMLElement): void {
-  if (
-    widget.classList.contains('diagram-expanded-active') ||
-    document.querySelector('.diagram-fullscreen-backdrop')
-  ) {
-    return;
+  // 2. Attach framing banners & expand modal buttons to ALL .interactive-widget elements via DiagramModalManager
+  if (modalManager) {
+    modalManager.attachExpandButtons(root);
   }
-
-  const placeholder = document.createElement('div');
-  placeholder.style.cssText = 'padding:24px; text-align:center; color:#94a3b8; border:1px dashed #334155; border-radius:12px;';
-  placeholder.textContent = 'Diagrama abierto en vista ampliada...';
-
-  const parent = widget.parentElement;
-  if (!parent) return;
-  parent.replaceChild(placeholder, widget);
-
-  const backdrop = document.createElement('div');
-  backdrop.className = 'diagram-fullscreen-backdrop';
-  backdrop.innerHTML = `
-    <div class="diagram-fullscreen-shell" role="dialog" aria-modal="true" aria-label="Vista Ampliada del Diagrama Interactivo">
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #334155; background:#0f172a;">
-        <strong style="color:#fbbf24; font-size:0.95rem;">🔍 Vista Ampliada Interactiva (Haz clic en cualquier nodo para escuchar)</strong>
-        <button type="button" class="btn js-close-expanded-modal" style="background:rgba(244,63,94,0.2); color:#fda4af; border:1px solid rgba(244,63,94,0.45);">✕ Cerrar Vista Ampliada</button>
-      </div>
-      <div class="diagram-fullscreen-body" style="padding:16px; overflow:auto; flex:1;"></div>
-    </div>
-  `;
-
-  const body = backdrop.querySelector<HTMLElement>('.diagram-fullscreen-body')!;
-  widget.classList.add('diagram-expanded-active');
-  body.appendChild(widget);
-  document.body.appendChild(backdrop);
-
-  const restore = () => {
-    document.removeEventListener('keydown', onEsc);
-    widget.classList.remove('diagram-expanded-active');
-    if (placeholder.parentElement) {
-      placeholder.parentElement.replaceChild(widget, placeholder);
-    }
-    backdrop.remove();
-  };
-
-  const onEsc = (ev: KeyboardEvent) => {
-    if (ev.key === 'Escape') restore();
-  };
-  document.addEventListener('keydown', onEsc);
-
-  backdrop.querySelector('.js-close-expanded-modal')?.addEventListener('click', restore);
-  backdrop.addEventListener('click', (ev) => {
-    if (ev.target === backdrop) restore();
-  });
 }

@@ -1031,5 +1031,299 @@ export function resolvePlayableChordVoicing(
   return bestResult;
 }
 
+export type GlowModeKind = 'idle' | 'note' | 'chord';
+
+export interface LatchedGlowEntry {
+  midi: number;
+  isChord?: boolean;
+  chordGroup?: number;
+  sIdx?: number;
+  fret?: number;
+  scopeId?: string;
+}
+
+export interface LatchedGlowState<T extends LatchedGlowEntry = LatchedGlowEntry> {
+  kind: GlowModeKind;
+  entries: T[];
+}
+
+/**
+ * Pure latched highlight reducer:
+ * - Single notes replace any prior highlight and stay latched until another event or Stop (null).
+ * - Chords group notes matching `chordGroup`, replace prior notes or older chords, and stay latched until next event or Stop (null).
+ */
+export function reduceLatchGlowState<T extends LatchedGlowEntry>(
+  state: LatchedGlowState<T>,
+  ev: T | null
+): LatchedGlowState<T> {
+  if (!ev) {
+    return { kind: 'idle', entries: [] };
+  }
+
+  const normalized = { ...ev, midi: Math.round(ev.midi) };
+
+  if (!normalized.isChord) {
+    return {
+      kind: 'note',
+      entries: [normalized],
+    };
+  }
+
+  const sameGroup =
+    normalized.chordGroup !== undefined
+      ? state.entries.filter(
+          (entry) => entry.isChord && entry.chordGroup === normalized.chordGroup
+        )
+      : state.kind === 'chord'
+        ? state.entries
+        : [];
+
+  return {
+    kind: 'chord',
+    entries: [...sameGroup, normalized],
+  };
+}
+
+export interface ChordDiagramDef {
+  id: string;
+  name: string;
+  symbol: string;
+  intervals: number[];
+  formula: string;
+  character: string;
+}
+
+export const CHORD_DIAGRAM_CATALOG: ChordDiagramDef[] = [
+  {
+    id: 'maj',
+    name: 'Mayor',
+    symbol: '',
+    intervals: [0, 4, 7],
+    formula: '1 - 3 - 5',
+    character: 'Estable, luminoso y afirmativo.',
+  },
+  {
+    id: 'min',
+    name: 'Menor',
+    symbol: 'm',
+    intervals: [0, 3, 7],
+    formula: '1 - b3 - 5',
+    character: 'Melancólico, serio e íntimo.',
+  },
+  {
+    id: 'maj7',
+    name: 'Maj7 (Séptima Mayor)',
+    symbol: 'Maj7',
+    intervals: [0, 4, 7, 11],
+    formula: '1 - 3 - 5 - 7',
+    character: 'Sofisticado, cálido y cinematográfico.',
+  },
+  {
+    id: '7',
+    name: 'Dominante 7',
+    symbol: '7',
+    intervals: [0, 4, 7, 10],
+    formula: '1 - 3 - 5 - b7',
+    character: 'Contiene el tritono (3 y b7); pide resolver a la tónica.',
+  },
+  {
+    id: 'm7',
+    name: 'Menor 7 (m7)',
+    symbol: 'm7',
+    intervals: [0, 3, 7, 10],
+    formula: '1 - b3 - 5 - b7',
+    character: 'Fluido y urbano; pilar del soul, funk y ii–V–I.',
+  },
+  {
+    id: 'm7b5',
+    name: 'Semidisminuido (m7b5)',
+    symbol: 'm7b5',
+    intervals: [0, 3, 6, 10],
+    formula: '1 - b3 - b5 - b7',
+    character: 'Tensión poética; grado ii del modo menor.',
+  },
+  {
+    id: 'dim7',
+    name: 'Disminuido 7 (dim7)',
+    symbol: 'dim7',
+    intervals: [0, 3, 6, 9],
+    formula: '1 - b3 - b5 - bb7',
+    character: 'Simétrico por terceras menores; puente modulante.',
+  },
+  {
+    id: 'mMaj7',
+    name: 'Menor (Maj7)',
+    symbol: 'm(Maj7)',
+    intervals: [0, 3, 7, 11],
+    formula: '1 - b3 - 5 - 7',
+    character: 'Misterioso, cine noir y color menor melódico.',
+  },
+  {
+    id: 'add9',
+    name: 'Mayor add9',
+    symbol: 'add9',
+    intervals: [0, 4, 7, 14],
+    formula: '1 - 3 - 5 - 9',
+    character: 'Abierto y acústico sin densidad de séptima.',
+  },
+  {
+    id: '9',
+    name: 'Dominante 9',
+    symbol: '9',
+    intervals: [0, 4, 7, 10, 14],
+    formula: '1 - 3 - 5 - b7 - 9',
+    character: 'Funk, blues y soul con novena mayor brillante.',
+  },
+  {
+    id: '7b9',
+    name: 'Dominante 7b9',
+    symbol: '7b9',
+    intervals: [0, 4, 7, 10, 13],
+    formula: '1 - 3 - 5 - b7 - b9',
+    character: 'Alta tensión hacia acordes menores (bolero, flamenco, jazz).',
+  },
+  {
+    id: 'sus4',
+    name: 'Suspendido 4 (sus4)',
+    symbol: 'sus4',
+    intervals: [0, 5, 7],
+    formula: '1 - 4 - 5',
+    character: 'Expectante; la 4ª pide resolver hacia la 3ª.',
+  },
+  {
+    id: 'sus2',
+    name: 'Suspendido 2 (sus2)',
+    symbol: 'sus2',
+    intervals: [0, 2, 7],
+    formula: '1 - 2 - 5',
+    character: 'Moderno, cristalino y sin género mayor/menor.',
+  },
+];
+
+export interface ScaleGuideDef {
+  id: string;
+  name: string;
+  intervals: number[];
+  charOffsets: number[];
+  formula: string;
+}
+
+export const SCALE_GUIDE_CATALOG: ScaleGuideDef[] = [
+  {
+    id: 'major',
+    name: 'Escala Mayor (Jónica)',
+    intervals: [0, 2, 4, 5, 7, 9, 11],
+    charOffsets: [11],
+    formula: '1 - 2 - 3 - 4 - 5 - 6 - 7',
+  },
+  {
+    id: 'minor',
+    name: 'Menor Natural (Eólica)',
+    intervals: [0, 2, 3, 5, 7, 8, 10],
+    charOffsets: [8],
+    formula: '1 - 2 - b3 - 4 - 5 - b6 - b7',
+  },
+  {
+    id: 'pent_minor',
+    name: 'Pentatónica Menor',
+    intervals: [0, 3, 5, 7, 10],
+    charOffsets: [],
+    formula: '1 - b3 - 4 - 5 - b7',
+  },
+  {
+    id: 'dorian',
+    name: 'Modo Dórico',
+    intervals: [0, 2, 3, 5, 7, 9, 10],
+    charOffsets: [9],
+    formula: '1 - 2 - b3 - 4 - 5 - 6 - b7',
+  },
+  {
+    id: 'mixolydian',
+    name: 'Modo Mixolidio',
+    intervals: [0, 2, 4, 5, 7, 9, 10],
+    charOffsets: [10],
+    formula: '1 - 2 - 3 - 4 - 5 - 6 - b7',
+  },
+  {
+    id: 'lydian',
+    name: 'Modo Lidio',
+    intervals: [0, 2, 4, 6, 7, 9, 11],
+    charOffsets: [6],
+    formula: '1 - 2 - 3 - #4 - 5 - 6 - 7',
+  },
+  {
+    id: 'none',
+    name: 'Solo Notas del Acorde',
+    intervals: [],
+    charOffsets: [],
+    formula: 'Sin escala superpuesta',
+  },
+];
+
+export interface ChordNeckComputation {
+  rootPc: number;
+  chord: ChordDiagramDef;
+  scaleGuide: ScaleGuideDef;
+  chordTitle: string;
+  chordNoteNames: string[];
+  chordMidis: number[];
+  chordPositions: ChordFretPos[];
+  scalePitchClasses: number[];
+  charPitchClasses: number[];
+  tabSummary: string;
+}
+
+export function computeChordNeckState(params: {
+  rootPc: number;
+  chordId: string;
+  scaleId: string;
+  openMidisHighToLow: number[];
+  maxFret?: number;
+}): ChordNeckComputation {
+  const rootPc = ((params.rootPc % 12) + 12) % 12;
+  const maxFret = params.maxFret ?? 12;
+  const chord =
+    CHORD_DIAGRAM_CATALOG.find((c) => c.id === params.chordId) || CHORD_DIAGRAM_CATALOG[0];
+  const scaleGuide =
+    SCALE_GUIDE_CATALOG.find((s) => s.id === params.scaleId) || SCALE_GUIDE_CATALOG[0];
+
+  const isBass = params.openMidisHighToLow.length <= 4;
+  const baseRootMidi = (isBass ? 36 : 48) + rootPc;
+  const chordMidis = chord.intervals.map((semi) => baseRootMidi + semi);
+  const chordPositions = resolvePlayableChordVoicing(
+    chordMidis,
+    params.openMidisHighToLow,
+    maxFret
+  );
+
+  const chordPcs = chord.intervals.map((i) => (rootPc + i) % 12);
+  const rawScalePcs =
+    scaleGuide.intervals.length > 0
+      ? scaleGuide.intervals.map((i) => (rootPc + i) % 12)
+      : chordPcs;
+  const scalePitchClasses = [...new Set([...rawScalePcs, ...chordPcs])];
+  const charPitchClasses = scaleGuide.charOffsets.map((i) => (rootPc + i) % 12);
+
+  const numStrings = params.openMidisHighToLow.length;
+  const fretsLowToHigh: string[] = [];
+  for (let sIdx = numStrings - 1; sIdx >= 0; sIdx--) {
+    const match = chordPositions.find((p) => p.sIdx === sIdx);
+    fretsLowToHigh.push(match ? String(match.fret) : 'x');
+  }
+
+  return {
+    rootPc,
+    chord,
+    scaleGuide,
+    chordTitle: `${LOGIC_NOTE_NAMES[rootPc]}${chord.symbol}`,
+    chordNoteNames: chord.intervals.map((i) => LOGIC_NOTE_NAMES[(rootPc + i) % 12]),
+    chordMidis,
+    chordPositions,
+    scalePitchClasses,
+    charPitchClasses,
+    tabSummary: fretsLowToHigh.join(' - '),
+  };
+}
+
 
 

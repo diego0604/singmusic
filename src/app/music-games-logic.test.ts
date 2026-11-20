@@ -6,10 +6,12 @@ import {
   applyEnharmonicGoldenRule,
   buildScaleFretboardPath,
   classifyVocalRangeDetailed,
+  computeChordNeckState,
   convertProgressionToNashville,
   createPitchAcuityRound,
   evaluateGapClickTiming,
   harmonizeMelodyVoices,
+  reduceLatchGlowState,
   resolvePlayableChordVoicing,
   verifySimonStep,
 } from './music-games-logic';
@@ -198,6 +200,54 @@ test('resolvePlayableChordVoicing returns idiomatic single-position guitar chord
   assert.equal(uniqueStrings.size, cmMaj7.length);
   const pcs = new Set(cmMaj7.map((v) => v.midi % 12));
   assert.deepEqual([...pcs].sort((a, b) => a - b), [0, 3, 7, 11]);
+});
+
+test('reduceLatchGlowState latches single notes vs chords distinctly until next event or Stop', () => {
+  let state = reduceLatchGlowState({ kind: 'idle', entries: [] }, { midi: 60, isChord: false });
+  assert.equal(state.kind, 'note');
+  assert.equal(state.entries.length, 1);
+  assert.equal(state.entries[0].midi, 60);
+
+  // Subsequent chord group replaces single note and accumulates notes of the same chordGroup
+  state = reduceLatchGlowState(state, { midi: 48, isChord: true, chordGroup: 10 });
+  state = reduceLatchGlowState(state, { midi: 52, isChord: true, chordGroup: 10 });
+  state = reduceLatchGlowState(state, { midi: 55, isChord: true, chordGroup: 10 });
+  assert.equal(state.kind, 'chord');
+  assert.deepEqual(state.entries.map((e) => e.midi), [48, 52, 55]);
+
+  // Touching another chord group replaces the older chord group
+  state = reduceLatchGlowState(state, { midi: 55, isChord: true, chordGroup: 11 });
+  state = reduceLatchGlowState(state, { midi: 59, isChord: true, chordGroup: 11 });
+  assert.equal(state.kind, 'chord');
+  assert.deepEqual(state.entries.map((e) => e.midi), [55, 59]);
+
+  // Touching a single note replaces the chord with a latched note
+  state = reduceLatchGlowState(state, { midi: 64, isChord: false, sIdx: 0, fret: 0 });
+  assert.equal(state.kind, 'note');
+  assert.equal(state.entries.length, 1);
+  assert.equal(state.entries[0].midi, 64);
+
+  // Only null resets to idle
+  state = reduceLatchGlowState(state, null);
+  assert.equal(state.kind, 'idle');
+  assert.equal(state.entries.length, 0);
+});
+
+test('computeChordNeckState preserves all scale guides while pinpointing exclusive playable chord frets', () => {
+  const guitarOpen = [64, 59, 55, 50, 45, 40];
+  const res = computeChordNeckState({
+    rootPc: 0,
+    chordId: 'maj',
+    scaleId: 'major',
+    openMidisHighToLow: guitarOpen,
+    maxFret: 12,
+  });
+
+  assert.equal(res.chordTitle, 'C');
+  assert.deepEqual(res.chordNoteNames, ['C', 'E', 'G']);
+  assert.deepEqual(res.scalePitchClasses.sort((a, b) => a - b), [0, 2, 4, 5, 7, 9, 11]);
+  assert.equal(res.tabSummary, 'x - 3 - 2 - 0 - 1 - 0');
+  assert.equal(res.chordPositions.length, 5);
 });
 
 

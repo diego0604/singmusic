@@ -1072,37 +1072,72 @@ details[open] summary {
   }
 }
 
-/* Live Note & Chord Spotlight Illumination (Refined Golden Glow — Keeps Pre-Painted Notes Visible) */
-.fret-note.playing-glow {
+/* Live Note vs Chord Latched Spotlight Illumination (Keeps Pre-Painted Scale Guides Visible) */
+.fret-note.playing-glow,
+.fret-note.playing-glow.glow-mode-chord {
   background: linear-gradient(135deg, #fde047, #f59e0b) !important;
   color: #090c12 !important;
   border: 2px solid #ffffff !important;
   transform: scale(1.22);
   box-shadow:
     0 0 0 1.5px #090c12,
-    0 0 12px rgba(251, 191, 36, 0.88),
+    0 0 13px rgba(251, 191, 36, 0.92),
     0 0 4px #ffffff;
   z-index: 4;
-  transition: transform 0.04s ease, box-shadow 0.04s ease;
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
 }
 
-.key-white.playing-glow {
+.fret-note.playing-glow.glow-mode-note {
+  background: linear-gradient(135deg, #a5f3fc, #06b6d4) !important;
+  color: #042f2e !important;
+  border: 2px solid #ffffff !important;
+  transform: scale(1.24);
+  box-shadow:
+    0 0 0 1.5px #090c12,
+    0 0 14px rgba(34, 211, 238, 0.95),
+    0 0 5px #ecfeff;
+  z-index: 5;
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+}
+
+.key-white.playing-glow,
+.key-white.playing-glow.glow-mode-chord {
   background: linear-gradient(to bottom, #fef08a 0%, #f59e0b 100%) !important;
   color: #090c12 !important;
   box-shadow:
     inset 0 -4px 0 #b45309,
     0 0 12px rgba(251, 191, 36, 0.72);
   z-index: 1;
-  transition: background 0.04s ease;
+  transition: background 0.05s ease;
 }
 
-.key-black.playing-glow {
+.key-white.playing-glow.glow-mode-note {
+  background: linear-gradient(to bottom, #cffafe 0%, #22d3ee 100%) !important;
+  color: #042f2e !important;
+  box-shadow:
+    inset 0 -4px 0 #0e7490,
+    0 0 14px rgba(34, 211, 238, 0.85);
+  z-index: 2;
+  transition: background 0.05s ease;
+}
+
+.key-black.playing-glow,
+.key-black.playing-glow.glow-mode-chord {
   background: linear-gradient(to bottom, #fde047 0%, #d97706 100%) !important;
   color: #090c12 !important;
   border: 1.5px solid #ffffff !important;
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.82);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.85);
   z-index: 5;
-  transition: background 0.04s ease;
+  transition: background 0.05s ease;
+}
+
+.key-black.playing-glow.glow-mode-note {
+  background: linear-gradient(to bottom, #67e8f9 0%, #0891b2 100%) !important;
+  color: #042f2e !important;
+  border: 1.5px solid #ffffff !important;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.92);
+  z-index: 6;
+  transition: background 0.05s ease;
 }
 
 /* Global Level Filter Locking & Unlock Banner */
@@ -1125,30 +1160,107 @@ details[open] summary {
   font-size: 0.84rem;
 }
 
-/* Enlarged Interactive Diagram Fullscreen Modal */
+/* Expand Icon Trigger & Enlarged Interactive Diagram Fullscreen Modal */
+.js-expand-diagram {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(56, 189, 248, 0.16) !important;
+  color: #7dd3fc !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  font-size: 0.76rem !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+}
+
+.js-expand-diagram:hover {
+  background: rgba(56, 189, 248, 0.28) !important;
+  color: #e0f2fe !important;
+}
+
+.widget-expand-strip {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.65rem;
+}
+
 .diagram-fullscreen-backdrop {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(2, 6, 23, 0.86);
-  backdrop-filter: blur(6px);
+  background: rgba(2, 6, 23, 0.88);
+  backdrop-filter: blur(7px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 0.85rem;
 }
 
 .diagram-fullscreen-shell {
   width: 96vw;
-  max-width: 1320px;
+  max-width: 1360px;
   max-height: 92vh;
   background: #0b111e;
-  border: 1px solid rgba(56, 189, 248, 0.45);
+  border: 1px solid rgba(56, 189, 248, 0.48);
   border-radius: 1rem;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.diagram-fullscreen-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem;
+  border-bottom: 1px solid #334155;
+  background: #0f172a;
+}
+
+.diagram-fullscreen-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.diagram-fullscreen-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.4rem;
+  background: rgba(56, 189, 248, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #7dd3fc;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.diagram-fullscreen-title {
+  color: #fbbf24;
+  font-size: 0.95rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.diagram-fullscreen-close {
+  background: rgba(244, 63, 94, 0.2) !important;
+  color: #fda4af !important;
+  border: 1px solid rgba(244, 63, 94, 0.48) !important;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.diagram-fullscreen-body {
+  padding: 1rem 1.15rem;
+  overflow: auto;
+  flex: 1;
 }
 
 .diagram-expanded-active {
@@ -1175,9 +1287,10 @@ details[open] summary {
 
 .diagram-expanded-active svg {
   min-height: 340px;
-  max-height: 56vh;
+  max-height: 58vh;
   width: 100% !important;
   height: auto !important;
 }
+
 
 

@@ -19,6 +19,8 @@ import {
   hydrateAllLabs,
   replaceLegacyMarkers,
 } from './lab-engine';
+import { ChordDiagram } from './chord-diagram';
+import { DiagramModalManager } from './diagram-modal';
 import {
   SECTION_GAMES_SEARCH_META,
   hydrateInteractiveArcade,
@@ -78,14 +80,15 @@ const COMPLETED_STORAGE_KEY = 'enciclopedia_completed_sections_v1';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-root',
-  imports: [],
+  imports: [ChordDiagram],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
 export class App implements OnInit, OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly audio = new MusicAudioEngine();
+  private readonly modalManager = inject(DiagramModalManager);
+  readonly audio = new MusicAudioEngine();
 
   readonly contentHost = viewChild<ElementRef<HTMLElement>>('contentHost');
 
@@ -141,9 +144,11 @@ export class App implements OnInit, OnDestroy {
 
   // Live Note Monitor (driven by Studio Enhancements custom window event)
   readonly liveNotes = signal<string[]>([]);
+  readonly liveNoteKind = signal<'note' | 'chord' | 'idle'>('idle');
   private liveNotesListener: ((ev: Event) => void) | null = null;
 
-  // Guided Learning Paths & Completion Tracking
+  // Guided Learning Paths & Completion Tracking & Chord Diagram Studio
+  readonly showChordDiagram = signal<boolean>(false);
   readonly showPaths = signal<boolean>(false);
   readonly selectedPathId = signal<string>('cero-a-musico');
   readonly activeSectionId = signal<string>('intro');
@@ -434,8 +439,10 @@ export class App implements OnInit, OnDestroy {
       }
 
       this.liveNotesListener = (ev: Event) => {
-        const custom = ev as CustomEvent<{ notes?: string[] }>;
-        this.liveNotes.set(Array.isArray(custom.detail?.notes) ? custom.detail.notes : []);
+        const custom = ev as CustomEvent<{ notes?: string[]; kind?: 'note' | 'chord' | 'idle' }>;
+        const notes = Array.isArray(custom.detail?.notes) ? custom.detail.notes : [];
+        this.liveNotes.set(notes);
+        this.liveNoteKind.set(notes.length === 0 ? 'idle' : custom.detail?.kind || 'note');
       };
       window.addEventListener('enciclopedia:live-notes', this.liveNotesListener);
     }
@@ -523,6 +530,17 @@ export class App implements OnInit, OnDestroy {
   onGlossaryInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.glossaryFilter.set(input.value);
+  }
+
+  toggleChordDiagram(): void {
+    this.showChordDiagram.update((v) => {
+      const next = !v;
+      if (next) {
+        this.showGlossary.set(false);
+        this.showPaths.set(false);
+      }
+      return next;
+    });
   }
 
   toggleGlossary(): void {
@@ -617,6 +635,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   loadCategory(cat: CategoryPart): void {
+    this.modalManager.close();
     this.audio.stopAll();
     this.activeCat.set(cat);
     this.mobileMenuOpen.set(false);
@@ -642,7 +661,12 @@ export class App implements OnInit, OnDestroy {
       setTimeout(() => {
         const hostEl = this.contentHost()?.nativeElement;
         if (hostEl) {
-          hydrateAllLabs(hostEl, this.audio, (msg) => this.activeNoteLabel.set(msg));
+          hydrateAllLabs(
+            hostEl,
+            this.audio,
+            (msg) => this.activeNoteLabel.set(msg),
+            this.modalManager
+          );
           hydrateInteractiveArcade(hostEl, this.audio, (msg) => this.activeNoteLabel.set(msg));
           this.applyLevelDomFilter();
         }

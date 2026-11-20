@@ -28,6 +28,15 @@
         <div class="flex items-center gap-1 shrink-0 md:hidden">
           <button
             type="button"
+            (click)="toggleChordDiagram()"
+            aria-label="Diagrama de acordes"
+            [class]="showChordDiagram()
+              ? 'min-h-[38px] px-2 py-1.5 text-xs font-bold text-slate-950 bg-sky-400 border border-sky-300 rounded-lg whitespace-nowrap cursor-pointer'
+              : 'min-h-[38px] px-2 py-1.5 text-xs font-semibold text-sky-300 bg-sky-500/15 border border-sky-500/40 rounded-lg hover:bg-sky-500/25 whitespace-nowrap cursor-pointer'">
+            🎹
+          </button>
+          <button
+            type="button"
             (click)="toggleInstrument()"
             [attr.aria-label]="'Cambiar timbre global: ' + currentInstrument()"
             class="min-h-[38px] px-2 py-1.5 text-xs font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-lg hover:bg-amber-500/25 whitespace-nowrap cursor-pointer">
@@ -120,6 +129,15 @@
         </div>
 
         <div class="hidden md:flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            (click)="toggleChordDiagram()"
+            [class]="showChordDiagram()
+              ? 'px-2.5 py-1.5 text-xs font-bold text-slate-950 bg-sky-400 border border-sky-300 rounded-lg transition-colors whitespace-nowrap cursor-pointer'
+              : 'px-2.5 py-1.5 text-xs font-semibold text-sky-300 bg-sky-500/15 border border-sky-500/40 rounded-lg hover:bg-sky-500/25 transition-colors whitespace-nowrap cursor-pointer'">
+            🎹 Acordes
+          </button>
+
           <button
             type="button"
             (click)="togglePaths()"
@@ -391,9 +409,15 @@
 
           <div class="flex items-center gap-2 min-w-0">
             @if (liveNotes().length > 0) {
-              <span class="px-2.5 py-1 rounded-md bg-lime-400/20 border border-lime-400/70 text-lime-200 font-bold truncate">
-                🔊 Sonando: {{ liveNotes().join(' · ') }}
-              </span>
+              @if (liveNoteKind() === 'chord') {
+                <span class="px-2.5 py-1 rounded-md bg-amber-400/20 border border-amber-400/75 text-amber-200 font-bold truncate">
+                  🎸 Acorde activo: {{ liveNotes().join(' · ') }}
+                </span>
+              } @else {
+                <span class="px-2.5 py-1 rounded-md bg-cyan-400/20 border border-cyan-400/75 text-cyan-200 font-bold truncate">
+                  🎵 Nota activa: {{ liveNotes().join(' · ') }}
+                </span>
+              }
             } @else {
               <span class="text-slate-400 truncate max-w-full sm:max-w-md">{{ activeNoteLabel() }}</span>
             }
@@ -439,6 +463,12 @@
           }
         </div>
       </div>
+
+      @if (showChordDiagram()) {
+        <div class="mb-4">
+          <app-chord-diagram [audio]="audio" />
+        </div>
+      }
 
       @if (loading()) {
         <div class="bg-[#111827] border border-slate-800 rounded-xl p-12 text-center text-slate-300">

@@ -1,7 +1,9 @@
 import {
+  SCALE_GUIDE_CATALOG,
   analyzePedalInterval,
   buildScaleFretboardPath,
   classifyVocalRangeDetailed,
+  computeChordNeckState,
   createPitchAcuityRound,
   midiToNoteName,
 } from './music-games-logic';
@@ -11,6 +13,7 @@ import {
   attachStudioEnhancements,
   buildStudioDataLabStage,
 } from './studio-labs';
+import type { DiagramModalManager } from './diagram-modal';
 
 export interface ScaleDefinition {
   id: string;
@@ -356,6 +359,30 @@ export class MusicAudioEngine {
       } catch {
         // ignore listener errors
       }
+    });
+  }
+
+  emitNoteHighlight(midi: number, glowHint?: NoteGlowHint): void {
+    this.emitNoteEvent({
+      midi,
+      durationSec: 1.2,
+      instrument: 'guitar',
+      ...(glowHint || {}),
+    });
+  }
+
+  emitChordHighlight(midiNotes: number[], scopeEl?: HTMLElement | null): void {
+    if (midiNotes.length === 0) return;
+    const chordGroup = this.nextChordGroup++;
+    midiNotes.forEach((m) => {
+      this.emitNoteEvent({
+        midi: m,
+        durationSec: 1.4,
+        instrument: 'guitar',
+        isChord: true,
+        chordGroup,
+        scopeEl: scopeEl ?? null,
+      });
     });
   }
 
@@ -1273,7 +1300,8 @@ export function replaceLegacyMarkers(html: string): string {
 export function hydrateAllLabs(
   root: HTMLElement,
   audio: MusicAudioEngine,
-  onStatus: (msg: string) => void
+  onStatus: (msg: string) => void,
+  modalManager?: DiagramModalManager
 ): void {
   // 1. Transform all <div class="tab-block"> ASCII maps/tablatures into Interactive Visual Fretboards / Grids
   hydrateTabBlocks(root, audio, onStatus);
@@ -1303,7 +1331,7 @@ export function hydrateAllLabs(
   });
 
   // 4. Attach live fretboard note illumination & expandable diagram modal buttons
-  attachStudioEnhancements(root, audio);
+  attachStudioEnhancements(root, audio, modalManager);
 }
 
 /**
@@ -1696,6 +1724,10 @@ function buildMultiInstrumentExplorer(
     (c) => `<option value="${c.id}" ${c.id === currentChordId ? 'selected' : ''}>${c.name} (${c.formula})</option>`
   ).join('');
 
+  const scaleGuideOptionsHtml = SCALE_GUIDE_CATALOG.map(
+    (s) => `<option value="${s.id}" ${s.id === currentScaleId ? 'selected' : ''}>${s.name}</option>`
+  ).join('');
+
   container.innerHTML = `
     <div class="widget-header">
       <div>
@@ -1710,6 +1742,15 @@ function buildMultiInstrumentExplorer(
         <select class="js-mode-select">
           ${isChordMode ? chordOptionsHtml : scaleOptionsHtml}
         </select>
+
+        ${
+          isChordMode
+            ? `
+          <label style="font-size:0.82rem;">Guía de Escala:</label>
+          <select class="js-scale-guide-select">${scaleGuideOptionsHtml}</select>
+        `
+            : ''
+        }
 
         ${
           isBassOnly
@@ -1794,6 +1835,7 @@ function buildMultiInstrumentExplorer(
 
   const rootSelect = container.querySelector<HTMLSelectElement>('.js-root-select')!;
   const modeSelect = container.querySelector<HTMLSelectElement>('.js-mode-select')!;
+  const scaleGuideSelect = container.querySelector<HTMLSelectElement>('.js-scale-guide-select');
   const instSelect = container.querySelector<HTMLSelectElement>('.js-inst-select');
   const bassStyleSelect = container.querySelector<HTMLSelectElement>('.js-bass-style');
   const playMainBtn = container.querySelector<HTMLButtonElement>('.js-play-main')!;
@@ -1826,20 +1868,37 @@ function buildMultiInstrumentExplorer(
     return scale.intervals;
   };
 
-  const renderVisuals = (): void => {
-    const intervals = getActiveIntervals();
-    const activePitchClasses = new Set(intervals.map((i) => (currentRoot + i) % 12));
+  const renderVisuals = (syncChordGlow = false): void => {
+    const useBassNeck = isBassOnly || currentInstrument === 'bass';
+    const stringsToRender = useBassNeck ? BASS_STRINGS : GUITAR_STRINGS;
     const rootName = NOTE_NAMES[currentRoot];
 
+    let activePitchClasses: Set<number>;
+    let charPitchClasses = new Set<number>();
+    let computedChordState: ReturnType<typeof computeChordNeckState> | null = null;
+
     if (isChordMode) {
+      computedChordState = computeChordNeckState({
+        rootPc: currentRoot,
+        chordId: currentChordId,
+        scaleId: currentScaleId,
+        openMidisHighToLow: stringsToRender.map((s) => s.openMidi),
+        maxFret: 12,
+      });
+      activePitchClasses = new Set(computedChordState.scalePitchClasses);
+      charPitchClasses = new Set(computedChordState.charPitchClasses);
+
       const chord = CHORDS_DB.find((c) => c.id === currentChordId) || CHORDS_DB[0];
       const noteNames = chord.intervals.map((i) => NOTE_NAMES[(currentRoot + i) % 12]).join(' – ');
       formulaInfo.innerHTML = `
         <strong>Notas de ${rootName}${chord.symbol} (${chord.name}):</strong>
-        <span style="color:var(--accent-gold); font-weight:700;"> ${noteNames}</span><br>
-        <span style="color:var(--text-muted);">Fórmula interválica: ${chord.formula} — ${chord.character}</span>
+        <span style="color:var(--accent-gold); font-weight:700;"> ${noteNames}</span>
+        <span style="margin-left:8px; font-family:monospace; color:#38bdf8; font-weight:700;">[Posición: ${computedChordState.tabSummary}]</span><br>
+        <span style="color:var(--text-muted);">Fórmula: ${chord.formula} — ${chord.character} · Guía de Escala: <strong>${computedChordState.scaleGuide.name}</strong></span>
       `;
     } else {
+      const intervals = getActiveIntervals();
+      activePitchClasses = new Set(intervals.map((i) => (currentRoot + i) % 12));
       const scale = SCALES_DB.find((s) => s.id === currentScaleId) || SCALES_DB[0];
       const noteNames = scale.intervals.map((i) => NOTE_NAMES[(currentRoot + i) % 12]).join(' – ');
       formulaInfo.innerHTML = `
@@ -1857,20 +1916,23 @@ function buildMultiInstrumentExplorer(
           const midi = 48 + oct * 12 + pc;
           const isBlack = [1, 3, 6, 8, 10].includes(pc);
           const isRoot = pc === currentRoot;
+          const isChar = charPitchClasses.has(pc);
           const inScale = activePitchClasses.has(pc);
           const keyClass = isBlack ? 'key-black' : 'key-white';
-          const stateClass = isRoot ? 'is-root' : inScale ? 'in-scale' : '';
+          const stateClass = isRoot ? 'is-root' : isChar ? 'is-char' : inScale ? 'in-scale' : '';
           pianoHtml += `<div class="${keyClass} ${stateClass}" data-midi="${midi}" title="Reproducir ${NOTE_NAMES[pc]}${3 + oct} (MIDI ${midi})"><span>${NOTE_NAMES[pc]}</span></div>`;
         }
       }
       pianoContainer.innerHTML = pianoHtml;
     }
 
-    const useBassNeck = isBassOnly || currentInstrument === 'bass';
-    const stringsToRender = useBassNeck ? BASS_STRINGS : GUITAR_STRINGS;
     neckTitle.textContent = useBassNeck
       ? 'Mástil Exclusivo de Bajo Eléctrico (4 cuerdas: G–D–A–E · Afinación E1–A1–D2–G2)'
       : 'Mástil de Guitarra (6 cuerdas: e-B-G-D-A-E) y Bajo Eléctrico (4 inferiores: G-D-A-E)';
+
+    const chordPosKeys = new Set(
+      (computedChordState?.chordPositions || []).map((p) => `${p.sIdx}:${p.fret}`)
+    );
 
     let fretHeaderHtml = `<div class="fretboard-row" style="border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:4px;"><div class="string-label" style="color:var(--text-muted); font-size:0.7rem;">Traste</div>`;
     for (let f = 0; f <= 12; f++) {
@@ -1886,24 +1948,31 @@ function buildMultiInstrumentExplorer(
         const midi = str.openMidi + fret;
         const pc = midi % 12;
         const isRoot = pc === currentRoot;
+        const isChar = charPitchClasses.has(pc);
         const inScale = activePitchClasses.has(pc);
-        const noteClass = isRoot ? 'root' : inScale ? 'active' : '';
+        const noteClass = isRoot ? 'root' : isChar ? 'char' : inScale ? 'active' : '';
+        const isChordFret = isChordMode && chordPosKeys.has(`${sIdx}:${fret}`);
+        const glowClasses = isChordFret ? 'playing-glow glow-mode-chord' : '';
         fretRowsHtml += `
           <div class="fret-cell" data-sidx="${sIdx}" data-fret="${fret}" data-midi="${midi}" title="Cuerda ${str.label}, Traste ${fret}: ${NOTE_NAMES[pc]} (${audio.midiToFreq(midi).toFixed(1)} Hz)">
-            <div class="fret-note ${noteClass}">${NOTE_NAMES[pc]}</div>
+            <div class="fret-note ${noteClass} ${glowClasses}">${NOTE_NAMES[pc]}</div>
           </div>
         `;
       }
       fretRowsHtml += `</div>`;
     });
     fretboardContainer.innerHTML = fretRowsHtml;
+
+    if (syncChordGlow && computedChordState) {
+      audio.emitChordHighlight(computedChordState.chordMidis, fretboardContainer);
+    }
   };
 
-  renderVisuals();
+  renderVisuals(false);
 
   rootSelect.addEventListener('change', () => {
     currentRoot = parseInt(rootSelect.value, 10);
-    renderVisuals();
+    renderVisuals(isChordMode);
   });
 
   modeSelect.addEventListener('change', () => {
@@ -1912,12 +1981,17 @@ function buildMultiInstrumentExplorer(
     } else {
       currentScaleId = modeSelect.value;
     }
-    renderVisuals();
+    renderVisuals(isChordMode);
+  });
+
+  scaleGuideSelect?.addEventListener('change', () => {
+    currentScaleId = scaleGuideSelect.value;
+    renderVisuals(isChordMode);
   });
 
   instSelect?.addEventListener('change', () => {
     currentInstrument = instSelect.value as 'guitar' | 'piano' | 'bass';
-    renderVisuals();
+    renderVisuals(isChordMode);
   });
 
   bassStyleSelect?.addEventListener('change', () => {
@@ -7967,7 +8041,7 @@ function buildPolychordVisualizerLab(
     const { pr, baseName, upperName, baseMidis, upperMidis, baseRootMidi } = computeStructures();
     if (target.closest('.js-poly-play-base')) {
       audio.stopAll();
-      audio.playElectricBass(baseRootMidi - 12, 1.3, 0, 0.38, 'finger', false);
+      audio.playElectricBass(baseRootMidi - 12, 1.3, 0, 0.38, 'finger', false, { isChord: true, chordGroup: 901 });
       audio.strumChord(baseMidis, neckMode === 'bass' ? 'guitar' : 'piano', 0, false);
       onStatus(`Estructura Base Inferior: ${baseName}`);
     } else if (target.closest('.js-poly-play-upper')) {
@@ -7976,12 +8050,7 @@ function buildPolychordVisualizerLab(
       onStatus(`Tríada Superior (Upper Structure): ${upperName} (${pr.tensions})`);
     } else if (target.closest('.js-poly-play-both')) {
       audio.stopAll();
-      audio.playElectricBass(baseRootMidi - 12, 1.6, 0, 0.38, 'finger', false);
-      baseMidis.forEach((m, i) => audio.playAcousticPiano(m, 1.5, i * 0.03, 0.2, false));
-      upperMidis.forEach((m, i) => {
-        audio.playAcousticPiano(m, 1.5, 0.16 + i * 0.04, 0.24, false);
-        audio.playPluckedGuitar(m, 1.4, 0.16 + i * 0.04, 0.22, false);
-      });
+      audio.strumChord([...baseMidis, ...upperMidis], neckMode === 'bass' ? 'guitar' : 'piano', 0, false);
       onStatus(`Poliacorde Completo: ${upperName} | ${baseName} = ${NOTE_NAMES[rootPc]}${pr.resultingSymbol}`);
     }
   });
@@ -8190,7 +8259,7 @@ function buildNeighborChordsVisualizerLab(
         const stateClass = isRoot ? 'root' : isTone ? (isBass ? 'char' : 'active') : '';
         const ringStyle = isPrimary ? 'box-shadow:0 0 0 2.5px #fff, 0 0 12px #f59e0b; transform:scale(1.12);' : '';
         neckHtml += `
-          <div class="fret-cell js-nb-cell" data-midi="${midi}">
+          <div class="fret-cell js-nb-cell" data-sidx="${sIdx}" data-fret="${f}" data-midi="${midi}">
             <div class="fret-note ${stateClass}" style="${ringStyle}">${isPrimary ? `${noteName}★` : noteName}</div>
           </div>
         `;
@@ -8206,8 +8275,7 @@ function buildNeighborChordsVisualizerLab(
     const st = steps[idx];
     activeStep = idx;
     render();
-    audio.playElectricBass(st.bassMidi, 1.2, 0, 0.36, 'finger', false);
-    audio.strumChord(st.midis, neckMode === 'bass' ? 'guitar' : 'guitar', 0, false);
+    audio.strumChord(st.midis, 'guitar', 0, false);
     onStatus(`${st.title} — ${st.fretDelta}`);
   };
 
@@ -8243,8 +8311,11 @@ function buildNeighborChordsVisualizerLab(
     const cell = target.closest<HTMLElement>('.js-nb-cell');
     if (cell) {
       const midi = parseInt(cell.getAttribute('data-midi')!, 10);
-      if (neckMode === 'bass') audio.playElectricBass(midi, 1.1, 0, 0.38, 'finger', true);
-      else audio.playPluckedGuitar(midi, 1.1, 0, 0.3, true);
+      const sIdx = parseInt(cell.getAttribute('data-sidx') || '-1', 10);
+      const fret = parseInt(cell.getAttribute('data-fret') || '-1', 10);
+      const hint: NoteGlowHint = sIdx >= 0 && fret >= 0 ? { sIdx, fret, scopeEl: neckHostEl } : {};
+      if (neckMode === 'bass') audio.playElectricBass(midi, 1.1, 0, 0.38, 'finger', true, hint);
+      else audio.playPluckedGuitar(midi, 1.1, 0, 0.3, true, hint);
       return;
     }
     if (target.closest('.js-nb-play')) {
