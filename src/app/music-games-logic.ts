@@ -905,6 +905,7 @@ export function resolvePlayableChordVoicing(
 
   const sortedMidis = [...midiNotes].map((m) => Math.round(m)).sort((a, b) => a - b);
   const bassPc = ((sortedMidis[0] % 12) + 12) % 12;
+  const fifthPc = (bassPc + 7) % 12;
   const chordPcs = [...new Set(sortedMidis.map((m) => ((m % 12) + 12) % 12))];
   const chordPcSet = new Set(chordPcs);
   const isBassNeck = numStrings <= 4;
@@ -952,19 +953,17 @@ export function resolvePlayableChordVoicing(
           const valid = getValidFrets(s);
           if (valid.length === 0) {
             perStringOptions.push([null]);
-          } else if (isBassNeck || s === 0) {
-            perStringOptions.push([...valid, null]);
           } else {
-            perStringOptions.push(valid);
+            // Allow muting strings (e.g. A-string skip in 6th-string jazz grips like 3-x-3-4-5-x, or high strings)
+            perStringOptions.push([...valid, null]);
           }
         }
 
-        // Enumerate combinations (<= ~32 per bass string)
-        const combos: { sIdx: number; fret: number; midi: number }[][] = [[]];
+        const combos: ChordFretPos[][] = [[]];
         for (let idx = 0; idx < perStringOptions.length; idx++) {
           const sIdx = bassSIdx - 1 - idx;
           const opts = perStringOptions[idx];
-          const nextCombos: { sIdx: number; fret: number; midi: number }[][] = [];
+          const nextCombos: ChordFretPos[][] = [];
           for (const prev of combos) {
             for (const f of opts) {
               if (f === null) {
@@ -977,7 +976,7 @@ export function resolvePlayableChordVoicing(
               }
             }
           }
-          combos.splice(0, combos.length, ...nextCombos.slice(0, 96));
+          combos.splice(0, combos.length, ...nextCombos.slice(0, 2000));
         }
 
         for (const upper of combos) {
@@ -986,6 +985,7 @@ export function resolvePlayableChordVoicing(
             ...upper,
           ];
           if (isBassNeck && voicing.length > 3) continue;
+          if (!isBassNeck && chordPcs.length >= 3 && voicing.length < 3) continue;
 
           const coveredPcs = new Set(voicing.map((v) => v.midi % 12));
           const nonZeroFrets = voicing.filter((v) => v.fret > 0).map((v) => v.fret);
@@ -995,19 +995,54 @@ export function resolvePlayableChordVoicing(
               : 0;
           if (span > 4) continue;
 
+          // Evaluate interior muted-string gaps between lowest sounded string (bassSIdx) and highest sounded string
+          const highestSoundedSIdx = Math.min(...voicing.map((v) => v.sIdx));
+          const soundedSet = new Set(voicing.map((v) => v.sIdx));
+          let interiorHoles = 0;
+          let onlyBassSkipHole = false;
+          for (let s = bassSIdx - 1; s > highestSoundedSIdx; s--) {
+            if (!soundedSet.has(s)) {
+              interiorHoles++;
+              if (s === bassSIdx - 1 && bassSIdx >= 4 && interiorHoles === 1) {
+                onlyBassSkipHole = true;
+              } else {
+                onlyBassSkipHole = false;
+              }
+            }
+          }
+
           let score = coveredPcs.size * 1000;
-          // Prefer full-sounding shapes (more strings covered cleanly)
+          // Prioritize non-5th color tones (3rds, 7ths, 9ths, 13ths, alterations) over the 5th
+          let essentialCount = 0;
+          coveredPcs.forEach((pc) => {
+            if (pc !== bassPc && pc !== fifthPc) essentialCount++;
+          });
+          score += essentialCount * 180;
+
+          // Ergonomics & span scoring
           score += voicing.length * 18;
-          // Prefer lower/open position over high neck
           const avgFret =
             voicing.reduce((sum, v) => sum + v.fret, 0) / Math.max(1, voicing.length);
           score -= avgFret * 9;
-          score -= span * 12;
+          score -= span * 15;
+          if (span === 4 && win.winMin > 1) {
+            score -= 35;
+          }
+
+          if (interiorHoles > 0) {
+            if (onlyBassSkipHole) {
+              // Standard thumb/index muted 5th-string jazz grip (e.g. 3-x-3-4-5-x, 5-x-5-6-6-5)
+              score -= 8;
+            } else {
+              score -= interiorHoles * 180;
+            }
+          }
+
           if (win.allowOpen) {
             score += 24;
             score += voicing.filter((v) => v.fret === 0).length * 8;
           }
-          // Prefer root on deeper string when available in open/low position
+          // Prefer root on deeper string (6th or 5th) when available cleanly
           score += bassSIdx * 4;
 
           // Avoid muddy low 3rds in bottom register (e.g. F2-A2 <= 45), while allowing standard G2-B2 (47)
@@ -1016,6 +1051,9 @@ export function resolvePlayableChordVoicing(
             if (diff <= 0) score -= 45;
             if (voicing[i].midi <= 45 && diff < 5) {
               score -= 90;
+            }
+            if (voicing[i].midi <= 54 && diff <= 2) {
+              score -= 40;
             }
           }
 
@@ -1037,6 +1075,7 @@ export interface LatchedGlowEntry {
   midi: number;
   isChord?: boolean;
   chordGroup?: number;
+  chordBatch?: number[];
   sIdx?: number;
   fret?: number;
   scopeId?: string;
@@ -1050,7 +1089,8 @@ export interface LatchedGlowState<T extends LatchedGlowEntry = LatchedGlowEntry>
 /**
  * Pure latched highlight reducer:
  * - Single notes replace any prior highlight and stay latched until another event or Stop (null).
- * - Chords group notes matching `chordGroup`, replace prior notes or older chords, and stay latched until next event or Stop (null).
+ * - Atomic chordBatch events replace any prior highlight in a single state transition (zero strum flicker).
+ * - Grouped chord notes matching `chordGroup` accumulate safely, and Stop (null) resets to idle.
  */
 export function reduceLatchGlowState<T extends LatchedGlowEntry>(
   state: LatchedGlowState<T>,
@@ -1061,6 +1101,19 @@ export function reduceLatchGlowState<T extends LatchedGlowEntry>(
   }
 
   const normalized = { ...ev, midi: Math.round(ev.midi) };
+
+  if (normalized.chordBatch && normalized.chordBatch.length > 0) {
+    const batchMidis = [...new Set(normalized.chordBatch.map((m) => Math.round(m)))];
+    return {
+      kind: 'chord',
+      entries: batchMidis.map((m) => ({
+        ...normalized,
+        midi: m,
+        isChord: true,
+        chordBatch: undefined,
+      })),
+    };
+  }
 
   if (!normalized.isChord) {
     return {

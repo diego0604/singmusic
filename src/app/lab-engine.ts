@@ -6,6 +6,7 @@ import {
   computeChordNeckState,
   createPitchAcuityRound,
   midiToNoteName,
+  resolvePlayableChordVoicing,
 } from './music-games-logic';
 import {
   type NoteGlowHint,
@@ -374,15 +375,14 @@ export class MusicAudioEngine {
   emitChordHighlight(midiNotes: number[], scopeEl?: HTMLElement | null): void {
     if (midiNotes.length === 0) return;
     const chordGroup = this.nextChordGroup++;
-    midiNotes.forEach((m) => {
-      this.emitNoteEvent({
-        midi: m,
-        durationSec: 1.4,
-        instrument: 'guitar',
-        isChord: true,
-        chordGroup,
-        scopeEl: scopeEl ?? null,
-      });
+    this.emitNoteEvent({
+      midi: midiNotes[0],
+      durationSec: 1.4,
+      instrument: 'guitar',
+      isChord: true,
+      chordGroup,
+      chordBatch: [...midiNotes],
+      scopeEl: scopeEl ?? null,
     });
   }
 
@@ -393,6 +393,7 @@ export class MusicAudioEngine {
     instrument: string,
     glowHint?: NoteGlowHint
   ): void {
+    if (glowHint?.skipGlow) return;
     const payload: NotePlayEvent = { midi, durationSec, instrument, ...(glowHint || {}) };
     if (delaySec <= 0.005) {
       this.emitNoteEvent(payload);
@@ -1265,13 +1266,29 @@ export class MusicAudioEngine {
     delayOffset = 0,
     stopPrevious = true
   ): void {
+    if (midiNotes.length === 0) return;
     if (stopPrevious && delayOffset === 0) {
       this.stopAll(true);
     }
     const chordGroup = this.nextChordGroup++;
+    const batchPayload: NotePlayEvent = {
+      midi: midiNotes[0],
+      durationSec: instrument === 'guitar' ? 1.35 : instrument === 'bass' ? 1.15 : 1.25,
+      instrument,
+      isChord: true,
+      chordGroup,
+      chordBatch: [...midiNotes],
+    };
+    if (delayOffset <= 0.005) {
+      this.emitNoteEvent(batchPayload);
+    } else {
+      this.schedule(() => {
+        this.emitNoteEvent(batchPayload);
+      }, delayOffset * 1000);
+    }
     midiNotes.forEach((m, idx) => {
       const strumDelay = delayOffset + idx * (instrument === 'guitar' ? 0.036 : 0.014);
-      const hint: NoteGlowHint = { isChord: true, chordGroup };
+      const hint: NoteGlowHint = { isChord: true, chordGroup, skipGlow: true };
       if (instrument === 'bass') {
         this.playElectricBass(m, 1.15, strumDelay, 0.34, 'finger', false, hint);
       } else if (instrument === 'guitar') {
@@ -4530,55 +4547,29 @@ function computePlayableGuitarVoicing(
   chordMidis: number[],
   bassMidi: number
 ): { frets: (number | null)[]; baseFret: number; tabText: string } {
-  // 6 strings from 6th (low E2=40) to 1st (high E4=64)
-  const openLowToHigh = [40, 45, 50, 55, 59, 64];
-  const pcs = new Set(chordMidis.map((m) => ((m % 12) + 12) % 12));
-  const rootPc = (((bassMidi ?? chordMidis[0]) % 12) + 12) % 12;
-
-  const fretOn5 = (rootPc - (45 % 12) + 12) % 12;
-  const fretOn6 = (rootPc - (40 % 12) + 12) % 12;
-
-  // Prefer root on 5th string if fret <= 6, else 6th string if fret <= 7, else whichever is smaller
-  let bassStringIdx = 1; // 5th string (A2)
-  let rootFret = fretOn5;
-  if (fretOn6 <= 4 && fretOn5 > 4) {
-    bassStringIdx = 0;
-    rootFret = fretOn6;
-  } else if (fretOn5 > 7 && fretOn6 <= 8) {
-    bassStringIdx = 0;
-    rootFret = fretOn6;
+  const openHighToLow = GUITAR_STRINGS.map((s) => s.openMidi);
+  const lowestNote = Math.min(...chordMidis);
+  const bassPc = (((bassMidi ?? lowestNote) % 12) + 12) % 12;
+  const lowestPc = ((lowestNote % 12) + 12) % 12;
+  let orderedMidis = [...chordMidis];
+  if (lowestPc !== bassPc) {
+    const normalizedBass = lowestNote - (((lowestNote % 12) - bassPc + 12) % 12);
+    const bassAnchor = normalizedBass < lowestNote ? normalizedBass : normalizedBass - 12;
+    orderedMidis = [bassAnchor, ...chordMidis];
   }
-
-  const minWindow = Math.max(0, rootFret - 1);
-  const maxWindow = rootFret + 3;
+  const positions = resolvePlayableChordVoicing(orderedMidis, openHighToLow, 12);
   const frets: (number | null)[] = [null, null, null, null, null, null];
-  frets[bassStringIdx] = rootFret;
-
-  for (let s = bassStringIdx + 1; s < 6; s++) {
-    const openMidi = openLowToHigh[s];
-    let chosen: number | null = null;
-    // If open string is in chord and rootFret <= 3, allow open string
-    if (rootFret <= 3 && pcs.has(openMidi % 12)) {
-      chosen = 0;
+  positions.forEach((pos) => {
+    const lowToHighIdx = 5 - pos.sIdx;
+    if (lowToHighIdx >= 0 && lowToHighIdx < 6) {
+      frets[lowToHighIdx] = pos.fret;
     }
-    for (let f = Math.max(1, minWindow); f <= maxWindow; f++) {
-      const pc = (openMidi + f) % 12;
-      if (pcs.has(pc)) {
-        // Prefer fret closest to rootFret
-        if (chosen === null || Math.abs(f - rootFret) < Math.abs(chosen - rootFret)) {
-          chosen = f;
-        }
-      }
-    }
-    frets[s] = chosen;
-  }
-
+  });
   const nonZero = frets.filter((f): f is number => f !== null && f > 0);
   const minFret = nonZero.length > 0 ? Math.min(...nonZero) : 1;
   const maxFret = nonZero.length > 0 ? Math.max(...nonZero) : 4;
   const baseFret = maxFret <= 4 ? 1 : minFret;
   const tabText = frets.map((f) => (f === null ? 'X' : String(f))).join('-');
-
   return { frets, baseFret, tabText };
 }
 
@@ -4586,58 +4577,26 @@ function computePlayableBassVoicing(
   chordMidis: number[],
   bassMidi: number
 ): { frets: (number | null)[]; baseFret: number; tabText: string } {
-  // 4 strings from 4th (low E1=28) to 1st (G2=43)
-  const openLowToHigh = [28, 33, 38, 43];
-  const pcs = new Set(chordMidis.map((m) => ((m % 12) + 12) % 12));
-  const rootPc = (((bassMidi ?? chordMidis[0]) % 12) + 12) % 12;
-
-  const fretOn4 = (rootPc - (28 % 12) + 12) % 12;
-  const fretOn3 = (rootPc - (33 % 12) + 12) % 12;
-
-  // Prefer root on 3rd string (A1) if fret <= 4 and fretOn4 > 5, else 4th string (E1)
-  let bassStringIdx = 0; // 4th string (E1)
-  let rootFret = fretOn4;
-  if (fretOn4 > 6 && fretOn3 <= 5) {
-    bassStringIdx = 1; // 3rd string (A1)
-    rootFret = fretOn3;
+  const openHighToLow = BASS_STRINGS.map((s) => s.openMidi);
+  const lowestNote = Math.min(...chordMidis);
+  const bassPc = (((bassMidi ?? lowestNote) % 12) + 12) % 12;
+  const orderedMidis = [...chordMidis];
+  if (orderedMidis.length > 0 && (((orderedMidis[0] % 12) + 12) % 12) !== bassPc) {
+    orderedMidis.unshift(24 + bassPc);
   }
-
-  const minWindow = Math.max(0, rootFret - 2);
-  const maxWindow = rootFret + 3;
+  const positions = resolvePlayableChordVoicing(orderedMidis, openHighToLow, 12);
   const frets: (number | null)[] = [null, null, null, null];
-  frets[bassStringIdx] = rootFret;
-  const usedPcs = new Set<number>([rootPc]);
-
-  for (let s = bassStringIdx + 1; s < 4; s++) {
-    const openMidi = openLowToHigh[s];
-    let chosen: number | null = null;
-    let bestScore = 999;
-
-    for (let f = minWindow; f <= maxWindow; f++) {
-      if (f === 0 && rootFret > 3) continue;
-      const pc = (openMidi + f) % 12;
-      if (pcs.has(pc)) {
-        const dist = Math.abs(f - rootFret);
-        const dupPenalty = usedPcs.has(pc) ? 4 : 0;
-        const score = dist + dupPenalty;
-        if (score < bestScore) {
-          bestScore = score;
-          chosen = f;
-        }
-      }
+  positions.forEach((pos) => {
+    const lowToHighIdx = 3 - pos.sIdx;
+    if (lowToHighIdx >= 0 && lowToHighIdx < 4) {
+      frets[lowToHighIdx] = pos.fret;
     }
-    if (chosen !== null) {
-      usedPcs.add((openMidi + chosen) % 12);
-    }
-    frets[s] = chosen;
-  }
-
+  });
   const nonZero = frets.filter((f): f is number => f !== null && f > 0);
   const minFret = nonZero.length > 0 ? Math.min(...nonZero) : 1;
   const maxFret = nonZero.length > 0 ? Math.max(...nonZero) : 4;
   const baseFret = maxFret <= 4 ? 1 : minFret;
   const tabText = frets.map((f) => (f === null ? 'X' : String(f))).join('-');
-
   return { frets, baseFret, tabText };
 }
 
@@ -4804,11 +4763,16 @@ function buildProgressionWidget(
     });
   };
 
+  const getChordBassMidi = (p: ProgressionItem, cIdx: number): number =>
+    p.bassLine.length === p.chords.length
+      ? p.bassLine[cIdx]
+      : p.chords[cIdx][0] - 12;
+
   const renderFullNeckForActiveChord = (): void => {
     const p = progressions[currentIdx];
     const cIdx = Math.min(activeChordIdx, p.chords.length - 1);
     const chordMidis = p.chords[cIdx];
-    const bassMidi = p.bassLine[cIdx % p.bassLine.length] ?? chordMidis[0] - 12;
+    const bassMidi = getChordBassMidi(p, cIdx);
     const label = p.roman[cIdx];
     const rootPc = ((bassMidi % 12) + 12) % 12;
     const pcs = new Set(chordMidis.map((m) => ((m % 12) + 12) % 12));
@@ -4882,7 +4846,7 @@ function buildProgressionWidget(
     cardsEl.innerHTML = p.roman
       .map((label, cIdx) => {
         const notesList = p.chords[cIdx].map((m) => NOTE_NAMES[m % 12]).join(' – ');
-        const bassMidi = p.bassLine[cIdx % p.bassLine.length] ?? p.chords[cIdx][0] - 12;
+        const bassMidi = getChordBassMidi(p, cIdx);
         const bassName = `${NOTE_NAMES[bassMidi % 12]}${Math.floor(bassMidi / 12) - 1}`;
         const isSelected = cIdx === activeChordIdx;
         const svgNeck = renderMiniChordNeckSvg(p.chords[cIdx], bassMidi, neckViewMode);
@@ -4970,7 +4934,7 @@ function buildProgressionWidget(
     const p = progressions[currentIdx];
     audio.stopAll();
     renderCards();
-    const bassMidi = p.bassLine[cIdx % p.bassLine.length] ?? p.chords[cIdx][0] - 12;
+    const bassMidi = getChordBassMidi(p, cIdx);
     if (currentInst === 'bass') {
       audio.playElectricBass(bassMidi, 1.3, 0, 0.42, 'finger', false);
       p.chords[cIdx].slice(1).forEach((m, i) => {
@@ -4978,7 +4942,7 @@ function buildProgressionWidget(
       });
     } else {
       if (includeBassLine) {
-        audio.playElectricBass(bassMidi, 1.4, 0, 0.36, 'finger', false);
+        audio.playElectricBass(bassMidi, 1.4, 0, 0.36, 'finger', false, { skipGlow: true });
       }
       audio.strumChord(p.chords[cIdx], currentInst, 0, false);
     }
@@ -4992,11 +4956,11 @@ function buildProgressionWidget(
       audio.schedule(() => {
         activeChordIdx = idx;
         renderCards();
-        const bassMidi = p.bassLine[idx % p.bassLine.length] ?? notes[0] - 12;
+        const bassMidi = getChordBassMidi(p, idx);
         if (currentInst === 'bass') {
           audio.playElectricBass(bassMidi, 0.85, 0, 0.42, 'finger', false);
         } else {
-          audio.playElectricBass(bassMidi, 0.88, 0, 0.35, 'finger', false);
+          audio.playElectricBass(bassMidi, 0.88, 0, 0.35, 'finger', false, { skipGlow: true });
           audio.strumChord(notes, currentInst, 0, false);
         }
         onStatus(`▶ [${idx + 1}/${p.chords.length}] ${p.roman[idx]} — ${p.name}`);
@@ -5230,7 +5194,7 @@ function buildDiatonicScaleHarmonizerLab(
       const idx = parseInt(playDeg.getAttribute('data-idx')!, 10);
       const c = chords[idx];
       audio.stopAll();
-      audio.playElectricBass(c.notesMidi[0] - 12, 1.3, 0, 0.35, 'finger', false);
+      audio.playElectricBass(c.notesMidi[0] - 12, 1.3, 0, 0.35, 'finger', false, { skipGlow: true });
       audio.strumChord(c.notesMidi, neckMode === 'bass' ? 'guitar' : 'piano', 0, false);
       onStatus(`Grado ${idx + 1}: ${c.chordName} (${c.notesNames}) — ${c.role}`);
       return;
@@ -5252,7 +5216,7 @@ function buildDiatonicScaleHarmonizerLab(
     if (target.closest('.js-dh-play-all')) {
       audio.stopAll();
       chords.forEach((c, i) => {
-        audio.playElectricBass(c.notesMidi[0] - 12, 0.75, i * 0.72, 0.32, 'finger', false);
+        audio.playElectricBass(c.notesMidi[0] - 12, 0.75, i * 0.72, 0.32, 'finger', false, { skipGlow: true });
         audio.strumChord(c.notesMidi, 'piano', i * 0.72, false);
       });
       onStatus(`Reproduciendo los 7 grados armonizados de ${NOTE_NAMES[rootPc]} (${scaleId})`);
@@ -5260,7 +5224,7 @@ function buildDiatonicScaleHarmonizerLab(
       audio.stopAll();
       customChain.forEach((dIdx, i) => {
         const c = chords[dIdx] || chords[0];
-        audio.playElectricBass(c.notesMidi[0] - 12, 0.9, i * 0.88, 0.36, 'finger', false);
+        audio.playElectricBass(c.notesMidi[0] - 12, 0.9, i * 0.88, 0.36, 'finger', false, { skipGlow: true });
         audio.strumChord(c.notesMidi, 'piano', i * 0.88, false);
       });
       onStatus('Reproduciendo tu progresión personalizada con piano y bajo');
@@ -5322,7 +5286,7 @@ function buildNeoRiemannTonnetzLab(
     if (history.length > 7) history.shift();
 
     audio.stopAll();
-    audio.playElectricBass(36 + rootPc, 1.4, 0, 0.36, 'finger', false);
+    audio.playElectricBass(36 + rootPc, 1.4, 0, 0.36, 'finger', false, { skipGlow: true });
     audio.strumChord([...midis, midis[0] + 12], 'piano', 0, false);
     render();
     onStatus(`Transformación ${op}: ${name}`);
@@ -5617,7 +5581,7 @@ function buildNeoRiemannTonnetzLab(
       const midis = getTriadMidis(rootPc, isMinor);
       history = [`${triadLabel(rootPc, isMinor)} (${midis.map((m) => NOTE_NAMES[m % 12]).join('–')})`];
       audio.stopAll();
-      audio.playElectricBass(36 + rootPc, 1.3, 0, 0.36, 'finger', false);
+      audio.playElectricBass(36 + rootPc, 1.3, 0, 0.36, 'finger', false, { skipGlow: true });
       audio.strumChord([...midis, midis[0] + 12], 'piano', 0, false);
       render();
       onStatus(`Árbol Neo-Riemanniano centrado en ${triadLabel(rootPc, isMinor)}`);
@@ -5642,7 +5606,7 @@ function buildNeoRiemannTonnetzLab(
       history.push(`[${op}] → ${triadLabel(rootPc, isMinor)}`);
       if (history.length > 7) history.shift();
       audio.stopAll();
-      audio.playElectricBass(36 + rootPc, 1.35, 0, 0.36, 'finger', false);
+      audio.playElectricBass(36 + rootPc, 1.35, 0, 0.36, 'finger', false, { skipGlow: true });
       audio.strumChord([...midis, midis[0] + 12], 'piano', 0, false);
       render();
       onStatus(`Nodo del Árbol (${op}): ${triadLabel(rootPc, isMinor)} (${notesStr})`);
@@ -5765,11 +5729,19 @@ function buildHarmonizerWidget(
 
   const playOneReharm = (idx: number, delay = 0) => {
     const o = options[idx];
-    audio.playElectricBass(o.bass, 1.5, delay, 0.36, 'finger', false);
+    audio.playElectricBass(o.bass, 1.5, delay, 0.36, 'finger', false, { skipGlow: true });
+    if (delay <= 0.005) {
+      audio.emitChordHighlight(o.chord);
+    } else {
+      audio.schedule(() => audio.emitChordHighlight(o.chord), delay * 1000);
+    }
     // Play all chord voices synchronously in the same piano timbre so E4 shines cleanly on top
     o.chord.forEach((m) => {
       const isTopE4 = m === 64;
-      audio.playAcousticPiano(m, isTopE4 ? 1.8 : 1.4, delay, isTopE4 ? 0.32 : 0.18, false);
+      audio.playAcousticPiano(m, isTopE4 ? 1.8 : 1.4, delay, isTopE4 ? 0.32 : 0.18, false, {
+        isChord: true,
+        skipGlow: true,
+      });
     });
   };
 
@@ -7697,7 +7669,7 @@ function buildInterval9thVisualizerLab(
     if (polyPlay) {
       const preset = chordPolygonPresets[polyPresetIdx];
       audio.stopAll();
-      audio.playElectricBass(36 + rootPc, 1.4, 0, 0.36, 'finger', false);
+      audio.playElectricBass(36 + rootPc, 1.4, 0, 0.36, 'finger', false, { skipGlow: true });
       audio.strumChord(preset.offsets.map((o) => 48 + rootPc + o), 'piano', 0, false);
       onStatus(`Acorde completo: ${NOTE_NAMES[rootPc]}${preset.suffix}`);
       return;
@@ -9473,7 +9445,7 @@ function buildTensionPyramidLab(
     const baseMidi = 48 + cRootPc;
     const midis = n.voicingOffsets.map((o) => baseMidi + o);
     audio.stopAll();
-    audio.playElectricBass(36 + cRootPc, 1.5, 0, 0.36, 'finger', false);
+    audio.playElectricBass(36 + cRootPc, 1.5, 0, 0.36, 'finger', false, { skipGlow: true });
     audio.strumChord(midis, 'piano', 0, false);
     const info = getChordInfo(n);
     onStatus(`Pirámide 9+11+13: ${info.symbol} [${info.noteNames.join(' – ')}]`);

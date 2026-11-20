@@ -15,6 +15,8 @@ import type { DiagramModalManager } from './diagram-modal';
 export interface NoteGlowHint {
   isChord?: boolean;
   chordGroup?: number;
+  chordBatch?: number[];
+  skipGlow?: boolean;
   sIdx?: number;
   fret?: number;
   scopeEl?: HTMLElement | null;
@@ -1039,7 +1041,7 @@ function buildNotationWriterLab(
                   : [0, 4, 7];
         const chordMidis = offsets.map((o) => base + o);
         audio.schedule(() => {
-          audio.playElectricBass(36 + tRoot, 0.9, 0, 0.34, 'finger', false);
+          audio.playElectricBass(36 + tRoot, 0.9, 0, 0.34, 'finger', false, { skipGlow: true });
           audio.strumChord(chordMidis, 'piano', 0, false);
           if (bp.kicks[ci * 2] || bp.kicks[ci * 2 + 1]) {
             audio.playDrumHit('crash', 0);

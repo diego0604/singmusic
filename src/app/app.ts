@@ -833,7 +833,7 @@ export class App implements OnInit, OnDestroy {
           this.audio.schedule(() => {
             this.audio.strumChord(chord, timb, 0, false);
             const bassMidi = chord[0] >= 48 ? chord[0] - 12 : chord[0];
-            this.audio.playElectricBass(bassMidi, 0.78, 0, 0.28, 'finger', false);
+            this.audio.playElectricBass(bassMidi, 0.78, 0, 0.28, 'finger', false, { skipGlow: true });
             this.activeNoteLabel.set(`🔊 ${label} [Paso ${idx + 1}/${groups.length}]`);
           }, idx * 820);
         });

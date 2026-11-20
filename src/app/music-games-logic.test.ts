@@ -250,5 +250,68 @@ test('computeChordNeckState preserves all scale guides while pinpointing exclusi
   assert.equal(res.chordPositions.length, 5);
 });
 
+test('resolvePlayableChordVoicing resolves idiomatic jazz/extended voicings for ii9-V13-Imaj9-VI7alt', () => {
+  const guitarOpen = [64, 59, 55, 50, 45, 40];
+  const toTab = (voicing: { sIdx: number; fret: number }[]) => {
+    const arr: (number | null)[] = [null, null, null, null, null, null];
+    voicing.forEach((v) => {
+      arr[5 - v.sIdx] = v.fret;
+    });
+    return arr.map((f) => (f === null ? 'X' : String(f))).join('-');
+  };
+
+  // ii9 (Dm9): [50, 53, 60, 64] -> D, F, C, E all covered cleanly without X-X-0-X-1-0 gap
+  const dm9 = resolvePlayableChordVoicing([50, 53, 60, 64], guitarOpen, 12);
+  const dm9Pcs = new Set(dm9.map((v) => v.midi % 12));
+  assert.deepEqual([...dm9Pcs].sort((a, b) => a - b), [0, 2, 4, 5]);
+  assert.equal(toTab(dm9), 'X-5-3-5-5-X');
+
+  // V13 (G13): [43, 53, 59, 64] -> G, B, F, G, B, E (idiomatic open-position 3-2-3-0-0-0 grip)
+  const g13 = resolvePlayableChordVoicing([43, 53, 59, 64], guitarOpen, 12);
+  const g13Pcs = new Set(g13.map((v) => v.midi % 12));
+  assert.deepEqual([...g13Pcs].sort((a, b) => a - b), [4, 5, 7, 11]);
+  assert.equal(toTab(g13), '3-2-3-0-0-0');
+
+  // Imaj9 (Cmaj9): [48, 52, 59, 62] -> C, E, B, D, E (idiomatic X-3-2-4-3-0 Cmaj9 grip)
+  const cmaj9 = resolvePlayableChordVoicing([48, 52, 59, 62], guitarOpen, 12);
+  const cmaj9Pcs = new Set(cmaj9.map((v) => v.midi % 12));
+  assert.deepEqual([...cmaj9Pcs].sort((a, b) => a - b), [0, 2, 4, 11]);
+  assert.equal(toTab(cmaj9), 'X-3-2-4-3-0');
+
+  // VI7alt (A7b13): [45, 52, 55, 61, 65] -> rooted on A, never X-2-2-2-2-1!
+  const a7b13 = resolvePlayableChordVoicing([45, 52, 55, 61, 65], guitarOpen, 12);
+  const a7b13Tab = toTab(a7b13);
+  assert.notEqual(a7b13Tab, 'X-2-2-2-2-1');
+  const lowestVoiced = [...a7b13].sort((a, b) => b.sIdx - a.sIdx)[0];
+  assert.equal(lowestVoiced.midi % 12, 9); // Root A
+  const a7b13Pcs = new Set(a7b13.map((v) => v.midi % 12));
+  assert.ok(a7b13Pcs.has(1) && a7b13Pcs.has(7) && a7b13Pcs.has(5)); // C#, G, F
+});
+
+test('reduceLatchGlowState atomically swaps chordBatch without intermediate strum flicker', () => {
+  const initial = reduceLatchGlowState({ kind: 'idle', entries: [] }, { midi: 38, isChord: false });
+  assert.equal(initial.kind, 'note');
+
+  const dm9Batch = reduceLatchGlowState(initial, {
+    midi: 50,
+    isChord: true,
+    chordGroup: 1,
+    chordBatch: [50, 53, 60, 64],
+  });
+  assert.equal(dm9Batch.kind, 'chord');
+  assert.deepEqual(dm9Batch.entries.map((e) => e.midi), [50, 53, 60, 64]);
+  assert.ok(dm9Batch.entries.every((e) => e.isChord === true && e.chordBatch === undefined));
+
+  const g13Batch = reduceLatchGlowState(dm9Batch, {
+    midi: 43,
+    isChord: true,
+    chordGroup: 2,
+    chordBatch: [43, 53, 59, 64],
+  });
+  assert.equal(g13Batch.kind, 'chord');
+  assert.deepEqual(g13Batch.entries.map((e) => e.midi), [43, 53, 59, 64]);
+});
+
+
 
 
