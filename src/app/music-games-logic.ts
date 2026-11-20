@@ -544,3 +544,492 @@ export function verifySimonStep(
     expectedMidi,
   };
 }
+
+/**
+ * Enharmonic Golden Rule: Spells any 7-note diatonic scale using each letter C-D-E-F-G-A-B strictly once.
+ */
+export interface EnharmonicScaleResult {
+  rootLabel: string;
+  notes: string[];
+  enharmonicTwin: string;
+  usesFlats: boolean;
+  explanation: string;
+}
+
+const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const;
+const LETTER_NATURAL_PCS = [0, 2, 4, 5, 7, 9, 11] as const;
+
+const FLAT_ROOT_NAMES: Record<number, string> = {
+  0: 'C', 1: 'Db', 2: 'D', 3: 'Eb', 4: 'E', 5: 'F',
+  6: 'Gb', 7: 'G', 8: 'Ab', 9: 'A', 10: 'Bb', 11: 'B',
+};
+
+const SHARP_ROOT_NAMES: Record<number, string> = {
+  0: 'C', 1: 'C#', 2: 'D', 3: 'D#', 4: 'E', 5: 'F',
+  6: 'F#', 7: 'G', 8: 'G#', 9: 'A', 10: 'A#', 11: 'B',
+};
+
+function spellPitchForLetter(targetPc: number, letterIndex: number): string {
+  const natPc = LETTER_NATURAL_PCS[letterIndex];
+  let diff = (targetPc - natPc + 12) % 12;
+  if (diff > 6) diff -= 12;
+  const letter = LETTERS[letterIndex];
+  if (diff === 0) return letter;
+  if (diff === 1) return `${letter}#`;
+  if (diff === 2) return `${letter}##`;
+  if (diff === -1) return `${letter}b`;
+  if (diff === -2) return `${letter}bb`;
+  return SHARP_ROOT_NAMES[((targetPc % 12) + 12) % 12];
+}
+
+export function applyEnharmonicGoldenRule(
+  rootPcInput: number,
+  scaleOffsets: number[] = [0, 2, 4, 5, 7, 9, 11],
+  preferFlats?: boolean
+): EnharmonicScaleResult {
+  const rootPc = ((rootPcInput % 12) + 12) % 12;
+  // Default conventional key signature preference if not explicitly specified
+  const defaultFlatRoots = new Set([1, 3, 5, 6, 8, 10]); // Db, Eb, F, Gb, Ab, Bb
+  const useFlats = preferFlats !== undefined ? preferFlats : defaultFlatRoots.has(rootPc);
+
+  // Pick starting letter for rootPc
+  let startLetterIdx = LETTER_NATURAL_PCS.indexOf(rootPc as 0 | 2 | 4 | 5 | 7 | 9 | 11);
+  if (startLetterIdx === -1) {
+    // Accidental root: choose upper natural letter if flat, lower natural letter if sharp
+    const adjPc = useFlats ? (rootPc + 1) % 12 : (rootPc + 11) % 12;
+    startLetterIdx = LETTER_NATURAL_PCS.indexOf(adjPc as 0 | 2 | 4 | 5 | 7 | 9 | 11);
+    if (startLetterIdx === -1) startLetterIdx = 0;
+  }
+
+  const rootLabel = spellPitchForLetter(rootPc, startLetterIdx);
+  const notes = scaleOffsets.map((offset, stepIdx) => {
+    const pc = (rootPc + offset) % 12;
+    if (scaleOffsets.length === 7) {
+      return spellPitchForLetter(pc, (startLetterIdx + stepIdx) % 7);
+    }
+    return useFlats ? FLAT_ROOT_NAMES[pc] : SHARP_ROOT_NAMES[pc];
+  });
+
+  const twin =
+    SHARP_ROOT_NAMES[rootPc] !== FLAT_ROOT_NAMES[rootPc]
+      ? `${SHARP_ROOT_NAMES[rootPc]} ↔ ${FLAT_ROOT_NAMES[rootPc]}`
+      : `${rootLabel} (sin enarmonía común)`;
+
+  const explanation =
+    scaleOffsets.length === 7
+      ? `Regla de Oro aplicada desde ${rootLabel}: cada una de las 7 letras (C–D–E–F–G–A–B) aparece exactamente una vez (${notes.join(' – ')}) sin repetir ni saltar letras.`
+      : `Ortografía cromática aplicada desde ${rootLabel}: ${notes.join(' – ')}.`;
+
+  return {
+    rootLabel,
+    notes,
+    enharmonicTwin: twin,
+    usesFlats: useFlats,
+    explanation,
+  };
+}
+
+/**
+ * Nashville Number System Converter & Transposer
+ */
+export interface NashvilleChordInput {
+  rootPc: number;
+  quality: 'maj' | 'min' | 'dim' | 'dom7' | 'maj7' | 'm7';
+}
+
+export interface NashvilleChordOutput {
+  nashville: string;
+  originalSymbol: string;
+  transposedSymbol: string;
+}
+
+const ACCIDENTAL_ROMAN_NASHVILLE: Record<number, string> = {
+  0: '1',
+  1: 'b2',
+  2: '2',
+  3: 'b3',
+  4: '3',
+  5: '4',
+  6: '#4',
+  7: '5',
+  8: 'b6',
+  9: '6',
+  10: 'b7',
+  11: '7',
+};
+
+function qualitySuffix(q: NashvilleChordInput['quality']): string {
+  if (q === 'min') return 'm';
+  if (q === 'dim') return '°';
+  if (q === 'dom7') return '7';
+  if (q === 'maj7') return 'maj7';
+  if (q === 'm7') return 'm7';
+  return '';
+}
+
+export function convertProgressionToNashville(
+  keyPcInput: number,
+  chords: NashvilleChordInput[],
+  targetKeyPcInput?: number
+): NashvilleChordOutput[] {
+  const keyPc = ((keyPcInput % 12) + 12) % 12;
+  const targetKeyPc = targetKeyPcInput !== undefined ? ((targetKeyPcInput % 12) + 12) % 12 : keyPc;
+  const origFlat = new Set([1, 3, 5, 6, 8, 10]).has(keyPc);
+  const targFlat = new Set([1, 3, 5, 6, 8, 10]).has(targetKeyPc);
+
+  return chords.map((ch) => {
+    const cRoot = ((ch.rootPc % 12) + 12) % 12;
+    const interval = (cRoot - keyPc + 12) % 12;
+    const deg = ACCIDENTAL_ROMAN_NASHVILLE[interval] || '1';
+    const suf = qualitySuffix(ch.quality);
+    const nashville = `${deg}${suf}`;
+
+    const origName = origFlat ? FLAT_ROOT_NAMES[cRoot] : SHARP_ROOT_NAMES[cRoot];
+    const transposedRoot = (targetKeyPc + interval) % 12;
+    const targName = targFlat ? FLAT_ROOT_NAMES[transposedRoot] : SHARP_ROOT_NAMES[transposedRoot];
+
+    return {
+      nashville,
+      originalSymbol: `${origName}${suf}`,
+      transposedSymbol: `${targName}${suf}`,
+    };
+  });
+}
+
+/**
+ * 2, 3, and 4-Voice Diatonic Melody Harmonizer + Parallel 5th/8ve Checker
+ */
+export interface HarmonizedChordStep {
+  melodyMidi: number;
+  voices: number[]; // Sorted low -> high, ending on melodyMidi
+  parallelFifthWarning: boolean;
+  parallelOctaveWarning: boolean;
+}
+
+export function harmonizeMelodyVoices(
+  melodyMidis: number[],
+  keyPcInput: number,
+  numVoices: 2 | 3 | 4,
+  scaleOffsets: number[] = [0, 2, 4, 5, 7, 9, 11]
+): HarmonizedChordStep[] {
+  const keyPc = ((keyPcInput % 12) + 12) % 12;
+  const scalePcs = scaleOffsets.map((o) => (keyPc + o) % 12);
+
+  // Build sorted ascending pool of scale midis from 36 to 96
+  const scalePool: number[] = [];
+  for (let m = 36; m <= 96; m++) {
+    if (scalePcs.includes(m % 12)) {
+      scalePool.push(m);
+    }
+  }
+
+  const findScaleStepIndex = (midi: number): number => {
+    let bestIdx = 0;
+    let bestDist = 999;
+    scalePool.forEach((sm, idx) => {
+      const d = Math.abs(sm - midi);
+      if (d < bestDist) {
+        bestDist = d;
+        bestIdx = idx;
+      }
+    });
+    return bestIdx;
+  };
+
+  const results: HarmonizedChordStep[] = [];
+
+  melodyMidis.forEach((melMidi, stepIdx) => {
+    const topIdx = findScaleStepIndex(melMidi);
+    let voices: number[];
+    if (numVoices === 2) {
+      // 2 voices: diatonic 3rd below (-2 scale steps)
+      const lower = scalePool[Math.max(0, topIdx - 2)] ?? melMidi - 4;
+      voices = [lower, melMidi];
+    } else if (numVoices === 3) {
+      // 3 voices: closed triad (-4 and -2 scale steps)
+      const thirdBelow = scalePool[Math.max(0, topIdx - 2)] ?? melMidi - 4;
+      const fifthBelow = scalePool[Math.max(0, topIdx - 4)] ?? melMidi - 7;
+      voices = [fifthBelow, thirdBelow, melMidi];
+    } else {
+      // 4 voices: Drop 2 style open spread (-9, -4, -2 scale steps)
+      const secondFromTop = scalePool[Math.max(0, topIdx - 2)] ?? melMidi - 4;
+      const thirdFromTop = scalePool[Math.max(0, topIdx - 4)] ?? melMidi - 7;
+      const bass = scalePool[Math.max(0, topIdx - 9)] ?? melMidi - 16;
+      voices = [bass, thirdFromTop, secondFromTop, melMidi];
+    }
+
+    let parallelFifthWarning = false;
+    let parallelOctaveWarning = false;
+
+    if (stepIdx > 0) {
+      const prev = results[stepIdx - 1].voices;
+      const len = Math.min(prev.length, voices.length);
+      for (let i = 0; i < len; i++) {
+        for (let j = i + 1; j < len; j++) {
+          const prevInt = (prev[j] - prev[i]) % 12;
+          const currInt = (voices[j] - voices[i]) % 12;
+          const moved = prev[i] !== voices[i] && prev[j] !== voices[j];
+          if (moved && prevInt === 7 && currInt === 7) {
+            parallelFifthWarning = true;
+          }
+          if (moved && prevInt === 0 && currInt === 0) {
+            parallelOctaveWarning = true;
+          }
+        }
+      }
+    }
+
+    results.push({
+      melodyMidi: melMidi,
+      voices,
+      parallelFifthWarning,
+      parallelOctaveWarning,
+    });
+  });
+
+  return results;
+}
+
+/**
+ * Gap Click Internal Tempo Timing Evaluator
+ */
+export interface GapClickTimingResult {
+  deltaMs: number; // Negative = early, Positive = late
+  absErrorMs: number;
+  verdict: 'En el bolsillo (±25 ms)' | 'Levemente adelantado' | 'Levemente atrasado' | 'Fuera de tiempo';
+}
+
+export function evaluateGapClickTiming(
+  beatIntervalMs: number,
+  tapElapsedMs: number
+): GapClickTimingResult {
+  const safeInterval = Math.max(150, beatIntervalMs);
+  const nearestBeat = Math.round(tapElapsedMs / safeInterval) * safeInterval;
+  const deltaMs = Math.round(tapElapsedMs - nearestBeat);
+  const absErrorMs = Math.abs(deltaMs);
+
+  let verdict: GapClickTimingResult['verdict'] = 'Fuera de tiempo';
+  if (absErrorMs <= 25) {
+    verdict = 'En el bolsillo (±25 ms)';
+  } else if (absErrorMs <= 75) {
+    verdict = deltaMs < 0 ? 'Levemente adelantado' : 'Levemente atrasado';
+  }
+
+  return { deltaMs, absErrorMs, verdict };
+}
+
+export interface ScaleFretStep {
+  sIdx: number;
+  fret: number;
+  midi: number;
+}
+
+/**
+ * Computes a comfortable ascending 1-octave scale path on a stringed instrument neck,
+ * mapping each scale step to exactly ONE (string, fret, midi) position so scale playback
+ * illuminates only the single note currently sounding.
+ */
+export function buildScaleFretboardPath(
+  openMidisHighToLow: number[],
+  rootPc: number,
+  intervals: number[],
+  maxFret = 12
+): ScaleFretStep[] {
+  if (openMidisHighToLow.length === 0 || intervals.length === 0) return [];
+
+  const lowestOpen = openMidisHighToLow[openMidisHighToLow.length - 1];
+  const highestOpen = openMidisHighToLow[0];
+  const minPlayable = lowestOpen;
+  const maxPlayable = highestOpen + maxFret;
+
+  // Choose a comfortable starting octave root MIDI in the lower half of the neck
+  let startRootMidi = lowestOpen + ((rootPc - (lowestOpen % 12) + 12) % 12);
+  if (startRootMidi + 12 > maxPlayable) {
+    startRootMidi = Math.max(minPlayable, startRootMidi - 12);
+  }
+
+  const semitoneSteps = [...intervals, 12];
+  const path: ScaleFretStep[] = [];
+  let prevFret = 2;
+
+  for (const semi of semitoneSteps) {
+    const targetMidi = startRootMidi + semi;
+    const candidates: { sIdx: number; fret: number; score: number }[] = [];
+
+    openMidisHighToLow.forEach((openMidi, sIdx) => {
+      const fret = targetMidi - openMidi;
+      if (fret >= 0 && fret <= maxFret) {
+        // Prefer lower-to-mid frets (0..7) and minimal hand jump from previous fret
+        const stretchPenalty = Math.abs(fret - prevFret);
+        const openBonus = fret === 0 ? -0.3 : 0;
+        const highFretPenalty = fret > 7 ? (fret - 7) * 1.5 : 0;
+        candidates.push({
+          sIdx,
+          fret,
+          score: stretchPenalty + highFretPenalty + openBonus,
+        });
+      }
+    });
+
+    if (candidates.length > 0) {
+      candidates.sort((a, b) => a.score - b.score || b.sIdx - a.sIdx);
+      const best = candidates[0];
+      prevFret = best.fret === 0 ? prevFret : best.fret;
+      path.push({ sIdx: best.sIdx, fret: best.fret, midi: targetMidi });
+    } else {
+      path.push({ sIdx: 0, fret: 0, midi: targetMidi });
+    }
+  }
+
+  return path;
+}
+
+export interface ChordFretPos {
+  sIdx: number;
+  fret: number;
+  midi: number;
+}
+
+/**
+ * Resolves a chord's MIDI notes to ONE idiomatic, compact playable voicing on a guitar or bass neck
+ * (preferring standard open voicings when available, else compact 4-fret movable boxes),
+ * never scattering duplicate unisons/octaves across all 12 frets.
+ */
+export function resolvePlayableChordVoicing(
+  midiNotes: number[],
+  openMidisHighToLow: number[],
+  maxFret = 12
+): ChordFretPos[] {
+  const numStrings = openMidisHighToLow.length;
+  if (midiNotes.length === 0 || numStrings === 0) return [];
+
+  const sortedMidis = [...midiNotes].map((m) => Math.round(m)).sort((a, b) => a - b);
+  const bassPc = ((sortedMidis[0] % 12) + 12) % 12;
+  const chordPcs = [...new Set(sortedMidis.map((m) => ((m % 12) + 12) % 12))];
+  const chordPcSet = new Set(chordPcs);
+  const isBassNeck = numStrings <= 4;
+
+  interface WinSpec {
+    winMin: number;
+    winMax: number;
+    allowOpen: boolean;
+  }
+
+  const windows: WinSpec[] = [{ winMin: 1, winMax: Math.min(4, maxFret), allowOpen: true }];
+  for (let w = 1; w <= Math.max(1, maxFret - 3); w++) {
+    windows.push({ winMin: w, winMax: Math.min(maxFret, w + 3), allowOpen: false });
+  }
+
+  let bestScore = -1e9;
+  let bestResult: ChordFretPos[] = [];
+
+  for (const win of windows) {
+    const getValidFrets = (sIdx: number): number[] => {
+      const openM = openMidisHighToLow[sIdx];
+      const list: number[] = [];
+      for (let f = 0; f <= maxFret; f++) {
+        const inWin = (f === 0 && win.allowOpen) || (f >= win.winMin && f <= win.winMax);
+        if (!inWin) continue;
+        if (chordPcSet.has((openM + f) % 12)) {
+          list.push(f);
+        }
+      }
+      return list;
+    };
+
+    const minBassString = Math.min(numStrings - 1, isBassNeck ? 1 : 2);
+    for (let bassSIdx = numStrings - 1; bassSIdx >= minBassString; bassSIdx--) {
+      const bassFrets = getValidFrets(bassSIdx).filter(
+        (f) => (openMidisHighToLow[bassSIdx] + f) % 12 === bassPc
+      );
+      if (bassFrets.length === 0) continue;
+
+      for (const bassFret of bassFrets) {
+        const bassMidi = openMidisHighToLow[bassSIdx] + bassFret;
+        const perStringOptions: (number | null)[][] = [];
+
+        for (let s = bassSIdx - 1; s >= 0; s--) {
+          const valid = getValidFrets(s);
+          if (valid.length === 0) {
+            perStringOptions.push([null]);
+          } else if (isBassNeck || s === 0) {
+            perStringOptions.push([...valid, null]);
+          } else {
+            perStringOptions.push(valid);
+          }
+        }
+
+        // Enumerate combinations (<= ~32 per bass string)
+        const combos: { sIdx: number; fret: number; midi: number }[][] = [[]];
+        for (let idx = 0; idx < perStringOptions.length; idx++) {
+          const sIdx = bassSIdx - 1 - idx;
+          const opts = perStringOptions[idx];
+          const nextCombos: { sIdx: number; fret: number; midi: number }[][] = [];
+          for (const prev of combos) {
+            for (const f of opts) {
+              if (f === null) {
+                nextCombos.push(prev);
+              } else {
+                nextCombos.push([
+                  ...prev,
+                  { sIdx, fret: f, midi: openMidisHighToLow[sIdx] + f },
+                ]);
+              }
+            }
+          }
+          combos.splice(0, combos.length, ...nextCombos.slice(0, 96));
+        }
+
+        for (const upper of combos) {
+          const voicing: ChordFretPos[] = [
+            { sIdx: bassSIdx, fret: bassFret, midi: bassMidi },
+            ...upper,
+          ];
+          if (isBassNeck && voicing.length > 3) continue;
+
+          const coveredPcs = new Set(voicing.map((v) => v.midi % 12));
+          const nonZeroFrets = voicing.filter((v) => v.fret > 0).map((v) => v.fret);
+          const span =
+            nonZeroFrets.length > 1
+              ? Math.max(...nonZeroFrets) - Math.min(...nonZeroFrets)
+              : 0;
+          if (span > 4) continue;
+
+          let score = coveredPcs.size * 1000;
+          // Prefer full-sounding shapes (more strings covered cleanly)
+          score += voicing.length * 18;
+          // Prefer lower/open position over high neck
+          const avgFret =
+            voicing.reduce((sum, v) => sum + v.fret, 0) / Math.max(1, voicing.length);
+          score -= avgFret * 9;
+          score -= span * 12;
+          if (win.allowOpen) {
+            score += 24;
+            score += voicing.filter((v) => v.fret === 0).length * 8;
+          }
+          // Prefer root on deeper string when available in open/low position
+          score += bassSIdx * 4;
+
+          // Avoid muddy low 3rds in bottom register (e.g. F2-A2 <= 45), while allowing standard G2-B2 (47)
+          for (let i = 1; i < voicing.length; i++) {
+            const diff = voicing[i].midi - voicing[i - 1].midi;
+            if (diff <= 0) score -= 45;
+            if (voicing[i].midi <= 45 && diff < 5) {
+              score -= 90;
+            }
+          }
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestResult = voicing;
+          }
+        }
+      }
+    }
+  }
+
+  return bestResult;
+}
+
+
+

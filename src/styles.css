@@ -95,12 +95,14 @@ body {
   line-height: 1.25;
   margin: 0.25rem 0 0.5rem 0;
   letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 
 .module-subtitle {
   font-size: 1.05rem;
   color: var(--text-muted);
   margin: 0;
+  max-width: 72ch;
 }
 
 .module-section h3 {
@@ -110,6 +112,7 @@ body {
   margin: 2rem 0 0.85rem 0;
   padding-top: 0.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+  text-wrap: balance;
 }
 
 .module-section h4 {
@@ -122,6 +125,12 @@ body {
 .module-section p {
   color: var(--text-secondary);
   margin: 0 0 1rem 0;
+}
+
+.module-section > p,
+.module-section > ul,
+.module-section > ol {
+  max-width: 74ch;
 }
 
 .module-section ul,
@@ -235,6 +244,8 @@ body {
 .table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #334155 #0b111e;
   margin: 1.25rem 0;
   border: 1px solid #283548;
   border-radius: 0.75rem;
@@ -298,6 +309,17 @@ body {
   margin: 1.5rem 0;
   overflow-x: auto;
   white-space: pre;
+}
+
+.tab-block.is-hydrated {
+  white-space: normal;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.tab-block.is-hydrated .js-tab-raw-box {
+  white-space: pre;
+  font-family: 'JetBrains Mono', monospace;
+  overflow-x: auto;
 }
 
 .tab-label {
@@ -513,6 +535,9 @@ body {
 /* Piano Render */
 .piano-wrapper {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #334155 #06090f;
   padding: 0.75rem 0.5rem;
   background: #06090f;
   border: 1px solid #1e293b;
@@ -526,6 +551,21 @@ body {
   height: 138px;
   min-width: 640px;
   user-select: none;
+}
+
+.piano-keys.piano-3oct {
+  min-width: 780px;
+}
+
+.piano-keys.piano-3oct .key-white {
+  font-size: 0.68rem;
+}
+
+.piano-keys.piano-3oct .key-black {
+  width: 22px;
+  margin-left: -11px;
+  margin-right: -11px;
+  font-size: 0.56rem;
 }
 
 .key-white {
@@ -543,7 +583,7 @@ body {
   font-weight: 700;
   cursor: pointer;
   z-index: 1;
-  transition: transform 0.08s ease, background 0.12s ease;
+  transition: transform 0.06s ease, background 0.06s ease, opacity 0.08s ease;
 }
 
 .key-white:hover {
@@ -580,7 +620,7 @@ body {
   background: linear-gradient(to bottom, #1e293b 0%, #090d16 100%);
   border: 1px solid #000000;
   border-radius: 0 0 5px 5px;
-  z-index: 2;
+  z-index: 3;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -589,7 +629,7 @@ body {
   font-size: 0.66rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.08s ease, background 0.12s ease;
+  transition: transform 0.06s ease, background 0.06s ease, opacity 0.08s ease;
 }
 
 .key-black:hover {
@@ -617,6 +657,9 @@ body {
 /* Fretboard Render */
 .fretboard-wrapper {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #3f2e21 #140f0b;
   background: #140f0b;
   border: 2px solid #3f2e21;
   border-radius: 0.65rem;
@@ -630,6 +673,11 @@ body {
   min-width: 720px;
   height: 32px;
   position: relative;
+}
+
+.fretboard-wrapper.compact-neck .fretboard-row,
+.fretboard-wrapper.compact-neck .fret-numbers {
+  min-width: 390px;
 }
 
 .fretboard-row::after {
@@ -682,7 +730,7 @@ body {
   color: rgba(148, 163, 184, 0.45);
   border: 1px solid rgba(148, 163, 184, 0.2);
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.12s ease;
+  transition: transform 0.07s ease, background 0.07s ease, opacity 0.08s ease, filter 0.08s ease;
 }
 
 .fret-note:hover {
@@ -735,10 +783,17 @@ body {
   align-items: center;
 }
 
+.circle-fifths-layout.circle-fifths-wide {
+  grid-template-columns: minmax(280px, 500px) 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
 .cof-svg-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
+  min-width: 0;
 }
 
 .cof-sector {
@@ -892,6 +947,49 @@ details[open] summary {
   scrollbar-width: none;
 }
 
+/* Diagram Framing Grid (What / How / Why) */
+.diagram-framing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 0.85rem 0;
+  padding: 0.75rem 0.9rem;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(56, 189, 248, 0.24);
+  border-radius: 0.65rem;
+  font-size: 0.76rem;
+  line-height: 1.48;
+  color: #cbd5e1;
+}
+
+.diagram-framing-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.diagram-framing-item strong {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.df-what { color: #38bdf8; }
+.df-how { color: #fbbf24; }
+.df-why { color: #34d399; }
+
+@media (max-width: 960px) {
+  .circle-fifths-layout.circle-fifths-wide {
+    grid-template-columns: 1fr;
+  }
+
+  .diagram-framing-grid {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+}
+
 @media (max-width: 768px) {
   .module-section {
     padding: 1rem;
@@ -952,8 +1050,9 @@ details[open] summary {
   }
 
   .btn {
-    padding: 0.38rem 0.68rem;
-    font-size: 0.76rem;
+    min-height: 38px;
+    padding: 0.42rem 0.75rem;
+    font-size: 0.78rem;
   }
 
   .widget-controls {
@@ -964,6 +1063,7 @@ details[open] summary {
   .lab-select,
   .interactive-widget select {
     width: 100%;
+    min-height: 38px;
   }
 
   .tab-block {
@@ -971,4 +1071,113 @@ details[open] summary {
     font-size: 0.74rem;
   }
 }
+
+/* Live Note & Chord Spotlight Illumination (Refined Golden Glow — Keeps Pre-Painted Notes Visible) */
+.fret-note.playing-glow {
+  background: linear-gradient(135deg, #fde047, #f59e0b) !important;
+  color: #090c12 !important;
+  border: 2px solid #ffffff !important;
+  transform: scale(1.22);
+  box-shadow:
+    0 0 0 1.5px #090c12,
+    0 0 12px rgba(251, 191, 36, 0.88),
+    0 0 4px #ffffff;
+  z-index: 4;
+  transition: transform 0.04s ease, box-shadow 0.04s ease;
+}
+
+.key-white.playing-glow {
+  background: linear-gradient(to bottom, #fef08a 0%, #f59e0b 100%) !important;
+  color: #090c12 !important;
+  box-shadow:
+    inset 0 -4px 0 #b45309,
+    0 0 12px rgba(251, 191, 36, 0.72);
+  z-index: 1;
+  transition: background 0.04s ease;
+}
+
+.key-black.playing-glow {
+  background: linear-gradient(to bottom, #fde047 0%, #d97706 100%) !important;
+  color: #090c12 !important;
+  border: 1.5px solid #ffffff !important;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.82);
+  z-index: 5;
+  transition: background 0.04s ease;
+}
+
+/* Global Level Filter Locking & Unlock Banner */
+.level-locked-hidden {
+  display: none !important;
+}
+
+.level-locked-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem 0;
+  padding: 0.95rem 1.2rem;
+  border-radius: 0.75rem;
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px dashed rgba(251, 191, 36, 0.5);
+  color: #e2e8f0;
+  font-size: 0.84rem;
+}
+
+/* Enlarged Interactive Diagram Fullscreen Modal */
+.diagram-fullscreen-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(2, 6, 23, 0.86);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.diagram-fullscreen-shell {
+  width: 96vw;
+  max-width: 1320px;
+  max-height: 92vh;
+  background: #0b111e;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 1rem;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.diagram-expanded-active {
+  margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.diagram-expanded-active .js-expand-diagram {
+  display: none !important;
+}
+
+.diagram-expanded-active .widget-header {
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.diagram-expanded-active .js-diagram-framing {
+  padding: 0.5rem 0.75rem !important;
+  margin-bottom: 0.65rem !important;
+}
+
+.diagram-expanded-active svg {
+  min-height: 340px;
+  max-height: 56vh;
+  width: 100% !important;
+  height: auto !important;
+}
+
 

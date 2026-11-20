@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  OnDestroy,
   OnInit,
   PLATFORM_ID,
   computed,
@@ -58,6 +59,22 @@ export interface GlossaryEntry {
   sectionId: string;
 }
 
+export interface LearningPathStep {
+  catId: string;
+  sectionId: string;
+  title: string;
+  badge: string;
+}
+
+export interface LearningPathTrack {
+  id: string;
+  title: string;
+  subtitle: string;
+  steps: LearningPathStep[];
+}
+
+const COMPLETED_STORAGE_KEY = 'enciclopedia_completed_sections_v1';
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-root',
@@ -65,7 +82,7 @@ export interface GlossaryEntry {
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App implements OnInit {
+export class App implements OnInit, OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly audio = new MusicAudioEngine();
@@ -96,6 +113,125 @@ export class App implements OnInit {
     'Motor de Síntesis Activo (Guitarra / Bajo / Piano / Voz / Vientos Andinos / Batería)'
   );
   readonly currentInstrument = signal<'guitar' | 'piano' | 'bass'>('guitar');
+
+  // Global Level Filter ('1' = Novato, '2' = Intermedio, '4' = Completo)
+  readonly activeLevelFilter = signal<'1' | '2' | '4'>('4');
+  readonly hiddenBlocksCount = signal<number>(0);
+
+  readonly filteredSections = computed<SectionAnchor[]>(() => {
+    const all = this.sections();
+    const maxLvl = parseInt(this.activeLevelFilter(), 10);
+    if (maxLvl >= 4) return all;
+    const filtered = all.filter((sec) => this.parseMinNivel(sec.nivel) <= maxLvl);
+    return filtered.length > 0 ? filtered : all.slice(0, 1);
+  });
+
+  readonly prevCategory = computed<CategoryPart | null>(() => {
+    const ordered = this.categories.filter((c) => c.id !== 'all');
+    const idx = ordered.findIndex((c) => c.id === this.activeCat().id);
+    return idx > 0 ? ordered[idx - 1] : null;
+  });
+
+  readonly nextCategory = computed<CategoryPart | null>(() => {
+    const ordered = this.categories.filter((c) => c.id !== 'all');
+    const idx = ordered.findIndex((c) => c.id === this.activeCat().id);
+    if (idx === -1) return ordered[0] ?? null;
+    return idx < ordered.length - 1 ? ordered[idx + 1] : null;
+  });
+
+  // Live Note Monitor (driven by Studio Enhancements custom window event)
+  readonly liveNotes = signal<string[]>([]);
+  private liveNotesListener: ((ev: Event) => void) | null = null;
+
+  // Guided Learning Paths & Completion Tracking
+  readonly showPaths = signal<boolean>(false);
+  readonly selectedPathId = signal<string>('cero-a-musico');
+  readonly activeSectionId = signal<string>('intro');
+  readonly completedSections = signal<string[]>([]);
+
+  readonly learningPaths: LearningPathTrack[] = [
+    {
+      id: 'cero-a-musico',
+      title: '🌱 De Cero a Músico Completo',
+      subtitle: 'Empieza sin conocimientos previos: sonido, notas, alteraciones, intervalos, escalas, tríadas y ritmo.',
+      steps: [
+        { catId: 'teoria', sectionId: 'intro', title: 'Mapa de Navegación y Cómo Estudiar', badge: 'N1' },
+        { catId: 'teoria', sectionId: 't-sonido', title: 'El Sonido y la Acústica Musical', badge: 'N1' },
+        { catId: 'teoria', sectionId: 't-notas', title: 'Notas, Alteraciones, Enarmonía y Reloj Cromático', badge: 'N1' },
+        { catId: 'teoria', sectionId: 't-intervalos', title: 'Intervalos: La Geometría de la Música', badge: 'N1–N2' },
+        { catId: 'teoria', sectionId: 't-escalas', title: 'Escalas Mayores, Menores y Pentatónicas', badge: 'N1–N2' },
+        { catId: 'teoria', sectionId: 't-ritmo', title: 'Ritmo, Compases y Métricas Irregulares', badge: 'N1–N3' },
+        { catId: 'teoria', sectionId: 't-lectura', title: 'Lectura Musical, Claves y Escritura de Banda', badge: 'N1–N3' },
+        { catId: 'armonia', sectionId: 'h-triadas', title: 'Tríadas: Los Cuatro Ladrillos Armónicos', badge: 'N1' },
+      ],
+    },
+    {
+      id: 'guitarra',
+      title: '🎸 Guitarra Rítmica, Rasgueos y Armónica',
+      subtitle: 'Acordes abiertos, patrones de rasgueo con púa/mano, fingerstyle y escalas por todo el mástil.',
+      steps: [
+        { catId: 'teoria', sectionId: 't-notas', title: 'Notas, Alteraciones y Reloj Cromático', badge: 'N1' },
+        { catId: 'guitarra-ac', sectionId: 'ga-acordes', title: 'Vocabulario de Acordes y Cejillas', badge: 'N1–N2' },
+        { catId: 'guitarra-ac', sectionId: 'ga-rasgueos', title: 'Rasgueos, Púa y Patrones Rítmicos', badge: 'N1–N2' },
+        { catId: 'guitarra-ac', sectionId: 'ga-ritmo-fingerstyle', title: 'Ritmo, Arpegios y Fingerstyle', badge: 'N2–N3' },
+        { catId: 'armonia', sectionId: 'h-diatonica', title: 'Armonía Diatónica y Funciones Tonales', badge: 'N2' },
+        { catId: 'guitarra-el', sectionId: 'ge-escalas-modos', title: 'Escalas, Modos y Tríadas en el Mástil', badge: 'N2–N3' },
+        { catId: 'guitarra-el', sectionId: 'ge-tecnicas', title: 'Articulación y Técnicas Expresivas', badge: 'N2–N4' },
+      ],
+    },
+    {
+      id: 'bajo',
+      title: '🎸 Bajista y Lock-In con Batería',
+      subtitle: 'Fundamentos en 4/5 cuerdas, muteo profesional, enlace bajo-bombo y recursos expresivos.',
+      steps: [
+        { catId: 'teoria', sectionId: 't-notas', title: 'Notas y Enarmonía en el Mástil', badge: 'N1' },
+        { catId: 'teoria', sectionId: 't-ritmo', title: 'Subdivisión Rítmica y Síncopa', badge: 'N1–N2' },
+        { catId: 'bajo', sectionId: 'b-fundamentos', title: 'Fundamentos del Bajo Eléctrico', badge: 'N1' },
+        { catId: 'bajo', sectionId: 'b-mutear-articulacion', title: 'Floating Thumb, Muteo y Slap', badge: 'N2–N3' },
+        { catId: 'bajo', sectionId: 'b-bajo-bateria', title: 'Lock-In Bajo + Bombo y Recursos Expresivos', badge: 'N2–N3' },
+        { catId: 'bajo', sectionId: 'b-armonia', title: 'Tríadas, Arpegios y Walking Bass', badge: 'N2–N3' },
+      ],
+    },
+    {
+      id: 'bateria',
+      title: '🥁 Batería, Notación PAS y Tempo Interno',
+      subtitle: 'Rudimentos, lectura de pentagrama sincronizada, Gap Click y técnicas del kit.',
+      steps: [
+        { catId: 'teoria', sectionId: 't-ritmo', title: 'Pulso, Compases y Síncopa', badge: 'N1' },
+        { catId: 'bateria', sectionId: 'd-fundamentos', title: 'Rudimentos, Agarre y Ghost Notes', badge: 'N1–N2' },
+        { catId: 'bateria', sectionId: 'd-grooves', title: 'Grooves Esenciales y Pentagrama PAS', badge: 'N1–N3' },
+        { catId: 'bateria', sectionId: 'd-fills-transiciones', title: 'Fills, Transiciones y Gap Click', badge: 'N2–N3' },
+        { catId: 'bateria', sectionId: 'd-independencia', title: 'Independencia de 4 Extremidades', badge: 'N3–N4' },
+      ],
+    },
+    {
+      id: 'canto-arreglo',
+      title: '🎤 Canto, Melismas y Arreglo a Voces',
+      subtitle: 'Calentamiento SOVT, apoyo, agilidad vocal, modificación de vocales y armonización a 2–4 voces.',
+      steps: [
+        { catId: 'canto', sectionId: 'v-calentamiento', title: 'Rutina Diaria SOVT y Cuidado Vocal', badge: 'N1' },
+        { catId: 'canto', sectionId: 'v-fundamentos', title: 'Respiración Costo-Diafragmática y Apoyo', badge: 'N1–N2' },
+        { catId: 'canto', sectionId: 'v-afinacion-registros', title: 'Registros, Passaggio y Modificación Vocal', badge: 'N2–N3' },
+        { catId: 'canto', sectionId: 'v-interpretacion-estilos', title: 'Gimnasio de Agilidad, Riffs y Melismas', badge: 'N2–N3' },
+        { catId: 'teoria', sectionId: 't-lectura', title: 'Escritura Práctica y Arreglo a 2–4 Voces', badge: 'N2–N3' },
+        { catId: 'arreglos', sectionId: 'a-integracion', title: 'Orquestación e Integración de Banda', badge: 'N3–N4' },
+      ],
+    },
+  ];
+
+  readonly activeLearningPath = computed<LearningPathTrack>(() => {
+    return (
+      this.learningPaths.find((p) => p.id === this.selectedPathId()) || this.learningPaths[0]
+    );
+  });
+
+  readonly activePathProgress = computed<{ done: number; total: number; pct: number }>(() => {
+    const steps = this.activeLearningPath().steps;
+    const completed = new Set(this.completedSections());
+    const done = steps.filter((s) => completed.has(s.sectionId)).length;
+    const total = steps.length;
+    return { done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 };
+  });
 
   // Global Instant Search State
   readonly searchQuery = signal<string>('');
@@ -284,8 +420,36 @@ export class App implements OnInit {
   });
 
   ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        const saved = localStorage.getItem(COMPLETED_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            this.completedSections.set(parsed.filter((x) => typeof x === 'string'));
+          }
+        }
+      } catch {
+        // Ignore storage read errors in restricted iframes
+      }
+
+      this.liveNotesListener = (ev: Event) => {
+        const custom = ev as CustomEvent<{ notes?: string[] }>;
+        this.liveNotes.set(Array.isArray(custom.detail?.notes) ? custom.detail.notes : []);
+      };
+      window.addEventListener('enciclopedia:live-notes', this.liveNotesListener);
+    }
+
     this.buildGlobalSearchIndex();
     this.loadCategory(this.categories[0]);
+  }
+
+  ngOnDestroy(): void {
+    this.audio.stopAll();
+    if (isPlatformBrowser(this.platformId) && this.liveNotesListener) {
+      window.removeEventListener('enciclopedia:live-notes', this.liveNotesListener);
+      this.liveNotesListener = null;
+    }
   }
 
   private normalizeText(str: string): string {
@@ -362,7 +526,69 @@ export class App implements OnInit {
   }
 
   toggleGlossary(): void {
-    this.showGlossary.update((v) => !v);
+    this.showGlossary.update((v) => {
+      const next = !v;
+      if (next) this.showPaths.set(false);
+      return next;
+    });
+  }
+
+  togglePaths(): void {
+    this.showPaths.update((v) => {
+      const next = !v;
+      if (next) this.showGlossary.set(false);
+      return next;
+    });
+  }
+
+  selectLearningPath(pathId: string): void {
+    this.selectedPathId.set(pathId);
+  }
+
+  setLevelFilter(level: '1' | '2' | '4'): void {
+    this.activeLevelFilter.set(level);
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => this.applyLevelDomFilter(), 10);
+    }
+  }
+
+  parseMinNivel(nivelStr: string): number {
+    const match = /\d+/.exec(nivelStr || '1');
+    return match ? parseInt(match[0], 10) : 1;
+  }
+
+  isSectionCompleted(sectionId: string): boolean {
+    return this.completedSections().includes(sectionId);
+  }
+
+  toggleSectionCompleted(sectionId: string): void {
+    this.completedSections.update((prev) => {
+      const next = prev.includes(sectionId)
+        ? prev.filter((id) => id !== sectionId)
+        : [...prev, sectionId];
+      if (isPlatformBrowser(this.platformId)) {
+        try {
+          localStorage.setItem(COMPLETED_STORAGE_KEY, JSON.stringify(next));
+        } catch {
+          // Ignore storage quota errors
+        }
+      }
+      return next;
+    });
+  }
+
+  jumpToPathStep(step: LearningPathStep): void {
+    this.showPaths.set(false);
+    this.mobileMenuOpen.set(false);
+    const targetCat = this.categories.find((c) => c.id === step.catId);
+    if (!targetCat) return;
+    this.activeSectionId.set(step.sectionId);
+    if (this.activeCat().id !== targetCat.id) {
+      this.loadCategory(targetCat);
+      setTimeout(() => this.scrollToSection(step.sectionId), 140);
+    } else {
+      this.scrollToSection(step.sectionId);
+    }
   }
 
   jumpToSearchResult(item: GlobalSearchIndexItem): void {
@@ -370,6 +596,7 @@ export class App implements OnInit {
     if (!targetCat) return;
     this.searchQuery.set('');
     this.mobileMenuOpen.set(false);
+    this.activeSectionId.set(item.sectionId);
     if (this.activeCat().id !== targetCat.id) {
       this.loadCategory(targetCat);
       setTimeout(() => this.scrollToSection(item.sectionId), 120);
@@ -381,6 +608,7 @@ export class App implements OnInit {
   jumpFromGlossary(entry: GlossaryEntry): void {
     this.showGlossary.set(false);
     this.mobileMenuOpen.set(false);
+    this.activeSectionId.set(entry.sectionId);
     this.jumpToCrossSection(entry.sectionId);
   }
 
@@ -416,9 +644,90 @@ export class App implements OnInit {
         if (hostEl) {
           hydrateAllLabs(hostEl, this.audio, (msg) => this.activeNoteLabel.set(msg));
           hydrateInteractiveArcade(hostEl, this.audio, (msg) => this.activeNoteLabel.set(msg));
+          this.applyLevelDomFilter();
         }
       }, 20);
     }
+  }
+
+  goPrevCategory(): void {
+    const prev = this.prevCategory();
+    if (prev) {
+      this.loadCategory(prev);
+    }
+  }
+
+  goNextCategory(): void {
+    const next = this.nextCategory();
+    if (next) {
+      this.loadCategory(next);
+    }
+  }
+
+  private applyLevelDomFilter(): void {
+    const hostEl = this.contentHost()?.nativeElement;
+    if (!hostEl) return;
+
+    // Remove previous unlock banners and restore hidden elements cleanly
+    hostEl.querySelectorAll('.level-locked-banner').forEach((b) => b.remove());
+    hostEl.querySelectorAll('.level-locked-hidden').forEach((el) => {
+      el.classList.remove('level-locked-hidden');
+    });
+
+    const maxLvl = parseInt(this.activeLevelFilter(), 10);
+    if (maxLvl >= 4) {
+      this.hiddenBlocksCount.set(0);
+      return;
+    }
+
+    const levelLabel = maxLvl === 1 ? 'Novato (N1)' : 'Intermedio (N1–N2)';
+    let hiddenCount = 0;
+
+    const candidates = hostEl.querySelectorAll<HTMLElement>(
+      'section.module-section[data-nivel], .callout-box[data-nivel], details[data-nivel], article[data-nivel]'
+    );
+
+    candidates.forEach((el) => {
+      const attr = el.getAttribute('data-nivel') || '1';
+      const minLvl = this.parseMinNivel(attr);
+      if (minLvl <= maxLvl || el.hasAttribute('data-user-unlocked')) return;
+
+      // Avoid double-banners inside an already hidden parent section
+      if (el.parentElement?.closest('.level-locked-hidden')) {
+        el.classList.add('level-locked-hidden');
+        return;
+      }
+
+      el.classList.add('level-locked-hidden');
+      hiddenCount++;
+
+      const title =
+        el.getAttribute('data-menu') ||
+        el.querySelector('h2, h3, summary')?.textContent?.trim() ||
+        'Bloque avanzado';
+
+      const banner = document.createElement('div');
+      banner.className = 'level-locked-banner';
+      banner.innerHTML = `
+        <span>🔒 <strong>Nivel ${attr}</strong> (${title}) oculto en modo <em>${levelLabel}</em>.</span>
+        <button type="button" class="btn js-unlock-block" style="background:rgba(245,158,11,0.18); color:#fde047; border:1px solid rgba(245,158,11,0.45);">
+          🔓 Desbloquear bloque
+        </button>
+      `;
+      banner.querySelector('.js-unlock-block')?.addEventListener('click', () => {
+        el.setAttribute('data-user-unlocked', '1');
+        el.classList.remove('level-locked-hidden');
+        el.querySelectorAll('.level-locked-hidden').forEach((child) =>
+          child.classList.remove('level-locked-hidden')
+        );
+        banner.remove();
+        this.hiddenBlocksCount.update((c) => Math.max(0, c - 1));
+      });
+
+      el.parentElement?.insertBefore(banner, el);
+    });
+
+    this.hiddenBlocksCount.set(hiddenCount);
   }
 
   stopAllAudio(): void {
@@ -452,13 +761,21 @@ export class App implements OnInit {
       });
     }
     this.sections.set(list);
+    if (list.length > 0) {
+      this.activeSectionId.set(list[0].id);
+    }
   }
 
   scrollToSection(id: string): void {
     if (!isPlatformBrowser(this.platformId)) return;
     this.mobileMenuOpen.set(false);
+    this.activeSectionId.set(id);
     const el = document.getElementById(id);
     if (el) {
+      if (el.classList.contains('level-locked-hidden')) {
+        el.setAttribute('data-user-unlocked', '1');
+        this.applyLevelDomFilter();
+      }
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }

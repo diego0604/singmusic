@@ -1,15 +1,15 @@
 <div class="min-h-screen flex flex-col bg-[#0b0f19] text-slate-100">
-  <!-- Clean Responsive Top Header with Integrated Search -->
-  <header class="sticky top-0 z-30 bg-[#0f172a]/95 backdrop-blur border-b border-slate-800 px-3 sm:px-6 py-2.5">
-    <div class="max-w-[1480px] mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
-      <!-- Top Row: Mobile Drawer Button, Title & Essential Controls -->
+  <!-- Compact Responsive Top Header (<= 15% mobile height) -->
+  <header class="sticky top-0 z-30 bg-[#0f172a]/95 backdrop-blur-md border-b border-slate-800/90 px-3 sm:px-6 py-2">
+    <div class="max-w-[1480px] mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
+      <!-- Top Row: Mobile Drawer Button, Title & Compact Mobile Controls -->
       <div class="flex items-center justify-between gap-2 min-w-0">
         <div class="flex items-center gap-2 min-w-0">
           <button
             type="button"
             (click)="toggleMobileMenu()"
             aria-label="Abrir índice de módulos"
-            class="lg:hidden px-2.5 py-1.5 text-xs font-bold text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-lg hover:bg-amber-500/25 shrink-0 cursor-pointer">
+            class="lg:hidden min-h-[38px] px-2.5 py-1.5 text-xs font-bold text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-lg hover:bg-amber-500/25 shrink-0 cursor-pointer whitespace-nowrap">
             @if (mobileMenuOpen()) {
               ✕ Cerrar
             } @else {
@@ -20,31 +20,52 @@
           <a
             href="#intro"
             (click)="$event.preventDefault(); loadCategory(categories[0])"
-            class="text-sm sm:text-base lg:text-lg font-extrabold tracking-tight text-white truncate">
+            class="text-sm sm:text-base lg:text-lg font-extrabold tracking-tight text-white truncate whitespace-nowrap">
             🎼 <span class="sm:hidden">Enciclopedia</span><span class="hidden sm:inline">Enciclopedia Musical</span>
           </a>
         </div>
 
-        <div class="flex items-center gap-1.5 shrink-0 md:hidden">
+        <div class="flex items-center gap-1 shrink-0 md:hidden">
+          <button
+            type="button"
+            (click)="toggleInstrument()"
+            [attr.aria-label]="'Cambiar timbre global: ' + currentInstrument()"
+            class="min-h-[38px] px-2 py-1.5 text-xs font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-lg hover:bg-amber-500/25 whitespace-nowrap cursor-pointer">
+            @if (currentInstrument() === 'guitar') {
+              🎸
+            } @else if (currentInstrument() === 'bass') {
+              🎸<span class="text-[10px]">4c</span>
+            } @else {
+              🎹
+            }
+          </button>
+          <button
+            type="button"
+            (click)="togglePaths()"
+            aria-label="Rutas de aprendizaje"
+            class="min-h-[38px] px-2 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 rounded-lg hover:bg-emerald-500/25 whitespace-nowrap cursor-pointer">
+            🗺️
+          </button>
           <button
             type="button"
             (click)="toggleGlossary()"
-            class="px-2.5 py-1.5 text-xs font-semibold text-purple-300 bg-purple-500/15 border border-purple-500/40 rounded-lg hover:bg-purple-500/25 whitespace-nowrap cursor-pointer">
-            📖 Glosario
+            aria-label="Glosario musical"
+            class="min-h-[38px] px-2 py-1.5 text-xs font-semibold text-purple-300 bg-purple-500/15 border border-purple-500/40 rounded-lg hover:bg-purple-500/25 whitespace-nowrap cursor-pointer">
+            📖
           </button>
           <button
             type="button"
             (click)="stopAllAudio()"
             aria-label="Detener audio"
-            class="px-2.5 py-1.5 text-xs font-semibold text-rose-300 bg-rose-500/15 border border-rose-500/40 rounded-lg hover:bg-rose-500/25 whitespace-nowrap cursor-pointer">
-            ⏹ Stop
+            class="min-h-[38px] px-2 py-1.5 text-xs font-semibold text-rose-300 bg-rose-500/15 border border-rose-500/40 rounded-lg hover:bg-rose-500/25 whitespace-nowrap cursor-pointer">
+            ⏹
           </button>
         </div>
       </div>
 
       <!-- Responsive Global Instant Search + Desktop Essential Controls -->
-      <div class="flex items-center gap-2 w-full md:w-auto md:flex-1 md:justify-end min-w-0">
-        <div class="relative w-full md:max-w-sm lg:max-w-md min-w-0">
+      <div class="flex items-center gap-2.5 w-full md:w-auto md:flex-1 md:justify-end min-w-0">
+        <div class="relative w-full md:max-w-xs lg:max-w-sm min-w-0">
           <label for="globalEncyclopediaSearch" class="sr-only">Buscar capítulos, juegos o conceptos musicales</label>
           <input
             id="globalEncyclopediaSearch"
@@ -53,8 +74,8 @@
             enterkeyhint="search"
             [value]="searchQuery()"
             (input)="onSearchInput($event)"
-            placeholder="🔍 Buscar capítulo, juego, acorde, batería, letra..."
-            class="w-full pl-3 pr-8 py-1.5 text-xs sm:text-sm bg-[#0b0f19] border border-slate-700 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:border-sky-400" />
+            placeholder="🔍 Buscar capítulo, rasgueo, enarmonía..."
+            class="w-full min-h-[38px] pl-3 pr-8 py-1.5 text-xs sm:text-sm bg-[#0b0f19] border border-slate-700 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:border-sky-400" />
           @if (searchQuery().length > 0) {
             <button
               type="button"
@@ -98,7 +119,14 @@
           }
         </div>
 
-        <div class="hidden md:flex items-center gap-2 shrink-0">
+        <div class="hidden md:flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            (click)="togglePaths()"
+            class="px-2.5 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 rounded-lg hover:bg-emerald-500/25 transition-colors whitespace-nowrap cursor-pointer">
+            🗺️ Rutas ({{ completedSections().length }})
+          </button>
+
           <button
             type="button"
             (click)="toggleGlossary()"
@@ -129,6 +157,86 @@
       </div>
     </div>
   </header>
+
+  <!-- Guided Learning Paths Modal/Drawer -->
+  @if (showPaths()) {
+    <div class="fixed inset-0 z-50 flex items-start justify-end bg-black/65 backdrop-blur-xs p-3 sm:p-6">
+      <div class="w-full max-w-2xl bg-[#111827] border border-emerald-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
+        <div class="flex items-center justify-between px-4 sm:px-5 py-3.5 bg-slate-900 border-b border-slate-800">
+          <div>
+            <h2 class="text-base font-extrabold text-emerald-300">🗺️ Rutas de Aprendizaje Guiadas</h2>
+            <p class="text-xs text-slate-400">Sigue un orden progresivo desde cero hasta nivel profesional y guarda tu avance.</p>
+          </div>
+          <button
+            type="button"
+            (click)="togglePaths()"
+            class="px-3 py-1 text-xs font-bold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg cursor-pointer">
+            ✕ Cerrar
+          </button>
+        </div>
+
+        <div class="p-3.5 border-b border-slate-800 bg-slate-900/50 flex flex-wrap gap-1.5">
+          @for (path of learningPaths; track path.id) {
+            <button
+              type="button"
+              (click)="selectLearningPath(path.id)"
+              [class]="selectedPathId() === path.id
+                ? 'px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 cursor-pointer'
+                : 'px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 cursor-pointer'">
+              {{ path.title }}
+            </button>
+          }
+        </div>
+
+        <div class="p-4 overflow-y-auto space-y-3">
+          <div class="p-3 rounded-xl bg-[#0b0f19] border border-slate-800">
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+              <strong class="text-sm text-amber-300">{{ activeLearningPath().title }}</strong>
+              <span class="text-xs font-bold text-emerald-300">
+                {{ activePathProgress().done }} / {{ activePathProgress().total }} ({{ activePathProgress().pct }}%)
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mb-2">{{ activeLearningPath().subtitle }}</p>
+            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div
+                class="h-full bg-gradient-to-r from-emerald-500 to-sky-400 transition-all duration-300"
+                [style.width.%]="activePathProgress().pct">
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            @for (step of activeLearningPath().steps; track step.sectionId; let idx = $index) {
+              <div class="p-3 rounded-xl bg-[#0b0f19] border border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <button
+                    type="button"
+                    (click)="toggleSectionCompleted(step.sectionId)"
+                    [attr.aria-label]="'Marcar ' + step.title + ' como dominado'"
+                    [class]="isSectionCompleted(step.sectionId)
+                      ? 'w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold bg-emerald-500 text-slate-950 shrink-0 cursor-pointer'
+                      : 'w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700 hover:border-emerald-400 shrink-0 cursor-pointer'">
+                    @if (isSectionCompleted(step.sectionId)) { ✓ } @else { {{ idx + 1 }} }
+                  </button>
+                  <div class="min-w-0">
+                    <div class="text-xs sm:text-sm font-bold text-slate-100 truncate">{{ step.title }}</div>
+                    <span class="text-[10px] font-mono text-sky-400">{{ step.badge }}</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  (click)="jumpToPathStep(step)"
+                  class="px-2.5 py-1 text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/40 rounded-lg hover:bg-sky-500/30 shrink-0 cursor-pointer">
+                  Estudiar →
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 
   <!-- Floating Interactive Glossary Modal/Drawer -->
   @if (showGlossary()) {
@@ -238,14 +346,21 @@
                 <span class="text-[11px] text-slate-400 ml-2 shrink-0">{{ cat.count }} cap.</span>
               </button>
 
-              @if (activeCat().id === cat.id && sections().length > 0) {
+              @if (activeCat().id === cat.id && filteredSections().length > 0) {
                 <div class="mt-1.5 mb-2.5 ml-2 pl-2.5 border-l-2 border-sky-500/40 space-y-1">
-                  @for (sec of sections(); track sec.id) {
+                  @for (sec of filteredSections(); track sec.id) {
                     <button
                       type="button"
                       (click)="scrollToSection(sec.id)"
-                      class="w-full text-left px-2.5 py-1.5 rounded text-xs text-slate-300 hover:text-amber-300 hover:bg-slate-800/80 transition-colors flex items-center justify-between gap-2 cursor-pointer">
-                      <span class="truncate">{{ sec.title }}</span>
+                      class="w-full text-left px-2.5 py-1.5 rounded text-xs text-slate-300 hover:text-amber-300 hover:bg-slate-800/80 transition-colors flex items-center justify-between gap-2 cursor-pointer"
+                      [class.bg-slate-800]="activeSectionId() === sec.id"
+                      [class.text-amber-300]="activeSectionId() === sec.id">
+                      <span class="truncate">
+                        @if (isSectionCompleted(sec.id)) {
+                          <span class="text-emerald-400 font-bold mr-1">✓</span>
+                        }
+                        {{ sec.title }}
+                      </span>
                       <span class="text-[10px] text-sky-400/80 font-mono shrink-0">N{{ sec.nivel }}</span>
                     </button>
                   }
@@ -259,9 +374,70 @@
 
     <!-- Main Encyclopedia & Embedded Labs Content Area -->
     <main class="lg:col-span-9 min-w-0">
-      <div class="mb-3 flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-lg bg-[#111827] border border-slate-800/90 text-xs">
-        <span class="font-semibold text-amber-300 truncate">{{ activeCat().label }}</span>
-        <span class="text-slate-400 truncate max-w-full sm:max-w-md">{{ activeNoteLabel() }}</span>
+      <!-- Workspace Control Deck: Level Filter + Active Chapter + Live Note Monitor -->
+      <div class="mb-4 p-3 sm:px-4 sm:py-3 rounded-xl bg-[#111827]/95 border border-slate-800/90 space-y-2.5 text-xs shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0 flex-wrap">
+            <span class="font-bold text-amber-300 truncate">{{ activeCat().label }}</span>
+            <button
+              type="button"
+              (click)="toggleSectionCompleted(activeSectionId())"
+              [class]="isSectionCompleted(activeSectionId())
+                ? 'px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-pointer whitespace-nowrap'
+                : 'px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800 text-slate-300 border border-slate-700 hover:border-emerald-400 cursor-pointer whitespace-nowrap'">
+              @if (isSectionCompleted(activeSectionId())) { ✅ Capítulo Dominado } @else { ✓ Marcar Dominado }
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2 min-w-0">
+            @if (liveNotes().length > 0) {
+              <span class="px-2.5 py-1 rounded-md bg-lime-400/20 border border-lime-400/70 text-lime-200 font-bold truncate">
+                🔊 Sonando: {{ liveNotes().join(' · ') }}
+              </span>
+            } @else {
+              <span class="text-slate-400 truncate max-w-full sm:max-w-md">{{ activeNoteLabel() }}</span>
+            }
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+          <div class="flex items-center gap-1.5 flex-wrap" role="group" aria-label="Filtro de nivel de aprendizaje">
+            <span class="text-[11px] font-semibold text-slate-400 mr-1">Nivel visible:</span>
+            <button
+              type="button"
+              (click)="setLevelFilter('1')"
+              [class]="activeLevelFilter() === '1'
+                ? 'min-h-[32px] px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-500 text-slate-950 cursor-pointer whitespace-nowrap'
+                : 'min-h-[32px] px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800/90 text-slate-300 hover:bg-slate-700 cursor-pointer whitespace-nowrap'">
+              🌱 Novato (N1)
+            </button>
+            <button
+              type="button"
+              (click)="setLevelFilter('2')"
+              [class]="activeLevelFilter() === '2'
+                ? 'min-h-[32px] px-2.5 py-1 rounded-md text-[11px] font-bold bg-sky-500 text-slate-950 cursor-pointer whitespace-nowrap'
+                : 'min-h-[32px] px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800/90 text-slate-300 hover:bg-slate-700 cursor-pointer whitespace-nowrap'">
+              🎸 Intermedio (N1–N2)
+            </button>
+            <button
+              type="button"
+              (click)="setLevelFilter('4')"
+              [class]="activeLevelFilter() === '4'
+                ? 'min-h-[32px] px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-500 text-slate-950 cursor-pointer whitespace-nowrap'
+                : 'min-h-[32px] px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800/90 text-slate-300 hover:bg-slate-700 cursor-pointer whitespace-nowrap'">
+              🎓 Completo (N1–N4)
+            </button>
+          </div>
+
+          @if (hiddenBlocksCount() > 0) {
+            <button
+              type="button"
+              (click)="setLevelFilter('4')"
+              class="min-h-[32px] px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/35 hover:bg-amber-500/25 cursor-pointer">
+              🔓 Mostrar {{ hiddenBlocksCount() }} bloque(s) avanzados N3–N4
+            </button>
+          }
+        </div>
       </div>
 
       @if (loading()) {
@@ -278,7 +454,44 @@
           (keydown.enter)="handleContentClick($any($event))"
           [innerHTML]="safeContent()">
         </div>
+
+        <!-- Bottom Module Stepper Footer -->
+        <nav aria-label="Navegación entre módulos" class="mt-6 mb-4 p-4 rounded-xl bg-[#111827] border border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          @if (prevCategory(); as prev) {
+            <button
+              type="button"
+              (click)="goPrevCategory()"
+              class="min-h-[42px] px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-left transition-colors cursor-pointer">
+              <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">← Módulo Anterior</div>
+              <div class="text-xs sm:text-sm font-bold text-slate-200 truncate">{{ prev.label }}</div>
+            </button>
+          } @else {
+            <div class="hidden sm:block"></div>
+          }
+
+          <button
+            type="button"
+            (click)="toggleSectionCompleted(activeSectionId())"
+            [class]="isSectionCompleted(activeSectionId())
+              ? 'min-h-[42px] px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-pointer whitespace-nowrap'
+              : 'min-h-[42px] px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-200 border border-slate-700 hover:border-emerald-400 cursor-pointer whitespace-nowrap'">
+            @if (isSectionCompleted(activeSectionId())) { ✅ Capítulo Dominado } @else { ✓ Marcar Capítulo Dominado }
+          </button>
+
+          @if (nextCategory(); as next) {
+            <button
+              type="button"
+              (click)="goNextCategory()"
+              class="min-h-[42px] px-4 py-2 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/40 text-left sm:text-right transition-colors cursor-pointer">
+              <div class="text-[10px] uppercase tracking-wider text-sky-300 font-semibold">Siguiente Módulo →</div>
+              <div class="text-xs sm:text-sm font-bold text-white truncate">{{ next.label }}</div>
+            </button>
+          } @else {
+            <div class="hidden sm:block"></div>
+          }
+        </nav>
       }
     </main>
   </div>
 </div>
+

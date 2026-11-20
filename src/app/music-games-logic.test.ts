@@ -3,8 +3,14 @@ import assert from 'node:assert/strict';
 import {
   analyzePedalInterval,
   analyzeSpanishLyricLine,
+  applyEnharmonicGoldenRule,
+  buildScaleFretboardPath,
   classifyVocalRangeDetailed,
+  convertProgressionToNashville,
   createPitchAcuityRound,
+  evaluateGapClickTiming,
+  harmonizeMelodyVoices,
+  resolvePlayableChordVoicing,
   verifySimonStep,
 } from './music-games-logic';
 
@@ -74,3 +80,125 @@ test('Simon pattern step verifier tracks progression and detects mistakes', () =
   assert.equal(wrong.status, 'wrong');
   assert.equal(wrong.expectedMidi, 64);
 });
+
+test('Enharmonic Golden Rule spells F major with Bb (not A#) and C# minor cleanly', () => {
+  const fMaj = applyEnharmonicGoldenRule(5); // F major
+  assert.deepEqual(fMaj.notes, ['F', 'G', 'A', 'Bb', 'C', 'D', 'E']);
+
+  const fSharpMaj = applyEnharmonicGoldenRule(6, [0, 2, 4, 5, 7, 9, 11], false); // F# major
+  assert.deepEqual(fSharpMaj.notes, ['F#', 'G#', 'A#', 'B', 'C#', 'D#', 'E#']);
+
+  const dbMaj = applyEnharmonicGoldenRule(1, [0, 2, 4, 5, 7, 9, 11], true); // Db major
+  assert.deepEqual(dbMaj.notes, ['Db', 'Eb', 'F', 'Gb', 'Ab', 'Bb', 'C']);
+});
+
+test('Nashville Number System converter translates C-Am-F-G7 and transposes cleanly to G', () => {
+  const out = convertProgressionToNashville(
+    0, // Key of C
+    [
+      { rootPc: 0, quality: 'maj' },
+      { rootPc: 9, quality: 'min' },
+      { rootPc: 5, quality: 'maj' },
+      { rootPc: 7, quality: 'dom7' },
+    ],
+    7 // Transpose to G
+  );
+  assert.deepEqual(out.map((o) => o.nashville), ['1', '6m', '4', '57']);
+  assert.deepEqual(out.map((o) => o.transposedSymbol), ['G', 'Em', 'C', 'D7']);
+});
+
+test('2, 3, and 4-voice diatonic harmonizer generates valid ascending voicings and detects parallel 5ths', () => {
+  const harm2 = harmonizeMelodyVoices([64, 65, 67], 0, 2); // E4 -> F4 -> G4 in C major
+  assert.equal(harm2.length, 3);
+  assert.deepEqual(harm2[0].voices, [60, 64]); // C4 + E4 (3rd below)
+
+  const harm3 = harmonizeMelodyVoices([67, 69], 0, 3); // G4 -> A4 in C major closed triad
+  assert.equal(harm3[0].voices.length, 3);
+  assert.equal(harm3[1].parallelFifthWarning, true); // Parallel closed triads trigger parallel 5th alert
+
+  const harm4 = harmonizeMelodyVoices([72, 74], 0, 4);
+  assert.equal(harm4[0].voices.length, 4);
+  assert.ok(harm4[0].voices[0] < harm4[0].voices[3]);
+});
+
+test('Gap Click timing evaluator classifies pocket, early, late, and off-beat taps', () => {
+  const pocket = evaluateGapClickTiming(500, 1012); // +12ms vs beat at 1000ms
+  assert.equal(pocket.deltaMs, 12);
+  assert.equal(pocket.verdict, 'En el bolsillo (±25 ms)');
+
+  const early = evaluateGapClickTiming(500, 955); // -45ms
+  assert.equal(early.deltaMs, -45);
+  assert.equal(early.verdict, 'Levemente adelantado');
+
+  const late = evaluateGapClickTiming(500, 1060); // +60ms
+  assert.equal(late.deltaMs, 60);
+  assert.equal(late.verdict, 'Levemente atrasado');
+});
+
+test('buildScaleFretboardPath produces strictly ascending valid 1-fret-per-step paths on guitar and bass', () => {
+  const guitarOpen = [64, 59, 55, 50, 45, 40];
+  const cMajGuitar = buildScaleFretboardPath(guitarOpen, 0, [0, 2, 4, 5, 7, 9, 11], 12);
+  assert.equal(cMajGuitar.length, 8);
+  assert.equal(cMajGuitar[0].midi, 48); // C3
+  assert.equal(cMajGuitar[7].midi, 60); // C4
+  for (let i = 1; i < cMajGuitar.length; i++) {
+    assert.ok(cMajGuitar[i].midi > cMajGuitar[i - 1].midi);
+    assert.equal(guitarOpen[cMajGuitar[i].sIdx] + cMajGuitar[i].fret, cMajGuitar[i].midi);
+  }
+
+  const bassOpen = [43, 38, 33, 28];
+  const eMinBass = buildScaleFretboardPath(bassOpen, 4, [0, 2, 3, 5, 7, 8, 10], 12);
+  assert.equal(eMinBass.length, 8);
+  assert.equal(eMinBass[0].midi, 28); // E1
+  assert.equal(eMinBass[0].sIdx, 3);
+  assert.equal(eMinBass[0].fret, 0);
+});
+
+test('resolvePlayableChordVoicing returns idiomatic single-position guitar chords without duplicate frets', () => {
+  const guitarOpen = [64, 59, 55, 50, 45, 40];
+  const byString = (voicing: { sIdx: number; fret: number }[]) =>
+    Object.fromEntries(voicing.map((v) => [v.sIdx, v.fret]));
+
+  // C Major: 5th string fret 3, 4th fret 2, 3rd fret 0, 2nd fret 1, 1st fret 0
+  const cMaj = resolvePlayableChordVoicing([48, 52, 55], guitarOpen, 12);
+  const cMap = byString(cMaj);
+  assert.equal(cMap[4], 3);
+  assert.equal(cMap[3], 2);
+  assert.equal(cMap[2], 0);
+  assert.equal(cMap[1], 1);
+  assert.equal(cMap[5], undefined); // must NOT light 6th string fret 8 duplicate!
+
+  // G Major: 3-2-0-0-0-3
+  const gMap = byString(resolvePlayableChordVoicing([43, 47, 50], guitarOpen, 12));
+  assert.equal(gMap[5], 3);
+  assert.equal(gMap[4], 2);
+  assert.equal(gMap[3], 0);
+  assert.equal(gMap[2], 0);
+  assert.equal(gMap[1], 0);
+  assert.equal(gMap[0], 3);
+
+  // D Major: x-x-0-2-3-2
+  const dMap = byString(resolvePlayableChordVoicing([50, 54, 57], guitarOpen, 12));
+  assert.equal(dMap[3], 0);
+  assert.equal(dMap[2], 2);
+  assert.equal(dMap[1], 3);
+  assert.equal(dMap[0], 2);
+  assert.equal(dMap[5], undefined);
+
+  // F Major: 1-3-3-2-1-1
+  const fMap = byString(resolvePlayableChordVoicing([41, 45, 48], guitarOpen, 12));
+  assert.equal(fMap[5], 1);
+  assert.equal(fMap[4], 3);
+  assert.equal(fMap[3], 3);
+  assert.equal(fMap[2], 2);
+
+  // Cm(maj7) (C Melódica): single compact voicing, max 1 fret per string, covers C Eb G B
+  const cmMaj7 = resolvePlayableChordVoicing([48, 51, 55, 59], guitarOpen, 12);
+  const uniqueStrings = new Set(cmMaj7.map((v) => v.sIdx));
+  assert.equal(uniqueStrings.size, cmMaj7.length);
+  const pcs = new Set(cmMaj7.map((v) => v.midi % 12));
+  assert.deepEqual([...pcs].sort((a, b) => a - b), [0, 3, 7, 11]);
+});
+
+
+

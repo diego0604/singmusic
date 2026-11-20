@@ -180,6 +180,60 @@ export const TREATISE_ENRICHMENT_SEARCH_META: TreatiseSearchMeta[] = [
     keywords: 'triadas en el mastil inversiones estado fundamental primera segunda inversion sets de 3 cuerdas spread triads triangulo gancho ala',
     snippet: 'Mapa interactivo de las 3 inversiones de cualquier tríada (Mayor, Menor, Disminuida, Aumentada, Sus2, Sus4) por grupos de 3 cuerdas en guitarra y bajo.',
   },
+  {
+    catId: 'guitarra-ac',
+    catLabel: '4. Guitarra Acústica',
+    sectionId: 'ga-rasgueos',
+    sectionTitle: '🎸 Rasgueos y Ejercicios Prácticos (Pop, 6/8, Funk Mute X y Reggae)',
+    nivel: '1-2',
+    keywords: 'rasgueos ejercicios guitarra acustica mano derecha pendulo apagados funk mute reggae 6/8',
+    snippet: 'Aprende el movimiento pendular de mano derecha, apagados percusivos (X), patrones en 4/4 y 6/8 y ejercicios guiados paso a paso.',
+  },
+  {
+    catId: 'teoria',
+    catLabel: '1. Teoría y Acústica',
+    sectionId: 't-lectura',
+    sectionTitle: '🎼 Escritor Interactivo de Pentagrama (Claves de Sol, Fa y Do 3ª)',
+    nivel: '1-2',
+    keywords: 'escritura musical pentagrama clave de sol fa do 3a figuras silencios compases',
+    snippet: 'Escribe y escucha tus propias melodías en clave de Sol, Fa o Do 3ª con compases 4/4, 3/4 y 6/8.',
+  },
+  {
+    catId: 'arreglos',
+    catLabel: '10. Arreglos y Orquestación',
+    sectionId: 'a-integracion',
+    sectionTitle: '🎺 Escritura Práctica de Banda (Kicks & Nashville) y Arreglo a 2, 3 y 4 Voces',
+    nivel: '2-3',
+    keywords: 'escritura practica de banda lead sheet kicks sistema nashville arreglo escrito 2 3 4 voces drop 2 satb',
+    snippet: 'Cómo escribir cifrados universales en Sistema Nashville, cortes rítmicos (kicks) y armonizar melodías a 2, 3 y 4 voces sin choques.',
+  },
+  {
+    catId: 'bateria',
+    catLabel: '7. Batería y Percusión',
+    sectionId: 'd-grooves',
+    sectionTitle: '🥁 Notación de Batería en Pentagrama PAS Sincronizada, Gap Click y Sonido del Kit',
+    nivel: '1-3',
+    keywords: 'notacion de bateria pentagrama sincronizada entrenador de tempo interno gap click tecnicas y sonido del kit afinacion toms rimshot cross-stick escobillas',
+    snippet: 'Lee y programa grooves sobre el pentagrama oficial PAS sincronizado, entrena tu reloj interno con Gap Click y domina la afinación y técnicas del kit.',
+  },
+  {
+    catId: 'bajo',
+    catLabel: '6. Bajo Eléctrico (4 Cuerdas)',
+    sectionId: 'b-bajo-bateria',
+    sectionTitle: '🔒 Laboratorio "Lock-In" Bajo + Bombo y Recursos Expresivos Avanzados (4c / 5c)',
+    nivel: '2-3',
+    keywords: 'laboratorio lock-in bajo bombo staccato sustain anticipacion 5 cuerdas b0 armonicos naturales artificiales decimos fretless palm mute',
+    snippet: 'Sincroniza el ataque del bajo con el bombo en 4 o 5 cuerdas y domina armónicos, décimas, glissando fretless y palm mute.',
+  },
+  {
+    catId: 'canto',
+    catLabel: '8. Canto y Calentamiento Vocal',
+    sectionId: 'v-calentamiento',
+    sectionTitle: '⚡ Gimnasio de Agilidad, Riffs y Melismas + Modificación de Vocales en el Passaggio',
+    nivel: '1-3',
+    keywords: 'gimnasio de agilidad riffs melismas trinos modificacion de vocales i e a o u passaggio covering',
+    snippet: 'Entrena velocidad en escalas pentatónicas/blues/armónicas y ajusta tus vocales al cruzar el passaggio sin tensión laríngea.',
+  },
 ];
 
 function appendInsideSection(html: string, sectionId: string, blockHtml: string): string {
@@ -218,6 +272,18 @@ function prependAfterSectionHeader(html: string, sectionId: string, blockHtml: s
   const closeSectionIndex = html.indexOf('</section>', startIndex);
   if (closeSectionIndex === -1) return html;
 
+  // Prefer inserting immediately after <div class="module-header">...</div> or <div class="section-header">...</div>
+  const mhIdx = html.indexOf('class="module-header"', startIndex);
+  const shIdx = html.indexOf('class="section-header"', startIndex);
+  const hdrIdx = mhIdx !== -1 && mhIdx < closeSectionIndex ? mhIdx : shIdx !== -1 && shIdx < closeSectionIndex ? shIdx : -1;
+  if (hdrIdx !== -1) {
+    const hdrClose = html.indexOf('</div>', hdrIdx);
+    if (hdrClose !== -1 && hdrClose < closeSectionIndex) {
+      const insertPos = hdrClose + '</div>'.length;
+      return html.slice(0, insertPos) + '\n' + blockHtml + '\n' + html.slice(insertPos);
+    }
+  }
+
   const h2CloseIndex = html.indexOf('</h2>', startIndex);
   if (h2CloseIndex !== -1 && h2CloseIndex < closeSectionIndex) {
     const insertPos = h2CloseIndex + '</h2>'.length;
@@ -228,10 +294,41 @@ function prependAfterSectionHeader(html: string, sectionId: string, blockHtml: s
   return html.slice(0, tagEndIndex) + '\n' + blockHtml + '\n' + html.slice(tagEndIndex);
 }
 
+function wrapDenseSubheadingInDetails(
+  html: string,
+  sectionId: string,
+  headingId: string,
+  summaryTitle: string,
+  nivel = '3'
+): string {
+  const secStart = html.indexOf(`id="${sectionId}"`);
+  if (secStart === -1) return html;
+  const secEnd = html.indexOf('</section>', secStart);
+  if (secEnd === -1) return html;
+
+  const h3Marker = `<h3 id="${headingId}"`;
+  const h3Idx = html.indexOf(h3Marker, secStart);
+  if (h3Idx === -1 || h3Idx > secEnd) return html;
+
+  // Wrap from h3Idx until next <h3 or <article class="interactive-widget" or </section>
+  const nextH3 = html.indexOf('<h3', h3Idx + h3Marker.length);
+  const nextArticle = html.indexOf('<article', h3Idx + h3Marker.length);
+  let blockEnd = secEnd;
+  if (nextH3 !== -1 && nextH3 < blockEnd) blockEnd = nextH3;
+  if (nextArticle !== -1 && nextArticle < blockEnd) blockEnd = nextArticle;
+
+  const innerBlock = html.slice(h3Idx, blockEnd);
+  const wrapped = `<details data-nivel="${nivel}" class="callout-box mt-4"><summary style="color:#fbbf24; font-weight:800;">🎓 ${summaryTitle} (Nivel ${nivel} — Pulsa para ver fórmulas matemáticas y detalle avanzado)</summary>${innerBlock}</details>`;
+  return html.slice(0, h3Idx) + wrapped + html.slice(blockEnd);
+}
+
 export function injectTreatiseEnrichmentIntoCategoryHtml(catId: string, html: string): string {
   let out = html;
 
   if (catId === 'teoria' || catId === 'all') {
+    out = prependAfterSectionHeader(out, 'intro', buildSoftBeginnerIntroPrimerHtml());
+    out = prependAfterSectionHeader(out, 't-sonido', buildSoftBeginnerSoundPrimerHtml());
+    out = wrapDenseSubheadingInDetails(out, 't-sonido', 't-sonido-temperamento', 'Profundización Matemática: Pitágoras, Cents y Temperamento Igual (2^(n/12))', '3');
     out = prependAfterSectionHeader(out, 't-notas', buildZeroToHeroNotesAndAccidentalsHtml());
     out = prependAfterSectionHeader(out, 't-intervalos', buildZeroToHeroIntervalsThirdsAndFifthsHtml());
     out = insertAfterSection(out, 't-intervalos', buildInterval9thVisualizerSectionHtml());
@@ -240,6 +337,7 @@ export function injectTreatiseEnrichmentIntoCategoryHtml(catId: string, html: st
     out = appendInsideSection(out, 't-modos', buildModosIlustradosCartographyHtml());
     out = appendInsideSection(out, 't-tonalidades', buildCircleOfFifthsDeepGuideHtml());
     out = appendInsideSection(out, 't-ritmo', buildKonnakolAndClaveHtml());
+    out = appendInsideSection(out, 't-lectura', buildNotationWriterIntroAndLabHtml('score'));
   }
 
   if (catId === 'armonia' || catId === 'all') {
@@ -256,22 +354,56 @@ export function injectTreatiseEnrichmentIntoCategoryHtml(catId: string, html: st
   if (catId === 'guitarra-ac' || catId === 'all') {
     out = appendInsideSection(out, 'ga-acordes', buildGuitarKuleshovCagedAndColombianHtml());
     out = insertAfterSection(out, 'ga-acordes', buildFretboardTriadsSectionHtml('ga-triadas-mastil', 'guitarra-ac', '2B. Tríadas en el Mástil (Inversiones y Sets de 3 Cuerdas)'));
+    out = insertAfterSection(out, 'ga-ritmo-fingerstyle', buildGuitarStrummingSectionHtml());
   }
 
   if (catId === 'guitarra-el' || catId === 'all') {
     out = appendInsideSection(out, 'ge-riffs-solos', buildElectricGuitarGlueTriadsAndOctavesHtml());
   }
 
+  if (catId === 'bajo' || catId === 'all') {
+    out = appendInsideSection(out, 'b-bajo-bateria', buildBassLockInAndExpressiveHtml());
+    out = appendInsideSection(out, 'b-mutear-articulacion', buildBassExpressiveQuickJumpHtml());
+  }
+
+  if (catId === 'bateria' || catId === 'all') {
+    out = appendInsideSection(out, 'd-grooves', buildDrumProNotationGapAndKitHtml());
+  }
+
   if (catId === 'canto' || catId === 'all') {
+    out = prependAfterSectionHeader(out, 'v-calentamiento', buildVocalAgilityAndVowelLabHtml());
     out = appendInsideSection(out, 'v-calentamiento', buildVocalDiagnosticAndHygieneHtml());
     out = appendInsideSection(out, 'v-interpretacion-estilos', buildVocalSixLayersBeltAndMicHtml());
   }
 
   if (catId === 'arreglos' || catId === 'all') {
     out = appendInsideSection(out, 'a-fundamentos', buildArreglosIlustradosBulletproofPadHtml());
+    out = appendInsideSection(out, 'a-integracion', buildBandChartAndVoicesSectionHtml());
   }
 
   return out;
+}
+
+function buildSoftBeginnerIntroPrimerHtml(): string {
+  return `
+  <div class="callout-box mb-5" style="border-left: 4px solid #10b981;" data-nivel="1">
+    <h3>🌱 Empieza Aquí (Sin Tecnicismos): Cómo Usar Esta Enciclopedia</h3>
+    <p class="text-sm mb-2">
+      No necesitas saber leer partituras ni dominar física acústica para tocar o componer música hoy mismo. Usa el selector de nivel en la barra superior (<strong>🌱 Novato</strong>) para enfocarte en las bases esenciales (<em>Notas, Intervalos, Acordes básicos, Ritmo y Rasgueos</em>), escucha cada ejemplo haciendo clic en los botones <code>🔊</code> y observa cómo las notas se <strong>iluminan en vivo</strong> sobre el mástil y el monitor.
+    </p>
+  </div>
+  `;
+}
+
+function buildSoftBeginnerSoundPrimerHtml(): string {
+  return `
+  <div class="callout-box mb-5" style="border-left: 4px solid #38bdf8;" data-nivel="1">
+    <h3>🌱 Paso 0 (Sin Fórmulas): ¿Por qué unas Notas Combinan y Otras Chocan?</h3>
+    <p class="text-sm mb-2">
+      Todo sonido musical es simplemente aire vibrando rápido o lento: <strong>más lento = sonido grave (bajo/bombo)</strong>; <strong>más rápido = sonido agudo (voz/flauta/guitarra)</strong>. Cuando una cuerda vibra, además de su nota principal produce ecos suaves llamados <strong>armónicos</strong>. Esos ecos naturales explican por qué una octava o una quinta suenan firmes y agradables sin necesidad de cálculos matemáticos (si quieres ver las ecuaciones de Pitágoras y hercios más adelante, las encontrarás desplegables al final del capítulo).
+    </p>
+  </div>
+  `;
 }
 
 function buildZeroToHeroNotesAndAccidentalsHtml(): string {
@@ -318,6 +450,24 @@ function buildZeroToHeroNotesAndAccidentalsHtml(): string {
         </div>
       </div>
     </div>
+
+    <div class="card mb-4" style="border-left: 3px solid #f59e0b;">
+      <h4>🕰️ 4. ¿Qué es una Enarmonía, el Becuadro (<code>♮</code>) y la "Regla de Oro de la Enarmonía"?</h4>
+      <p class="text-xs">
+        • <strong>¿Qué es una Enarmonía?</strong> Cuando <strong>un mismo sonido físico (la misma tecla o el mismo traste)</strong> puede escribirse con <strong>dos nombres distintos</strong> según la dirección o la escala. Ejemplos clave: <code>Do# = Re♭</code>, <code>Fa# = Sol♭</code>, e incluso entre notas naturales sin tecla negra en medio: <code>Mi# = Fa</code> y <code>Do♭ = Si</code>.<br>
+        • <strong>Becuadro (<code>♮</code>):</strong> Borra temporalmente un sostenido o bemol anterior y devuelve la nota a su estado natural.<br>
+        • <strong>La Regla de Oro de la Enarmonía (¿Por qué Fa Mayor lleva <code>Si♭</code> y NO <code>La#</code>?):</strong> En toda escala diatónica de 7 notas, debes usar las <strong>7 letras del abecedario musical (<code>Do – Re – Mi – Fa – Sol – La – Si</code>) UNA SOLA VEZ cada una</strong>, sin repetir letras ni saltarte ninguna. Si en Fa Mayor escribieras <code>Fa – Sol – La – La#</code> estarías repitiendo la letra <code>La</code> y saltándote el <code>Si</code>. Por eso la regla exige llamarlo <strong><code>Si♭</code></strong>. Explóralo en el reloj interactivo:
+      </p>
+    </div>
+
+    <article class="interactive-widget mt-4" id="lab-reloj-cromatico" data-lab="chromatic-clock-lab" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Nivel 1 · Base Obligatoria</span>
+        <h3>🕰️ Reloj Cromático de 12 Horas y Regla de Oro de la Enarmonía</h3>
+        <p class="text-sm">Haz clic en cualquier hora del reloj para escuchar la nota, ver su pareja enarmónica (<code># / ♭</code>) y comprobar cómo se aplica la Regla de Oro de las 7 letras sin repeticiones.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
   </div>
   `;
 }
@@ -548,7 +698,7 @@ function buildZeroToHeroChordBuildingHtml(): string {
 
 function buildScalesSkeletonAndAtlasHtml(): string {
   return `
-  <div class="callout-box mt-6" style="border-left: 4px solid #f59e0b;">
+  <div class="callout-box mt-6" style="border-left: 4px solid #f59e0b;" data-nivel="3">
     <h3>🦴 La Regla del "Esqueleto Pentatónico + 2 Notas" y Atlas de Escalas Avanzadas</h3>
     <p class="text-sm mb-3">
       La <strong>Pentatónica Mayor (1 – 2 – 3 – 5 – 6)</strong> y su relativa <strong>Pentatónica Menor (1 – ♭3 – 4 – 5 – ♭7)</strong> son la escala diatónica despojada de sus dos semitonos conflictivos (el tritono <code>4–7</code> en Mayor, o <code>2–♭6</code> en Menor). Esas <strong>5 notas son el chasis universal</strong>; las <strong>2 notas extra</strong> son los "faros modales" que definen el sabor exacto del modo:
@@ -682,7 +832,7 @@ function buildScalesSkeletonAndAtlasHtml(): string {
 
 function buildModosIlustradosCartographyHtml(): string {
   return `
-  <div class="callout-box mt-6" style="border-left: 4px solid #38bdf8;">
+  <div class="callout-box mt-6" style="border-left: 4px solid #38bdf8;" data-nivel="3">
     <h3>🗺️ Cartografía Modal de 14 Modos, Técnica "Por Descarte" e Ingredientes Emocionales (Método Callipari)</h3>
     <p class="text-sm mb-3">
       Para que una progresión suene verdaderamente <strong>modal</strong> y no sea absorbida por el imán tonal del Jónico o Eólico, aplicamos la <strong>Técnica por Descarte en 3 pasos</strong>:
@@ -906,7 +1056,7 @@ function buildKonnakolAndClaveHtml(): string {
 
 function buildTensionesIlustradasRescueAndGlueHtml(): string {
   return `
-  <div class="callout-box mt-6" style="border-left: 4px solid #a855f7;">
+  <div class="callout-box mt-6" style="border-left: 4px solid #a855f7;" data-nivel="3">
     <h3>🚑 "Operación Rescate" de 9nas, 11nas y 13nas, "Tensiones Glue" y Rearmonización del Feliz Cumpleaños</h3>
     <p class="text-sm mb-3">
       En el libro <em>Tensiones Ilustradas</em>, al superponer 9nas, 11nas y 13nas diatónicas sobre los 7 grados de Do Mayor descubrimos por qué algunas tensiones chocan a semitono (<code>♭9</code>, <code>11</code> sobre acorde mayor, <code>♭13</code>) o forman un tritono interno que destruye la función del acorde. Así queda la <strong>Auditoría y Operación Rescate grado por grado</strong>:
@@ -1021,7 +1171,7 @@ function buildTensionesIlustradasRescueAndGlueHtml(): string {
 
 function buildPolychordVsHybridMatrixHtml(): string {
   return `
-  <div class="callout-box mt-6" style="border-left: 4px solid #ec4899;">
+  <div class="callout-box mt-6" style="border-left: 4px solid #ec4899;" data-nivel="4">
     <h3>⚖️ Matriz Definitiva de "Slash Chords" (<code>X/Y</code>): Poliacorde vs. Híbrido vs. Inversión vs. Line Cliché</h3>
     <p class="text-sm mb-3">
       No todo lo que lleva una barra diagonal (<code>/</code>) es lo mismo. En arreglo profesional distinguimos <strong>4 arquitecturas completamente diferentes</strong>:
@@ -1075,7 +1225,7 @@ function buildPolychordVsHybridMatrixHtml(): string {
 
 function buildPachelbelAndStaircasesHtml(): string {
   return `
-  <div class="callout-box mt-6" style="border-left: 4px solid #f97316;">
+  <div class="callout-box mt-6" style="border-left: 4px solid #f97316;" data-nivel="3">
     <h3>🎻 Deformación del Canon de Pachelbel, "La Escalera que Baja" y "La Escalera que Sube"</h3>
     <p class="text-sm mb-3">
       En <em>Armonía Ilustrada</em> analizamos por qué el <strong>Canon de Pachelbel</strong> (<code>I – V – vi – iii – IV – I – IV – V</code>, en Do: <code>C – G – Am – Em – F – C – F – G</code>) funciona como una montaña rusa perfecta de tensión y cómo podemos <strong>deformarlo con las dos escaleras maestras</strong>:
@@ -1109,7 +1259,7 @@ function buildPachelbelAndStaircasesHtml(): string {
 
 function buildArmoniaIlustradaAdvancedSystemsHtml(): string {
   return `
-  <div class="callout-box mt-6" style="border-left: 4px solid #06b6d4;">
+  <div class="callout-box mt-6" style="border-left: 4px solid #06b6d4;" data-nivel="4">
     <h3>🧲 Sistemas de Armonía Ilustrada 1 y 2: Índice de Familiaridad, Alineación de Inversiones, Función Gamma (Γ) y Ejes de Bartók</h3>
     <p class="text-sm mb-3">
       Más allá de la tonalidad clásica, Brian Callipari sistematiza <strong>4 motores de composición moderna y cinematográfica</strong>:
@@ -1230,7 +1380,7 @@ function buildGuitarKuleshovCagedAndColombianHtml(): string {
 
 function buildElectricGuitarGlueTriadsAndOctavesHtml(): string {
   return `
-  <div class="callout-box mt-6" style="border-left: 4px solid #ef4444;">
+  <div class="callout-box mt-6" style="border-left: 4px solid #ef4444;" data-nivel="3">
     <h3>⚡ Solución al Abuso de la Pentatónica en el Blues: Las 3 Figuras Maestras (Triángulo, Gancho y Ala) y las 5 Octavas</h3>
     <p class="text-sm mb-3">
       ¿Por qué cuando improvisas con la <strong>Pentatónica Menor de La (<code>A–C–D–E–G</code>)</strong> sobre un Blues Mayor en La (<code>A7 – D7 – E7</code>) algunas notas suenan "desconectadas"? Porque en <code>A7 (A–C#–E–G)</code> el <code>Do natural</code> choca con <code>C#</code>, y en <code>E7 (E–G#–B–D)</code> el <code>Sol natural</code> y el <code>La</code> chocan contra <code>G#</code>. La solución profesional de <em>Glue Mágico para Guitarristas</em> es dominar las <strong>3 Figuras Geométricas de Tríadas en las cuerdas 1, 2 y 3</strong> sin mover la mano de una sola zona de 4 trastes:
@@ -1354,7 +1504,7 @@ function buildVocalDiagnosticAndHygieneHtml(): string {
 
 function buildVocalSixLayersBeltAndMicHtml(): string {
   return `
-  <div class="callout-box mt-6" style="border-left: 4px solid #f43f5e;">
+  <div class="callout-box mt-6" style="border-left: 4px solid #f43f5e;" data-nivel="3">
     <h3>🎭 El Método de las 6 Capas para Montar una Canción, Belting Sano vs. Mixed Belt y Coreografía de Micrófono</h3>
     <p class="text-sm mb-3">
       Síntesis de los <em>Capítulos 19, 25, 29, 30 y 31 del Libro Completo de Canto</em>: nunca intentes aprender letra, melodía, agudos y emoción al mismo tiempo. Usa el <strong>Protocolo de las 6 Capas (y el Desarme Quirúrgico en 3 pasos para compases difíciles)</strong>:
@@ -1430,7 +1580,7 @@ function buildVocalSixLayersBeltAndMicHtml(): string {
 
 function buildArreglosIlustradosBulletproofPadHtml(): string {
   return `
-  <div class="callout-box mt-6" style="border-left: 4px solid #6366f1;">
+  <div class="callout-box mt-6" style="border-left: 4px solid #6366f1;" data-nivel="3">
     <h3>🛡️ El "Colchón a Prueba de Balas" a 4 Voces (Los 4 Power Rangers), <code>Cmaj6</code> vs. <code>Cmaj7</code> y la Línea de Acción en Embudo</h3>
     <p class="text-sm mb-3">
       En <em>Arreglos Ilustrados</em> (Brian Callipari), cuando escribimos para un cuarteto (cuerdas, vientos, coro SATB o sintetizador polifónico) visualizamos las 4 voces como <strong>4 líneas horizontales independientes con color propio (Voz 1 Rosa/Soprano, Voz 2 Celeste/Contralto, Voz 3 Verde/Tenor, Voz 4 Amarilla/Bajo)</strong> gobernadas por 5 leyes de oro:
@@ -1799,4 +1949,158 @@ function buildNeighborChordsSectionHtml(): string {
   </section>
   `;
 }
+
+function buildGuitarStrummingSectionHtml(): string {
+  return `
+  <section id="ga-rasgueos" class="module-section" data-cat="guitarra-ac" data-nivel="1-2" data-menu="3B. Rasgueos, Apagados Percusivos y Ejercicios">
+    <div class="module-header">
+      <span class="nav-badge badge-lvl1">Niveles 1–2 · Mano Derecha y Ritmo Aplicado</span>
+      <h2 class="module-title">3B. Guitarra Acústica: Rasgueos, Péndulo Continuo, Apagados (<code>✕</code>) y Ejercicios</h2>
+      <p class="module-subtitle">Domina el groove con la mano derecha manteniendo el péndulo constante (sin frenar en los cambios de acorde) y combinando acentos dinámicos con chasquidos percusivos.</p>
+    </div>
+
+    <div class="grid-cards mb-4">
+      <div class="card">
+        <h4>1. La Ley del Péndulo Constante</h4>
+        <p class="text-xs">Tu muñeca derecha sube y baja <strong>siempre al mismo pulso constante</strong> (como un limpiaparabrisas): los tiempos fuertes (<code>1, 2, 3, 4</code>) van siempre <strong>hacia abajo (<code>↓</code>)</strong> y los contratiempos (<em>"y"</em>) van <strong>hacia arriba (<code>↑</code>)</strong>. Cuando un paso dice "Aire (<code>·</code>)", sigues moviendo la mano sin tocar las cuerdas.</p>
+      </div>
+      <div class="card">
+        <h4>2. Dinámica (Cuerdas Graves vs. Agudas) y Apagado (<code>✕</code>)</h4>
+        <p class="text-xs">No rasguees las 6 cuerdas con la misma fuerza en cada golpe: busca un golpe cálido en las graves en el tiempo 1, abre los agudos en el 2 y 4, o frena las cuerdas con el canto de la mano derecha justo al golpear (<code>✕</code>) para imitar la caja de la batería.</p>
+      </div>
+      <div class="card">
+        <h4>3. Regla del Cambio "En el Último Upstroke"</h4>
+        <p class="text-xs">Nunca frenes la mano derecha mientras cambias de acorde en la izquierda. Si el último movimiento del compás es <code>↑</code> al aire, usa esa fracción de segundo para soltar los dedos y caer limpio en el tiempo <code>1</code> del acorde nuevo.</p>
+      </div>
+    </div>
+
+    <article class="interactive-widget mt-4" id="lab-rasgueos-guitarra" data-lab="guitar-strumming-lab" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Entrenador Interactivo de Rasgueos · 4/4, 6/8 y Funk Mute</span>
+        <h3>🎸 Laboratorio y Secuenciador de Rasgueos en Vivo</h3>
+        <p class="text-sm">Elige un estilo (Pop, 6/8 Folk, Funk con <code>✕</code>, Reggae), personaliza cualquier paso haciendo clic en las flechas <code>↓ / ↑ / ✕</code> y sigue las notas iluminándose en el mástil al ritmo del metrónomo.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </section>
+  `;
+}
+
+function buildNotationWriterIntroAndLabHtml(preset: string): string {
+  return `
+  <div class="callout-box mt-6" style="border-left: 4px solid #38bdf8;" data-nivel="1">
+    <h3>🎼 Taller Interactivo de Escritura Musical, Band Charts y Arreglo Coral</h3>
+    <p class="text-sm mb-3">
+      Leer es solo la mitad del camino: escribir directamente sobre el pentagrama, cifrar con el <strong>Sistema Nashville</strong> para tu banda o repartir una melodía entre <strong>2, 3 o 4 voces</strong> fija la lectura para siempre.
+    </p>
+    <article class="interactive-widget mt-3" id="lab-escritor-pentagrama" data-lab="notation-writer-lab" data-preset="${preset}" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Escritor Interactivo · Sol / Fa / Do 3ª + Band Chart + 2/3/4 Voces</span>
+        <h3>✍️ Estudio de Escritura Musical, Lead Sheet y Armonizador a 4 Voces</h3>
+        <p class="text-sm">Alterna entre el escritor de pentagrama, el conversor de banda (Nashville + Kicks) y el armonizador coral/metales con detector de quintas paralelas.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </div>
+  `;
+}
+
+function buildBandChartAndVoicesSectionHtml(): string {
+  return `
+  <div class="callout-box mt-6" style="border-left: 4px solid #f472b6;" data-nivel="2">
+    <h3>🎺 Escritura Práctica de Banda (<em>Lead Sheets</em>, <em>Kicks</em> y Nashville) + Arreglo Escrito a 2, 3 y 4 Voces</h3>
+    <div class="grid-cards mb-3">
+      <div class="card">
+        <h4>1. El Chart Funcional (Sistema Nashville)</h4>
+        <p class="text-xs">En ensayos o grabaciones de estudio, escribir los acordes como grados (<code>1 – 6m – 4 – 57</code>) permite que el guitarrista, bajista y tecladista cambien de tonalidad al vuelo si el cantante pide subir o bajar la canción.</p>
+      </div>
+      <div class="card">
+        <h4>2. Cortes Rítmicos (<em>Kicks</em>)</h4>
+        <p class="text-xs">Cuando toda la banda debe golpear exactamente un acento sincopado antes del estribillo, se dibujan rombos (<code>♦</code>) encima del pentagrama indicando el ritmo exacto sin obligar a leer cada nota.</p>
+      </div>
+      <div class="card">
+        <h4>3. Arreglo Escrito a 2, 3 y 4 Voces</h4>
+        <p class="text-xs">• <strong>2 Voces:</strong> Dueto por 3ªs o 6ªs paralelas.<br>• <strong>3 Voces:</strong> Tríada cerrada en metales o coros.<br>• <strong>4 Voces (Drop 2 / SATB):</strong> Baja la 2ª voz aguda una octava para abrir el espectro sin cruzar registros.</p>
+      </div>
+    </div>
+    <article class="interactive-widget mt-4" id="lab-arreglo-banda-voces" data-lab="notation-writer-lab" data-preset="band" data-nivel="2">
+      <div class="widget-header">
+        <span class="widget-tag">Estudio de Arreglos · Band Chart + Armonizador 2/3/4 Voces</span>
+        <h3>🎶 Conversor Nashville en Vivo y Armonizador Escrito a 2, 3 y 4 Voces</h3>
+        <p class="text-sm">Transporta una progresión de banda en tiempo real, activa cortes rítmicos (<code>♦ Kicks</code>) o pasa a la pestaña de <strong>2, 3 y 4 Voces</strong> para escuchar y auditar cualquier melodía.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </div>
+  `;
+}
+
+function buildDrumProNotationGapAndKitHtml(): string {
+  return `
+  <div class="callout-box mt-6" style="border-left: 4px solid #38bdf8;" data-nivel="1">
+    <h3>🥁 Notación de Batería en Pentagrama Sincronizada, Entrenador de Tempo Interno (<em>Gap Click</em>) y Técnicas del Kit</h3>
+    <p class="text-sm mb-3">
+      Domina el estándar internacional PAS de lectura (<code>✕</code> arriba = Hi-Hat/Crash, espacio 3 = Caja/Tarola, espacio 1 = Bombo), pon a prueba tu reloj interno cuando desaparece el metrónomo y escucha la diferencia entre afinación por intervalos, <em>Rimshot</em>, <em>Cross-Stick</em>, <em>Ghost Notes</em> y escobillas.
+    </p>
+    <article class="interactive-widget mt-3" id="lab-bateria-pro" data-lab="drum-pro-lab" data-preset="staff" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Batería Completa · Pentagrama PAS + Gap Click + Sonido del Kit</span>
+        <h3>🥁 Pentagrama de Batería Sincronizado, Gap Click y Laboratorio del Kit</h3>
+        <p class="text-sm">Edita cualquier golpe en la rejilla para verlo y oírlo en el pentagrama, o cambia a las pestañas <strong>Gap Click</strong> (mide tu precisión en ms) y <strong>Sonido del Kit</strong>.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </div>
+  `;
+}
+
+function buildBassLockInAndExpressiveHtml(): string {
+  return `
+  <div class="callout-box mt-6" style="border-left: 4px solid #f59e0b;" data-nivel="2">
+    <h3>🔒 Laboratorio "Lock-In" Bajo + Bombo (4 y 5 Cuerdas) y Recursos Expresivos Avanzados</h3>
+    <p class="text-sm mb-3">
+      El verdadero peso de una banda ocurre cuando la envolvente del <strong>bajo y el bombo</strong> atacan y cortan exactamente en la misma subdivisión. Experimenta la diferencia entre tocar notas largas (<em>Legato/Sustain</em>), cortas (<em>Staccato</em>), anticipar un <code>-1/16</code> antes del compás o bajar a la 5ª cuerda grave (<code>B0</code>).
+    </p>
+    <article class="interactive-widget mt-3" id="lab-bajo-lock-in" data-lab="bass-lock-lab" data-preset="lock" data-nivel="2">
+      <div class="widget-header">
+        <span class="widget-tag">Groove Engine · Bombo + Bajo 4c/5c + Recursos Expresivos</span>
+        <h3>🔒 Secuenciador "Lock-In" Bajo + Bombo y Técnicas Expresivas</h3>
+        <p class="text-sm">Cambia entre 4 y 5 cuerdas (con <code>B0</code>), alterna <em>Staccato vs. Sustain</em>, activa la anticipación <code>-1/16</code> o explora Armónicos, Décimas y Fretless en la 2ª pestaña.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </div>
+  `;
+}
+
+function buildBassExpressiveQuickJumpHtml(): string {
+  return `
+  <div class="callout-box mt-4" style="border-left: 4px solid #10b981;" data-nivel="3">
+    <h3>✨ Recursos Expresivos del Bajista Moderno (Armónicos, Décimas, Glissando Fretless y Palm Mute)</h3>
+    <p class="text-xs mb-2">
+      Más allá de acompañar, el bajo eléctrico canta con <strong>armónicos naturales</strong> (trastes 12, 7 y 5), <strong>acordes en disposición abierta de décimas (<code>1–5–10</code>)</strong> y control de envolvente mediante <em>Palm Mute</em> junto al puente. Prueba todos los audios interactivos directamente en el laboratorio anterior (<a href="#lab-bajo-lock-in">ir a Lock-In y Recursos Expresivos</a>).
+    </p>
+  </div>
+  `;
+}
+
+function buildVocalAgilityAndVowelLabHtml(): string {
+  return `
+  <div class="callout-box mb-5" style="border-left: 4px solid #ec4899;" data-nivel="2">
+    <h3>⚡ Gimnasio de Agilidad, Riffs y Melismas + Modificación de Vocales en el <em>Passaggio</em></h3>
+    <p class="text-sm mb-3">
+      Para lograr runs limpios y agudos libres sin tensión de garganta necesitas dos entrenamientos complementarios: <strong>precisión escalonada por subdivisiones</strong> en velocidad progresiva, y <strong>modificación acústica de vocales</strong> (<code>/i/ → /ɪ/</code>, <code>/e/ → /œ/</code>, <code>/a/ → /ɔ/</code>) al subir hacia el puente vocal.
+    </p>
+    <article class="interactive-widget mt-3" id="lab-canto-agilidad-vocales" data-lab="vocal-agility-lab" data-preset="agility" data-nivel="2">
+      <div class="widget-header">
+        <span class="widget-tag">Entrenamiento Vocal · Melismas + Formantes por Registro</span>
+        <h3>🎤 Gimnasio de Melismas / Agilidad y Laboratorio de Modificación de Vocales</h3>
+        <p class="text-sm">Entrena riffs en escalas Pentatónica, Blues y Menor Armónica de 60 a 145 BPM o desliza la altura en la 2ª pestaña para escuchar cómo redondear cada vocal en tu passaggio.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </div>
+  `;
+}
+
 
