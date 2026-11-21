@@ -3555,6 +3555,95 @@ export function buildStructuredVocalTrainingSeries(
   );
 }
 
+/**
+ * Pure & persistent helper for hiding piano keyboards and focusing on Guitar or Bass
+ * in Theory / Harmony / Section 0-1 exercises.
+ */
+export type VisualInstrumentFocus = 'all' | 'guitar-only' | 'bass-only';
+
+export interface VisualInstrumentViewConfig {
+  focus: VisualInstrumentFocus;
+  showPiano: boolean;
+  neckMode: 'guitar' | 'bass';
+  audioTimbre: 'guitar' | 'bass' | 'piano';
+  label: string;
+}
+
+const VISUAL_INSTRUMENT_STORAGE_KEY = 'enciclopedia_visual_instrument_focus_v1';
+let memoryVisualInstrumentFocus: VisualInstrumentFocus = 'all';
+
+export function resolveVisualInstrumentView(
+  focus: VisualInstrumentFocus
+): VisualInstrumentViewConfig {
+  if (focus === 'guitar-only') {
+    return {
+      focus: 'guitar-only',
+      showPiano: false,
+      neckMode: 'guitar',
+      audioTimbre: 'guitar',
+      label: 'Solo Guitarra (6 cuerdas · Piano oculto)',
+    };
+  }
+  if (focus === 'bass-only') {
+    return {
+      focus: 'bass-only',
+      showPiano: false,
+      neckMode: 'bass',
+      audioTimbre: 'bass',
+      label: 'Solo Bajo 4c (4 cuerdas · Piano oculto)',
+    };
+  }
+  return {
+    focus: 'all',
+    showPiano: true,
+    neckMode: 'guitar',
+    audioTimbre: 'guitar',
+    label: 'Piano + Guitarra / Bajo',
+  };
+}
+
+export function computeEffectiveExplorerInstrument(
+  focus: VisualInstrumentFocus,
+  localInstrument: 'guitar' | 'piano' | 'bass'
+): 'guitar' | 'piano' | 'bass' {
+  if (focus === 'guitar-only') return 'guitar';
+  if (focus === 'bass-only') return 'bass';
+  return localInstrument;
+}
+
+export function getVisualInstrumentFocus(): VisualInstrumentFocus {
+  if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+    try {
+      const saved = window.localStorage.getItem(VISUAL_INSTRUMENT_STORAGE_KEY);
+      if (saved === 'all' || saved === 'guitar-only' || saved === 'bass-only') {
+        memoryVisualInstrumentFocus = saved;
+        return saved;
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+  return memoryVisualInstrumentFocus;
+}
+
+export function setVisualInstrumentFocus(focus: VisualInstrumentFocus): void {
+  memoryVisualInstrumentFocus = focus;
+  if (typeof window !== 'undefined') {
+    if (typeof window.localStorage !== 'undefined') {
+      try {
+        window.localStorage.setItem(VISUAL_INSTRUMENT_STORAGE_KEY, focus);
+      } catch {
+        // ignore storage errors
+      }
+    }
+    window.dispatchEvent(
+      new CustomEvent('enciclopedia:visual-instrument-change', {
+        detail: resolveVisualInstrumentView(focus),
+      })
+    );
+  }
+}
+
 
 
 
