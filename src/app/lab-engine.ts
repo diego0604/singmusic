@@ -6,11 +6,14 @@ import {
   buildScaleFretboardPath,
   classifyVocalRangeDetailed,
   computeChordNeckState,
+  computeEffectiveExplorerInstrument,
   createPitchAcuityRound,
+  getVisualInstrumentFocus,
   identifyGuitarChordFromFrets,
   midiToNoteName,
   renderTopViewDrumKitSvg,
   resolvePlayableChordVoicing,
+  setVisualInstrumentFocus,
   type DrumLimbHit,
 } from './music-games-logic';
 import {
@@ -1760,7 +1763,11 @@ function buildMultiInstrumentExplorer(
   let currentChordId = 'maj';
   const isChordMode = config.mode === 'chord';
   const isBassOnly = !!config.bassOnly;
-  let currentInstrument: 'guitar' | 'piano' | 'bass' = isBassOnly ? 'bass' : 'guitar';
+  let visualFocus = getVisualInstrumentFocus();
+  let hidePiano = isBassOnly || visualFocus !== 'all';
+  let currentInstrument: 'guitar' | 'piano' | 'bass' = isBassOnly
+    ? 'bass'
+    : computeEffectiveExplorerInstrument(visualFocus, 'guitar');
   let bassStyle: 'finger' | 'slap' = 'finger';
 
   const title =
@@ -1832,6 +1839,9 @@ function buildMultiInstrumentExplorer(
             <option value="piano">🎹 Piano Acústico</option>
             <option value="bass">🎸 Bajo Eléctrico (4 Cuerdas)</option>
           </select>
+          <button type="button" class="btn js-toggle-piano-btn" style="font-size:0.78rem; padding:4px 10px;">
+            ${hidePiano ? '🎹 Mostrar Piano' : '🙈 Ocultar Piano'}
+          </button>
         `
         }
 
@@ -1901,6 +1911,7 @@ function buildMultiInstrumentExplorer(
   const modeSelect = container.querySelector<HTMLSelectElement>('.js-mode-select')!;
   const scaleGuideSelect = container.querySelector<HTMLSelectElement>('.js-scale-guide-select');
   const instSelect = container.querySelector<HTMLSelectElement>('.js-inst-select');
+  const togglePianoBtn = container.querySelector<HTMLButtonElement>('.js-toggle-piano-btn');
   const bassStyleSelect = container.querySelector<HTMLSelectElement>('.js-bass-style');
   const playMainBtn = container.querySelector<HTMLButtonElement>('.js-play-main')!;
   const droneBtn = container.querySelector<HTMLButtonElement>('.js-drone-btn')!;
@@ -1909,6 +1920,7 @@ function buildMultiInstrumentExplorer(
   const pedalLiveDegree = container.querySelector<HTMLElement>('.js-pedal-live-degree')!;
   const stopBtn = container.querySelector<HTMLButtonElement>('.js-stop-btn')!;
   const formulaInfo = container.querySelector<HTMLElement>('.js-formula-info')!;
+  const pianoWrapper = container.querySelector<HTMLElement>('.piano-wrapper');
   const pianoContainer = container.querySelector<HTMLElement>('.js-piano-container');
   const fretboardContainer = container.querySelector<HTMLElement>('.js-fretboard-container')!;
   const neckTitle = container.querySelector<HTMLElement>('.js-neck-title')!;
@@ -1934,6 +1946,26 @@ function buildMultiInstrumentExplorer(
 
   const renderVisuals = (syncChordGlow = false): void => {
     const useBassNeck = isBassOnly || currentInstrument === 'bass';
+    if (pianoWrapper) {
+      pianoWrapper.style.display = isBassOnly || hidePiano ? 'none' : '';
+    }
+    if (instSelect) {
+      const pianoOpt = instSelect.querySelector<HTMLOptionElement>('option[value="piano"]');
+      if (pianoOpt) {
+        pianoOpt.hidden = hidePiano;
+        pianoOpt.disabled = hidePiano;
+      }
+      if (hidePiano && currentInstrument === 'piano') {
+        currentInstrument = 'guitar';
+      }
+      instSelect.value = currentInstrument;
+    }
+    if (togglePianoBtn) {
+      togglePianoBtn.textContent = hidePiano ? '🎹 Mostrar Piano' : '🙈 Ocultar Piano';
+      togglePianoBtn.style.background = hidePiano ? 'rgba(245,158,11,0.2)' : 'rgba(30,41,59,0.9)';
+      togglePianoBtn.style.color = hidePiano ? '#fbbf24' : '#cbd5e1';
+      togglePianoBtn.style.border = hidePiano ? '1px solid rgba(245,158,11,0.45)' : '1px solid #334155';
+    }
     const stringsToRender = useBassNeck ? BASS_STRINGS : GUITAR_STRINGS;
     const rootName = NOTE_NAMES[currentRoot];
 
@@ -2070,8 +2102,34 @@ function buildMultiInstrumentExplorer(
 
   instSelect?.addEventListener('change', () => {
     currentInstrument = instSelect.value as 'guitar' | 'piano' | 'bass';
+    if (!isBassOnly && hidePiano) {
+      setVisualInstrumentFocus(currentInstrument === 'bass' ? 'bass-only' : 'guitar-only');
+    }
     renderVisuals(isChordMode);
   });
+
+  togglePianoBtn?.addEventListener('click', () => {
+    if (isBassOnly) return;
+    if (hidePiano) {
+      setVisualInstrumentFocus('all');
+    } else {
+      const nextFocus = currentInstrument === 'bass' ? 'bass-only' : 'guitar-only';
+      setVisualInstrumentFocus(nextFocus);
+    }
+  });
+
+  const onGlobalVisualChange = () => {
+    if (!container.isConnected) {
+      window.removeEventListener('enciclopedia:visual-instrument-change', onGlobalVisualChange);
+      return;
+    }
+    if (isBassOnly) return;
+    visualFocus = getVisualInstrumentFocus();
+    hidePiano = visualFocus !== 'all';
+    currentInstrument = computeEffectiveExplorerInstrument(visualFocus, currentInstrument === 'piano' && hidePiano ? 'guitar' : currentInstrument);
+    renderVisuals(false);
+  };
+  window.addEventListener('enciclopedia:visual-instrument-change', onGlobalVisualChange);
 
   bassStyleSelect?.addEventListener('change', () => {
     bassStyle = bassStyleSelect.value as 'finger' | 'slap';
@@ -2167,7 +2225,12 @@ function buildMultiInstrumentExplorer(
     ];
     chords.forEach((ch, idx) => {
       audio.schedule(() => {
-        audio.strumChord(ch.notes, 'piano', 0, false);
+        if (isBassOnly || currentInstrument === 'bass') {
+          audio.playElectricBass(ch.notes[0], 0.85, 0, 0.36, bassStyle, false);
+        } else {
+          const strumTimb = hidePiano || currentInstrument === 'guitar' ? 'guitar' : 'piano';
+          audio.strumChord(ch.notes, strumTimb, 0, false);
+        }
         pedalLiveDegree.innerHTML = `<strong>Progresión sobre Bajo Pedal ${NOTE_NAMES[currentRoot]}:</strong> Sonando <strong>${ch.name}</strong> mientras el bajo permanece anclado en ${NOTE_NAMES[currentRoot]}2.`;
         onStatus(`Bajo Pedal: ${ch.name}`);
       }, idx * 1150);
@@ -3405,8 +3468,17 @@ function buildEarAndReadingTrainerLab(
   const playCurrentPrompt = (): void => {
     audio.stopAll();
     if (subMode === 'degrees') {
-      audio.playAcousticPiano(60, 0.65, 0, 0.25, false);
-      audio.playPluckedGuitar(items[targetIdx].midi, 1.1, 0.55, 0.3, false);
+      const focus = getVisualInstrumentFocus();
+      if (focus === 'bass-only') {
+        audio.playElectricBass(48, 0.65, 0, 0.36, 'finger', false);
+        audio.playElectricBass(items[targetIdx].midi - 12, 1.1, 0.55, 0.38, 'finger', false);
+      } else if (focus === 'guitar-only') {
+        audio.playPluckedGuitar(60, 0.65, 0, 0.28, false);
+        audio.playPluckedGuitar(items[targetIdx].midi, 1.1, 0.55, 0.3, false);
+      } else {
+        audio.playAcousticPiano(60, 0.65, 0, 0.25, false);
+        audio.playPluckedGuitar(items[targetIdx].midi, 1.1, 0.55, 0.3, false);
+      }
     } else {
       audio.playFreqTone(currentAcuity.baseHz, 0.85, 0, 0.28, false);
       audio.playFreqTone(currentAcuity.secondHz, 0.95, 0.72, 0.28, false);
@@ -4765,8 +4837,9 @@ function buildProgressionWidget(
   const progressions = PROGRESSION_SETS_BY_CONTEXT[contextKey] || PROGRESSION_SETS_BY_CONTEXT['archetypes'];
   let currentIdx = 0;
   let activeChordIdx = 0;
-  let currentInst: 'guitar' | 'piano' | 'bass' = 'guitar';
-  let neckViewMode: 'guitar' | 'bass' = 'guitar';
+  const initFocus = getVisualInstrumentFocus();
+  let currentInst: 'guitar' | 'piano' | 'bass' = initFocus === 'bass-only' ? 'bass' : 'guitar';
+  let neckViewMode: 'guitar' | 'bass' = initFocus === 'bass-only' ? 'bass' : 'guitar';
   let showOnlyVoicingOnNeck = false;
   let includeBassLine = true;
 
@@ -4942,7 +5015,26 @@ function buildProgressionWidget(
     renderFullNeckForActiveChord();
   };
 
+  instSel.value = currentInst;
   renderCards();
+
+  const onProgVisualFocus = () => {
+    if (!container.isConnected) {
+      window.removeEventListener('enciclopedia:visual-instrument-change', onProgVisualFocus);
+      return;
+    }
+    const f = getVisualInstrumentFocus();
+    if (f === 'bass-only') {
+      currentInst = 'bass';
+      neckViewMode = 'bass';
+    } else if (f === 'guitar-only') {
+      currentInst = 'guitar';
+      neckViewMode = 'guitar';
+    }
+    instSel.value = currentInst;
+    renderCards();
+  };
+  window.addEventListener('enciclopedia:visual-instrument-change', onProgVisualFocus);
 
   neckModeBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -7361,7 +7453,9 @@ function buildInterval9thVisualizerLab(
 
   let rootPc = 0; // C
   let selectedSemi = 14; // Default: 9M (Novena Mayor)
-  let neckMode: 'guitar' | 'bass' = 'guitar';
+  let visualFocus = getVisualInstrumentFocus();
+  let hidePiano = visualFocus !== 'all';
+  let neckMode: 'guitar' | 'bass' = visualFocus === 'bass-only' ? 'bass' : 'guitar';
   let polyPresetIdx = 0; // Default: add9 (C E G D)
 
   stage.innerHTML = `
@@ -7390,6 +7484,9 @@ function buildInterval9thVisualizerLab(
         </select>
         <button type="button" class="btn js-iv9-neck-mode" data-mode="guitar" style="font-size:0.76rem; padding:4px 10px; background:rgba(245,158,11,0.22); color:#fbbf24; border:1px solid #f59e0b;">🎸 Mástil Guitarra (6 Cuerdas)</button>
         <button type="button" class="btn js-iv9-neck-mode" data-mode="bass" style="font-size:0.76rem; padding:4px 10px; background:rgba(30,41,59,0.9); color:#94a3b8; border:1px solid #334155;">🎸 Mástil Bajo (4 Cuerdas)</button>
+        <button type="button" class="btn js-iv9-toggle-piano" style="font-size:0.76rem; padding:4px 10px;">
+          ${hidePiano ? '🎹 Mostrar Piano' : '🙈 Ocultar Piano'}
+        </button>
       </div>
       <div style="display:flex; flex-wrap:wrap; gap:6px;">
         <button type="button" class="btn btn-primary js-iv9-play-asc">▶ Melódico Ascendente</button>
@@ -7407,7 +7504,7 @@ function buildInterval9thVisualizerLab(
 
     <div class="js-iv9-summary" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; align-items:center; background:rgba(15,23,42,0.92); border:1px solid rgba(245,158,11,0.38); border-radius:10px; padding:12px; margin-bottom:12px;"></div>
 
-    <div class="piano-wrapper" style="margin-bottom:12px;">
+    <div class="piano-wrapper js-iv9-piano-wrap" style="margin-bottom:12px; ${hidePiano ? 'display:none;' : ''}">
       <div class="piano-keys js-iv9-piano"></div>
     </div>
 
@@ -7424,10 +7521,12 @@ function buildInterval9thVisualizerLab(
   const simpleBtnsEl = stage.querySelector<HTMLElement>('.js-iv9-simple-btns')!;
   const compBtnsEl = stage.querySelector<HTMLElement>('.js-iv9-comp-btns')!;
   const summaryEl = stage.querySelector<HTMLElement>('.js-iv9-summary')!;
+  const pianoWrapEl = stage.querySelector<HTMLElement>('.js-iv9-piano-wrap')!;
   const pianoEl = stage.querySelector<HTMLElement>('.js-iv9-piano')!;
   const neckTitleEl = stage.querySelector<HTMLElement>('.js-iv9-neck-title')!;
   const neckHostEl = stage.querySelector<HTMLElement>('.js-iv9-neck-host')!;
   const neckModeBtns = stage.querySelectorAll<HTMLButtonElement>('.js-iv9-neck-mode');
+  const togglePianoBtn = stage.querySelector<HTMLButtonElement>('.js-iv9-toggle-piano')!;
 
   const getSpec = (): IntervalSpec =>
     intervalsDb.find((it) => it.semi === selectedSemi) || intervalsDb[13];
@@ -7585,6 +7684,12 @@ function buildInterval9thVisualizerLab(
     const targetPc = (rootPc + spec.semi) % 12;
     const targetName = NOTE_NAMES[targetPc];
 
+    pianoWrapEl.style.display = hidePiano ? 'none' : '';
+    togglePianoBtn.textContent = hidePiano ? '🎹 Mostrar Piano' : '🙈 Ocultar Piano';
+    togglePianoBtn.style.background = hidePiano ? 'rgba(245,158,11,0.2)' : 'rgba(30,41,59,0.9)';
+    togglePianoBtn.style.color = hidePiano ? '#fbbf24' : '#cbd5e1';
+    togglePianoBtn.style.border = hidePiano ? '1px solid rgba(245,158,11,0.45)' : '1px solid #334155';
+
     neckModeBtns.forEach((b) => {
       const active = b.getAttribute('data-mode') === neckMode;
       b.style.background = active ? 'rgba(245,158,11,0.24)' : 'rgba(30,41,59,0.9)';
@@ -7693,7 +7798,9 @@ function buildInterval9thVisualizerLab(
         audio.playElectricBass(m, dur, delay, 0.38, 'finger', false);
       } else {
         audio.playPluckedGuitar(m, dur, delay, 0.3, false);
-        audio.playAcousticPiano(m, dur, delay, 0.22, false);
+        if (!hidePiano) {
+          audio.playAcousticPiano(m, dur, delay, 0.22, false);
+        }
       }
     };
 
@@ -7717,6 +7824,19 @@ function buildInterval9thVisualizerLab(
 
   render();
 
+  const onIv9VisualChange = () => {
+    if (!stage.isConnected) {
+      window.removeEventListener('enciclopedia:visual-instrument-change', onIv9VisualChange);
+      return;
+    }
+    visualFocus = getVisualInstrumentFocus();
+    hidePiano = visualFocus !== 'all';
+    if (visualFocus === 'bass-only') neckMode = 'bass';
+    else if (visualFocus === 'guitar-only') neckMode = 'guitar';
+    render();
+  };
+  window.addEventListener('enciclopedia:visual-instrument-change', onIv9VisualChange);
+
   rootSel.addEventListener('change', () => {
     rootPc = parseInt(rootSel.value, 10);
     render();
@@ -7728,7 +7848,12 @@ function buildInterval9thVisualizerLab(
     renderPolygonGraph();
     const preset = chordPolygonPresets[polyPresetIdx];
     audio.stopAll();
-    audio.strumChord(preset.offsets.map((o) => 48 + rootPc + o), 'piano', 0, false);
+    const midis = preset.offsets.map((o) => 48 + rootPc + o);
+    if (neckMode === 'bass') {
+      midis.forEach((m, i) => audio.playElectricBass(m - 12, 0.7, i * 0.14, 0.34, 'finger', false));
+    } else {
+      audio.strumChord(midis, hidePiano ? 'guitar' : 'piano', 0, false);
+    }
     onStatus(`Analizando acorde ${NOTE_NAMES[rootPc]}${preset.suffix}`);
   });
 
@@ -7738,15 +7863,26 @@ function buildInterval9thVisualizerLab(
     if (polyPlay) {
       const preset = chordPolygonPresets[polyPresetIdx];
       audio.stopAll();
-      audio.playElectricBass(36 + rootPc, 1.4, 0, 0.36, 'finger', false, { skipGlow: true });
-      audio.strumChord(preset.offsets.map((o) => 48 + rootPc + o), 'piano', 0, false);
+      const midis = preset.offsets.map((o) => 48 + rootPc + o);
+      if (neckMode === 'bass') {
+        midis.forEach((m, i) => audio.playElectricBass(m - 12, 0.72, i * 0.14, 0.36, 'finger', false));
+      } else {
+        audio.playElectricBass(36 + rootPc, 1.4, 0, 0.36, 'finger', false, { skipGlow: true });
+        audio.strumChord(midis, hidePiano ? 'guitar' : 'piano', 0, false);
+      }
       onStatus(`Acorde completo: ${NOTE_NAMES[rootPc]}${preset.suffix}`);
       return;
     }
     const polyNote = target.closest<HTMLElement>('.js-iv9-poly-note');
     if (polyNote) {
       const midi = parseInt(polyNote.getAttribute('data-midi')!, 10);
-      audio.playAcousticPiano(midi, 1.1, 0, 0.35, true);
+      if (neckMode === 'bass') {
+        audio.playElectricBass(midi - 12, 1.1, 0, 0.36, 'finger', true);
+      } else if (hidePiano) {
+        audio.playPluckedGuitar(midi, 1.1, 0, 0.32, true);
+      } else {
+        audio.playAcousticPiano(midi, 1.1, 0, 0.35, true);
+      }
       onStatus(`Nota del polígono: ${polyNote.getAttribute('data-name')}`);
       return;
     }
@@ -7757,15 +7893,32 @@ function buildInterval9thVisualizerLab(
       const rawSemi = parseInt(pairEdge.getAttribute('data-semi')!, 10);
       const desc = pairEdge.getAttribute('data-desc') || '';
       audio.stopAll();
-      audio.playAcousticPiano(ma, 0.9, 0, 0.32, false);
-      audio.playAcousticPiano(mb, 1.1, 0.35, 0.32, false);
-      audio.playAcousticPiano(ma, 1.2, 0.8, 0.28, false);
-      audio.playAcousticPiano(mb, 1.2, 0.82, 0.28, false);
+      const playEdgeNote = (m: number, dur: number, del: number) => {
+        if (neckMode === 'bass') {
+          audio.playElectricBass(m - 12, dur, del, 0.35, 'finger', false);
+        } else if (hidePiano) {
+          audio.playPluckedGuitar(m, dur, del, 0.3, false);
+        } else {
+          audio.playAcousticPiano(m, dur, del, 0.3, false);
+        }
+      };
+      playEdgeNote(ma, 0.9, 0);
+      playEdgeNote(mb, 1.1, 0.35);
+      playEdgeNote(ma, 1.2, 0.8);
+      playEdgeNote(mb, 1.2, 0.82);
       if (intervalsDb.some((it) => it.semi === rawSemi)) {
         selectedSemi = rawSemi;
         render();
       }
       onStatus(`Intervalo interno del acorde: ${desc}`);
+      return;
+    }
+    if (target.closest('.js-iv9-toggle-piano')) {
+      if (hidePiano) {
+        setVisualInstrumentFocus('all');
+      } else {
+        setVisualInstrumentFocus(neckMode === 'bass' ? 'bass-only' : 'guitar-only');
+      }
       return;
     }
     const pickBtn = target.closest<HTMLElement>('.js-iv9-pick');
@@ -7778,6 +7931,9 @@ function buildInterval9thVisualizerLab(
     const modeBtn = target.closest<HTMLElement>('.js-iv9-neck-mode');
     if (modeBtn) {
       neckMode = (modeBtn.getAttribute('data-mode') as 'guitar' | 'bass') || 'guitar';
+      if (hidePiano) {
+        setVisualInstrumentFocus(neckMode === 'bass' ? 'bass-only' : 'guitar-only');
+      }
       render();
       onStatus(`Visualizador de Intervalos: Mástil cambiado a ${neckMode === 'bass' ? 'Bajo (4 Cuerdas)' : 'Guitarra (6 Cuerdas)'}`);
       return;

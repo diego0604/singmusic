@@ -7,6 +7,7 @@ import {
   analyzePedalInterval,
   analyzeSpanishLyricLine,
   classifyVocalRangeDetailed,
+  getVisualInstrumentFocus,
   midiToNoteName,
   verifySimonStep,
 } from './music-games-logic';
@@ -556,7 +557,14 @@ function hydrateSimonMusicalArcade(
 
     const playPadNote = (idx: number, visual = true) => {
       const midi = padMidis[idx] ?? 60;
-      audio.playAcousticPiano(midi, 0.55, 0, 0.28, false);
+      const focus = getVisualInstrumentFocus();
+      if (focus === 'bass-only') {
+        audio.playElectricBass(midi - 12, 0.55, 0, 0.34, 'finger', false);
+      } else if (focus === 'guitar-only') {
+        audio.playPluckedGuitar(midi, 0.55, 0, 0.3, false);
+      } else {
+        audio.playAcousticPiano(midi, 0.55, 0, 0.28, false);
+      }
       if (visual) flashPad(idx, 300);
     };
 

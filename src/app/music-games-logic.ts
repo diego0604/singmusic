@@ -2618,7 +2618,7 @@ export interface VocalBreathStep {
   label: string;
   cue: string;
   beats: number;
-  kind: 'inhale' | 'hold' | 'exhale';
+  kind: 'inhale' | 'hold' | 'exhale' | 'rest';
 }
 
 export interface VocalTrainingExercise {
@@ -3644,8 +3644,123 @@ export function setVisualInstrumentFocus(focus: VisualInstrumentFocus): void {
   }
 }
 
+/**
+ * Pure vocal breathing & cycle recovery helpers so singers always get calm
+ * breath-recovery beats between repetitions and after exhale phases.
+ */
+export function getVocalCycleWithRest(
+  steps: VocalBreathStep[],
+  restBeats: number
+): VocalBreathStep[] {
+  if (!Array.isArray(steps) || steps.length === 0) return [];
+  const safeRest = Math.max(0, Math.round(restBeats));
+  if (safeRest <= 0) return steps;
+  if (steps[steps.length - 1]?.kind === 'rest') return steps;
+  return [
+    ...steps,
+    {
+      label: `Descansa ${safeRest}t`,
+      cue: 'Respira libre y suelta hombros antes del siguiente ciclo.',
+      beats: safeRest,
+      kind: 'rest',
+    },
+  ];
+}
 
+export interface VocalPatternStepState {
+  isRest: boolean;
+  noteIndex: number;
+  restBeat: number;
+  restTotal: number;
+  cycleNumber: number;
+}
 
+export function computeVocalPatternStepState(
+  stepIndex: number,
+  patternLength: number,
+  restBeatsBetweenReps: number
+): VocalPatternStepState {
+  const safeLen = Math.max(1, Math.round(patternLength));
+  const safeRest = Math.max(0, Math.round(restBeatsBetweenReps));
+  const cycleLen = safeLen + safeRest;
+  const safeStep = Math.max(0, Math.floor(stepIndex));
+  const pos = safeStep % cycleLen;
+  const cycleNumber = Math.floor(safeStep / cycleLen) + 1;
 
+  if (pos < safeLen) {
+    return {
+      isRest: false,
+      noteIndex: pos,
+      restBeat: 0,
+      restTotal: safeRest,
+      cycleNumber,
+    };
+  }
+
+  return {
+    isRest: true,
+    noteIndex: -1,
+    restBeat: pos - safeLen + 1,
+    restTotal: safeRest,
+    cycleNumber,
+  };
+}
+
+export interface AppoggioPhaseInfo {
+  phase: string;
+  remaining: number;
+  color: string;
+  tip: string;
+  isRest: boolean;
+  totalCycleSec: number;
+}
+
+export function computeAppoggioCyclePhase(
+  sec: number,
+  restSeconds = 4
+): AppoggioPhaseInfo {
+  const safeRest = Math.max(0, Math.round(restSeconds));
+  const totalCycleSec = 14 + safeRest;
+  const s = ((Math.floor(sec) % totalCycleSec) + totalCycleSec) % totalCycleSec;
+
+  if (s < 4) {
+    return {
+      phase: '1. INHALA SILENCIOSO (Costillas y Abdomen)',
+      remaining: 4 - s,
+      color: '#38bdf8',
+      tip: 'Expande cintura 360° sin levantar los hombros ni hacer ruido al aspirar.',
+      isRest: false,
+      totalCycleSec,
+    };
+  }
+  if (s < 6) {
+    return {
+      phase: '2. SUSPENSIÓN ABIERTA (Appoggio)',
+      remaining: 6 - s,
+      color: '#fbbf24',
+      tip: 'No cierres la garganta: mantén las costillas abiertas como si siguieras inhalando.',
+      isRest: false,
+      totalCycleSec,
+    };
+  }
+  if (s < 14) {
+    return {
+      phase: '3. EXHALA CONSTANTE ("Ssss" o "Ffff" uniforme)',
+      remaining: 14 - s,
+      color: '#10b981',
+      tip: 'Deja salir un hilo fino y estable de aire sin empujar de golpe al final.',
+      isRest: false,
+      totalCycleSec,
+    };
+  }
+  return {
+    phase: '4. DESCANSO Y RESPIRACIÓN LIBRE',
+    remaining: totalCycleSec - s,
+    color: '#818cf8',
+    tip: 'Suelta hombros y abdomen; respira tranquilo antes del próximo ciclo.',
+    isRest: true,
+    totalCycleSec,
+  };
+}
 
 

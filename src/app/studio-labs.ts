@@ -9,10 +9,14 @@ import {
   assignGuitarChordFingers,
   buildChordMemorySequence,
   buildStructuredVocalTrainingSeries,
+  computeAppoggioCyclePhase,
+  computeVocalPatternStepState,
   convertProgressionToNashville,
   evaluateChordMemoryAnswer,
   evaluateGapClickTiming,
   getChordMemoryPool,
+  getVisualInstrumentFocus,
+  getVocalCycleWithRest,
   harmonizeMelodyVoices,
   midiToNoteName,
   reduceLatchGlowState,
@@ -315,6 +319,17 @@ function buildChromaticClockLab(
 
   render();
 
+  const playClockNote = (midi: number, dur: number, delay = 0, vol = 0.28) => {
+    const focus = getVisualInstrumentFocus();
+    if (focus === 'bass-only') {
+      audio.playElectricBass(midi - 12, dur, delay, 0.36, 'finger', false);
+    } else if (focus === 'guitar-only') {
+      audio.playPluckedGuitar(midi, dur, delay, 0.3, false);
+    } else {
+      audio.playAcousticPiano(midi, dur, delay, vol, false);
+    }
+  };
+
   stage.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     const node = t.closest<HTMLElement>('.js-clock-node');
@@ -322,7 +337,7 @@ function buildChromaticClockLab(
       selectedPc = parseInt(node.getAttribute('data-pc')!, 10);
       preferFlats = undefined;
       audio.stopAll();
-      audio.playAcousticPiano(60 + selectedPc, 0.9, 0, 0.28, false);
+      playClockNote(60 + selectedPc, 0.9, 0, 0.28);
       render();
       onStatus(`Reloj Cromático: Nota ${SHARP_LABELS[selectedPc]}/${FLAT_LABELS[selectedPc]} (Escala de ${applyEnharmonicGoldenRule(selectedPc).rootLabel} Mayor)`);
       return;
@@ -333,7 +348,7 @@ function buildChromaticClockLab(
       activeChordMidis = [0, 2, 4, 5, 7, 9, 11, 12].map((o) => 60 + selectedPc + o);
       activeChordMidis.forEach((m, i) => {
         audio.schedule(() => {
-          audio.playAcousticPiano(m, 0.48, 0, 0.25, false);
+          playClockNote(m, 0.48, 0, 0.25);
         }, i * 240);
       });
       onStatus(`Escala Mayor (${golden.notes.join(' – ')})`);
@@ -2516,6 +2531,9 @@ function buildVocalAgilityLab(
   let playing = false;
   let litStep = -1;
   let riffTimers: ReturnType<typeof setTimeout>[] = [];
+  let loopWithRest = true;
+  let restCountdownSec = 0;
+  let restBannerText = '';
 
   // Tab 2: Vowel modification state
   let targetPitch = 68; // Ab4 (high passaggio / upper mix zone)
@@ -2524,7 +2542,8 @@ function buildVocalAgilityLab(
   // Tab 3: Breathing 4-2-8 & Vocal Exercise state
   let appoggioActive = false;
   let appoggioTimer: ReturnType<typeof setInterval> | null = null;
-  let appoggioSec = 0; // 0..13 (4 inhale + 2 hold + 8 exhale)
+  let appoggioSec = 0; // 0..(14 + appoggioRestSec - 1)
+  let appoggioRestSec = 4; // explicit rest/recovery pause after exhale
   let appoggioCycles = 0;
   let activeDrillId = 'sovt';
   let drillLitStep = -1;
@@ -2535,6 +2554,8 @@ function buildVocalAgilityLab(
     playing = false;
     litStep = -1;
     drillLitStep = -1;
+    restCountdownSec = 0;
+    restBannerText = '';
   };
 
   const stopAppoggioOnly = () => {
@@ -2576,30 +2597,19 @@ function buildVocalAgilityLab(
     });
   };
 
-  const getAppoggioPhase = (sec: number): { phase: string; remaining: number; color: string; tip: string } => {
-    if (sec < 4) {
-      return {
-        phase: '1. INHALA SILENCIOSO (Costillas y Abdomen)',
-        remaining: 4 - sec,
-        color: '#38bdf8',
-        tip: 'Expande cintura 360° sin levantar los hombros ni hacer ruido al aspirar.',
-      };
+  const syncRestBannerDom = () => {
+    const el = stage.querySelector<HTMLElement>('.js-va-rest-banner');
+    if (!el) return;
+    if (restCountdownSec > 0 && restBannerText) {
+      el.style.display = 'block';
+      el.textContent = restBannerText;
+    } else {
+      el.style.display = 'none';
+      el.textContent = '';
     }
-    if (sec < 6) {
-      return {
-        phase: '2. SUSPENSIÓN ABIERTA (Appoggio)',
-        remaining: 6 - sec,
-        color: '#fbbf24',
-        tip: 'No cierres la garganta: mantén las costillas abiertas como si siguieras inhalando.',
-      };
-    }
-    return {
-      phase: '3. EXHALA CONSTANTE ("Ssss" o "Ffff" uniforme)',
-      remaining: 14 - sec,
-      color: '#10b981',
-      tip: 'Deja salir un hilo fino y estable de aire sin empujar de golpe al final.',
-    };
   };
+
+  const getAppoggioPhase = (sec: number) => computeAppoggioCyclePhase(sec, appoggioRestSec);
 
   const syncAppoggioDom = () => {
     const info = getAppoggioPhase(appoggioSec);
@@ -2608,17 +2618,19 @@ function buildVocalAgilityLab(
     const tipEl = stage.querySelector<HTMLElement>('.js-va-appoggio-tip');
     const cycEl = stage.querySelector<HTMLElement>('.js-va-appoggio-cycles');
     if (phaseEl) {
-      phaseEl.textContent = appoggioActive ? info.phase : 'Listo para iniciar ciclo 4 – 2 – 8';
+      phaseEl.textContent = appoggioActive
+        ? info.phase
+        : `Listo para iniciar ciclo 4 – 2 – 8 + ${appoggioRestSec}s descanso`;
       phaseEl.style.color = appoggioActive ? info.color : '#94a3b8';
     }
     if (countEl) {
-      countEl.textContent = appoggioActive ? `${info.remaining}s` : '14s';
+      countEl.textContent = appoggioActive ? `${info.remaining}s` : `${info.totalCycleSec}s`;
       countEl.style.color = appoggioActive ? info.color : '#f8fafc';
     }
     if (tipEl) {
       tipEl.textContent = appoggioActive
         ? info.tip
-        : 'Pulsa Iniciar para entrenar el sostén diafragmático sin tensión en cuello ni mandíbula.';
+        : 'Pulsa Iniciar para entrenar el sostén diafragmático con pausa de descanso libre entre cada ciclo.';
     }
     if (cycEl) cycEl.textContent = `${appoggioCycles}`;
   };
@@ -2648,9 +2660,14 @@ function buildVocalAgilityLab(
             <label class="text-xs" style="color:#cbd5e1;">Velocidad: <strong class="js-va-bpm-val">${bpm}</strong> BPM
               <input type="range" class="js-va-bpm" min="60" max="145" value="${bpm}" style="width:95px;" />
             </label>
+            <label class="text-xs" style="color:#a5b4fc; display:inline-flex; align-items:center; gap:5px; cursor:pointer;">
+              <input type="checkbox" class="js-va-loop-rest" ${loopWithRest ? 'checked' : ''} /> 🔄 Repetir con pausa (4s para respirar)
+            </label>
           </div>
           <button type="button" class="btn btn-primary js-va-play">${playing ? '⏹ Detener' : '▶ Ejecutar Melisma'}</button>
         </div>
+
+        <div class="js-va-rest-banner text-xs" style="display:${restCountdownSec > 0 ? 'block' : 'none'}; margin-bottom:10px; padding:8px 12px; border-radius:8px; background:rgba(129,140,248,0.16); border:1px solid rgba(129,140,248,0.45); color:#c7d2fe; font-weight:700;">${restBannerText}</div>
 
         <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; min-height:110px; background:#090d16; border:1px solid #1e293b; border-radius:10px; padding:12px;">
           ${riff.offsets
@@ -2716,30 +2733,39 @@ function buildVocalAgilityLab(
       body = `
         <div class="grid-2">
           <div class="card" style="border-left:3px solid #10b981;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
               <h4 style="color:#34d399; margin:0;">🫁 Temporizador de Respiración 4–2–8 (Appoggio)</h4>
               <span class="text-xs" style="color:#94a3b8;">Ciclos: <strong class="js-va-appoggio-cycles">${appoggioCycles}</strong></span>
             </div>
             <div style="background:#090d16; border:1px solid #1e293b; border-radius:10px; padding:12px; text-align:center; margin-bottom:10px;">
               <div class="js-va-appoggio-phase text-xs" style="font-weight:800; color:${appoggioActive ? appInfo.color : '#94a3b8'};">
-                ${appoggioActive ? appInfo.phase : 'Listo para iniciar ciclo 4 – 2 – 8'}
+                ${appoggioActive ? appInfo.phase : `Listo para iniciar ciclo 4 – 2 – 8 + ${appoggioRestSec}s descanso`}
               </div>
               <div class="js-va-appoggio-count" style="font-size:2rem; font-weight:900; color:${appoggioActive ? appInfo.color : '#f8fafc'}; margin:4px 0;">
-                ${appoggioActive ? `${appInfo.remaining}s` : '14s'}
+                ${appoggioActive ? `${appInfo.remaining}s` : `${appInfo.totalCycleSec}s`}
               </div>
               <p class="js-va-appoggio-tip text-xs" style="margin:0; color:#cbd5e1;">
-                ${appoggioActive ? appInfo.tip : 'Pulsa Iniciar para entrenar el sostén diafragmático sin tensión en cuello ni mandíbula.'}
+                ${appoggioActive ? appInfo.tip : 'Pulsa Iniciar para entrenar el sostén diafragmático con pausa de descanso libre entre cada ciclo.'}
               </p>
             </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
               <button type="button" class="btn btn-primary js-va-appoggio-toggle">${appoggioActive ? '⏹ Detener Respiración' : '▶ Iniciar Ciclo 4-2-8'}</button>
+              <label class="text-xs" style="color:#a5b4fc;">Descanso tras exhalar:
+                <select class="lab-select js-va-appoggio-rest" aria-label="Descanso entre ciclos de respiración">
+                  <option value="0" ${appoggioRestSec === 0 ? 'selected' : ''}>0s (Continuo)</option>
+                  <option value="3" ${appoggioRestSec === 3 ? 'selected' : ''}>3s (Breve)</option>
+                  <option value="4" ${appoggioRestSec === 4 ? 'selected' : ''}>4s (Recomendado)</option>
+                  <option value="6" ${appoggioRestSec === 6 ? 'selected' : ''}>6s (Amplio)</option>
+                  <option value="8" ${appoggioRestSec === 8 ? 'selected' : ''}>8s (Profundo)</option>
+                </select>
+              </label>
             </div>
           </div>
 
           <div class="card" style="border-left:3px solid #ec4899;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:6px;">
               <h4 style="color:#f472b6; margin:0;">🎤 Ejercicios Guiados (SOVT, Afinación y Vibrato)</h4>
-              <select class="lab-select js-va-root" aria-label="Tónica ejercicio vocal">
+              <select class="lab-select js-va-root" aria-label="Tónica vocal">
                 ${[55, 57, 59, 60, 62, 64, 65].map((m) => `<option value="${m}" ${m === baseMidi ? 'selected' : ''}>Base ${midiToNoteName(m)}</option>`).join('')}
               </select>
             </div>
@@ -2759,9 +2785,13 @@ function buildVocalAgilityLab(
                 })
                 .join('')}
             </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <div class="js-va-rest-banner text-xs" style="display:${restCountdownSec > 0 ? 'block' : 'none'}; margin-bottom:8px; padding:7px 10px; border-radius:8px; background:rgba(129,140,248,0.16); border:1px solid rgba(129,140,248,0.45); color:#c7d2fe; font-weight:700;">${restBannerText}</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
               <button type="button" class="btn btn-primary js-vb-play">${playing ? '⏹ Detener Ejercicio' : '▶ Escuchar y Cantar Encima'}</button>
               <button type="button" class="btn js-va-stop-all">⏹ Detener Todo</button>
+              <label class="text-xs" style="color:#a5b4fc; display:inline-flex; align-items:center; gap:5px; cursor:pointer;">
+                <input type="checkbox" class="js-va-loop-rest" ${loopWithRest ? 'checked' : ''} /> 🔄 Repetir con pausa (4s)
+              </label>
             </div>
           </div>
         </div>
@@ -2772,6 +2802,28 @@ function buildVocalAgilityLab(
   };
 
   render();
+
+  const scheduleRestBeforeNextCycle = (onNextCycle: () => void) => {
+    const restSec = 4;
+    for (let s = restSec; s >= 1; s--) {
+      const waitMs = (restSec - s) * 1000;
+      const tid = setTimeout(() => {
+        if (!playing || !stage.isConnected) return;
+        restCountdownSec = s;
+        restBannerText = `🫁 Descansa y respira tranquilo antes de la siguiente repetición: ${s}s...`;
+        syncRestBannerDom();
+      }, waitMs);
+      riffTimers.push(tid);
+    }
+    const resumeId = setTimeout(() => {
+      if (!playing || !stage.isConnected) return;
+      restCountdownSec = 0;
+      restBannerText = '';
+      syncRestBannerDom();
+      onNextCycle();
+    }, restSec * 1000);
+    riffTimers.push(resumeId);
+  };
 
   const startRiff = () => {
     clearRiffTimersOnly();
@@ -2794,8 +2846,15 @@ function buildVocalAgilityLab(
       riffTimers.push(tid);
     });
     const endId = setTimeout(() => {
-      clearRiffTimersOnly();
-      render();
+      if (!playing || !stage.isConnected) return;
+      litStep = -1;
+      syncRiffStepDom();
+      if (loopWithRest) {
+        scheduleRestBeforeNextCycle(() => startRiff());
+      } else {
+        clearRiffTimersOnly();
+        render();
+      }
     }, riff.offsets.length * stepMs + 120);
     riffTimers.push(endId);
     onStatus(`Gimnasio Vocal: ${riff.label} a ${bpm} BPM`);
@@ -2821,8 +2880,15 @@ function buildVocalAgilityLab(
       riffTimers.push(tid);
     });
     const endId = setTimeout(() => {
-      clearRiffTimersOnly();
-      render();
+      if (!playing || !stage.isConnected) return;
+      drillLitStep = -1;
+      syncDrillStepDom();
+      if (loopWithRest) {
+        scheduleRestBeforeNextCycle(() => startBreathDrill());
+      } else {
+        clearRiffTimersOnly();
+        render();
+      }
     }, drill.pattern.length * drill.stepMs + 140);
     riffTimers.push(endId);
     onStatus(`Ejercicio vocal guiado: ${drill.title}`);
@@ -2881,9 +2947,10 @@ function buildVocalAgilityLab(
       appoggioActive = true;
       appoggioSec = 0;
       const playCue = (sec: number) => {
-        if (sec === 0) audio.playAcousticPiano(60, 0.25, 0, 0.15, false);
-        else if (sec === 4) audio.playAcousticPiano(64, 0.22, 0, 0.14, false);
-        else if (sec === 6) audio.playAcousticPiano(67, 0.3, 0, 0.16, false);
+        if (sec === 0) audio.playAcousticPiano(60, 0.25, 0, 0.14, false);
+        else if (sec === 4) audio.playAcousticPiano(64, 0.22, 0, 0.13, false);
+        else if (sec === 6) audio.playAcousticPiano(67, 0.3, 0, 0.14, false);
+        else if (sec === 14 && appoggioRestSec > 0) audio.playAcousticPiano(62, 0.18, 0, 0.05, false);
       };
       render();
       playCue(0);
@@ -2893,14 +2960,17 @@ function buildVocalAgilityLab(
           return;
         }
         appoggioSec += 1;
-        if (appoggioSec >= 14) {
+        const totalSec = 14 + appoggioRestSec;
+        if (appoggioSec >= totalSec) {
           appoggioSec = 0;
           appoggioCycles += 1;
         }
         playCue(appoggioSec);
         syncAppoggioDom();
       }, 1000);
-      onStatus('Respiración Appoggio 4-2-8 iniciada (4s inhala · 2s suspende · 8s exhala)');
+      onStatus(
+        `Respiración Appoggio 4-2-8 iniciada (4s inhala · 2s suspende · 8s exhala${appoggioRestSec > 0 ? ` · ${appoggioRestSec}s descanso libre` : ''})`
+      );
       return;
     }
     if (t.closest('.js-va-stop-all')) {
@@ -2954,6 +3024,16 @@ function buildVocalAgilityLab(
       else render();
     } else if (t.classList.contains('js-vv-pitch')) {
       targetPitch = parseInt(t.value, 10);
+      render();
+    } else if (t.classList.contains('js-va-appoggio-rest')) {
+      appoggioRestSec = parseInt(t.value, 10);
+      if (!appoggioActive) {
+        render();
+      } else {
+        syncAppoggioDom();
+      }
+    } else if (t.classList.contains('js-va-loop-rest')) {
+      loopWithRest = (t as HTMLInputElement).checked;
       render();
     }
   });
@@ -3607,7 +3687,11 @@ function buildDailyTrainingSessionLab(
   let vocalLevel: VocalTrainingLevel = 1;
   let vocalSeries: VocalTrainingExercise[] = buildStructuredVocalTrainingSeries(vocalLevel, totalMinutes);
   let vocalBaseMidiOverride: number | null = null; // lets singer shift pitch comfortably
+  let vocalRestBeats = 4; // Breath recovery pause between vocal cycles
+  const vocalBlockGapSec = 5; // Pause between ending one exercise block and starting the next
+  let transitionRestRemaining = 0;
   let activeBreathStatus = '';
+  let vocalRestingStep = false;
   let bassStringsCount: 4 | 5 = 4;
 
   const getDefaultBpm = (k: InstKey, idx: number): number => {
@@ -3669,6 +3753,8 @@ function buildDailyTrainingSessionLab(
     running = false;
     demoRunning = false;
     activeStep = -1;
+    transitionRestRemaining = 0;
+    vocalRestingStep = false;
     activeBreathStatus = '';
   };
 
@@ -3747,16 +3833,26 @@ function buildDailyTrainingSessionLab(
   const syncExerciseVisualsDom = () => {
     stage.querySelectorAll<HTMLElement>('.js-dt-step-pill').forEach((el, idx) => {
       const lit = idx === activeStep;
-      el.style.borderColor = lit ? '#fef08a' : '#334155';
-      el.style.background = lit ? INST_META[inst].color : 'rgba(15,23,42,0.9)';
-      el.style.color = lit ? '#090c12' : '#e2e8f0';
+      const isRestPill = el.getAttribute('data-kind') === 'rest';
+      el.style.borderColor = lit ? (isRestPill ? '#c7d2fe' : '#fef08a') : isRestPill ? '#4f46e5' : '#334155';
+      el.style.background = lit
+        ? isRestPill
+          ? '#6366f1'
+          : INST_META[inst].color
+        : isRestPill
+          ? 'rgba(99,102,241,0.14)'
+          : 'rgba(15,23,42,0.9)';
+      el.style.color = lit ? (isRestPill ? '#ffffff' : '#090c12') : isRestPill ? '#c7d2fe' : '#e2e8f0';
     });
 
     if (inst === 'canto') {
       const breathLiveEl = stage.querySelector<HTMLElement>('.js-dt-breath-live');
       if (breathLiveEl) {
         breathLiveEl.textContent =
-          activeBreathStatus || 'Pulsa "Iniciar Bloque" o "Escuchar Guía" para seguir los pulsos de respiración.';
+          activeBreathStatus || 'Pulsa "Iniciar Bloque" o "Escuchar Guía" para seguir los pulsos con descanso entre ciclos.';
+        breathLiveEl.style.color = vocalRestingStep ? '#c7d2fe' : '#6ee7b7';
+        breathLiveEl.style.borderColor = vocalRestingStep ? 'rgba(129,140,248,0.55)' : 'rgba(16,185,129,0.35)';
+        breathLiveEl.style.background = vocalRestingStep ? 'rgba(99,102,241,0.18)' : 'rgba(16,185,129,0.1)';
       }
       return;
     }
@@ -3918,6 +4014,7 @@ function buildDailyTrainingSessionLab(
     const ex = vocalSeries[blockIdx];
     const baseMidi = vocalBaseMidiOverride ?? ex.baseMidi;
     const isBreath = Boolean(ex.isBreathingOnly && ex.breathSteps?.length);
+    const breathCycleSteps = isBreath && ex.breathSteps ? getVocalCycleWithRest(ex.breathSteps, vocalRestBeats) : [];
     const LEVEL_LABELS: Record<VocalTrainingLevel, string> = {
       1: '🌱 Nivel 1 · Base',
       2: '🎤 Nivel 2 · Intermedio',
@@ -3939,16 +4036,40 @@ function buildDailyTrainingSessionLab(
               )
               .join('')}
           </div>
-          ${
-            isBreath
-              ? `<span class="text-xs" style="color:#38bdf8; font-weight:700;">🌬️ Guía rítmica por pulsos (sin afinación aún)</span>`
-              : `<label class="text-xs" style="color:#cbd5e1;">Tónica cómoda:
-                  <select class="lab-select js-dt-vocal-base" aria-label="Tónica del ejercicio vocal">
-                    ${[55, 57, 59, 60, 62, 64, 65].map((m) => `<option value="${m}" ${m === baseMidi ? 'selected' : ''}>${midiToNoteName(m)}</option>`).join('')}
-                  </select>
-                </label>`
-          }
+          <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+            <label class="text-xs" style="color:#a5b4fc;">🫁 Pausa entre ciclos:
+              <select class="lab-select js-dt-vocal-rest" aria-label="Pausa de respiración entre ciclos vocales">
+                <option value="0" ${vocalRestBeats === 0 ? 'selected' : ''}>Sin pausa (0 pulsos)</option>
+                <option value="2" ${vocalRestBeats === 2 ? 'selected' : ''}>2 pulsos (Breve)</option>
+                <option value="4" ${vocalRestBeats === 4 ? 'selected' : ''}>4 pulsos (Descanso ideal)</option>
+                <option value="6" ${vocalRestBeats === 6 ? 'selected' : ''}>6 pulsos (Amplio)</option>
+                <option value="8" ${vocalRestBeats === 8 ? 'selected' : ''}>8 pulsos (Profundo)</option>
+              </select>
+            </label>
+            ${
+              isBreath
+                ? `<span class="text-xs" style="color:#38bdf8; font-weight:700;">🌬️ Guía rítmica por pulsos</span>`
+                : `<label class="text-xs" style="color:#cbd5e1;">Tónica cómoda:
+                    <select class="lab-select js-dt-vocal-base" aria-label="Tónica del ejercicio vocal">
+                      ${[55, 57, 59, 60, 62, 64, 65].map((m) => `<option value="${m}" ${m === baseMidi ? 'selected' : ''}>${midiToNoteName(m)}</option>`).join('')}
+                    </select>
+                  </label>`
+            }
+          </div>
         </div>
+
+        ${
+          transitionRestRemaining > 0
+            ? `
+              <div style="margin-bottom:10px; padding:10px 12px; border-radius:10px; background:rgba(99,102,241,0.2); border:1px solid rgba(129,140,248,0.6); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px;">
+                <div class="text-xs" style="color:#e0e7ff; font-weight:800;">
+                  🫁 Descanso entre ejercicios (#${blockIdx + 2}): toma aire profundo y relaja hombros — comienza en <strong style="color:#fef08a;">${transitionRestRemaining}s</strong>
+                </div>
+                <button type="button" class="btn btn-primary js-dt-skip-gap" style="font-size:0.74rem; padding:4px 10px;">⏭ Empezar Siguiente Ya</button>
+              </div>
+            `
+            : ''
+        }
 
         <div class="grid-2" style="gap:8px; margin-bottom:10px;">
           <div style="background:#0f172a; border:1px solid #1e293b; border-radius:8px; padding:10px;">
@@ -3975,27 +4096,28 @@ function buildDailyTrainingSessionLab(
         </div>
 
         ${
-          isBreath && ex.breathSteps
+          isBreath && breathCycleSteps.length
             ? `
-              <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:stretch; margin-bottom:6px;">
-                ${ex.breathSteps
+              <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:stretch; margin-bottom:8px;">
+                ${breathCycleSteps
                   .map((bStep, idx) => {
                     const lit = idx === activeStep;
+                    const isRestPill = bStep.kind === 'rest';
                     return `
-                      <button type="button" class="btn js-dt-step-pill" data-step="${idx}" style="display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:2px; padding:7px 12px; border-radius:8px; border:1px solid ${lit ? '#fef08a' : '#334155'}; background:${lit ? '#10b981' : 'rgba(15,23,42,0.9)'}; color:${lit ? '#090c12' : '#f8fafc'}; text-align:left;">
-                        <div style="font-size:0.76rem; font-weight:900;">${bStep.label}</div>
+                      <button type="button" class="btn js-dt-step-pill" data-step="${idx}" data-kind="${bStep.kind}" style="display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:2px; padding:7px 12px; border-radius:8px; border:1px solid ${lit ? (isRestPill ? '#c7d2fe' : '#fef08a') : isRestPill ? '#4f46e5' : '#334155'}; background:${lit ? (isRestPill ? '#6366f1' : '#10b981') : isRestPill ? 'rgba(99,102,241,0.14)' : 'rgba(15,23,42,0.9)'}; color:${lit ? (isRestPill ? '#ffffff' : '#090c12') : isRestPill ? '#c7d2fe' : '#f8fafc'}; text-align:left;">
+                        <div style="font-size:0.76rem; font-weight:900;">${isRestPill ? '🫁 ' : ''}${bStep.label}</div>
                         <div style="font-size:0.66rem; opacity:0.9;">${bStep.cue}</div>
                       </button>
                     `;
                   })
                   .join('')}
               </div>
-              <div class="js-dt-breath-live text-xs" style="color:#6ee7b7; font-weight:700;">
-                ${activeBreathStatus || 'Pulsa "Iniciar Bloque" o "Escuchar Guía" para seguir los pulsos de respiración.'}
+              <div class="js-dt-breath-live text-xs" style="padding:7px 10px; border-radius:8px; border:1px solid ${vocalRestingStep ? 'rgba(129,140,248,0.55)' : 'rgba(16,185,129,0.35)'}; background:${vocalRestingStep ? 'rgba(99,102,241,0.18)' : 'rgba(16,185,129,0.1)'}; color:${vocalRestingStep ? '#c7d2fe' : '#6ee7b7'}; font-weight:700;">
+                ${activeBreathStatus || `Pulsa "Iniciar Bloque" o "Escuchar Guía" para seguir los pulsos con ${vocalRestBeats > 0 ? `${vocalRestBeats} pulsos de descanso entre ciclos` : 'ciclos continuos'}.`}
               </div>
             `
             : `
-              <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+              <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:8px;">
                 ${ex.patternOffsets
                   .map((off, idx) => {
                     const m = baseMidi + off;
@@ -4007,6 +4129,9 @@ function buildDailyTrainingSessionLab(
                     `;
                   })
                   .join('')}
+              </div>
+              <div class="js-dt-breath-live text-xs" style="padding:7px 10px; border-radius:8px; border:1px solid ${vocalRestingStep ? 'rgba(129,140,248,0.55)' : 'rgba(16,185,129,0.35)'}; background:${vocalRestingStep ? 'rgba(99,102,241,0.18)' : 'rgba(16,185,129,0.1)'}; color:${vocalRestingStep ? '#c7d2fe' : '#6ee7b7'}; font-weight:700;">
+                ${activeBreathStatus || (vocalRestBeats > 0 ? `Incluye pausa de ${vocalRestBeats} pulsos para respirar entre cada repetición.` : 'Repetición continua sin pausa entre ciclos.')}
               </div>
             `
         }
@@ -4235,13 +4360,14 @@ function buildDailyTrainingSessionLab(
 
     const ex = vocalSeries[blockIdx];
     if (ex.isBreathingOnly && ex.breathSteps?.length) {
-      const totalBeats = ex.breathSteps.reduce((acc, b) => acc + b.beats, 0) || 1;
+      const stepsWithRest = getVocalCycleWithRest(ex.breathSteps, vocalRestBeats);
+      const totalBeats = stepsWithRest.reduce((acc, b) => acc + b.beats, 0) || 1;
       const cycleBeat = stepIndex % totalBeats;
       let accum = 0;
       let chosenIdx = 0;
       let beatInStep = 1;
-      for (let i = 0; i < ex.breathSteps.length; i++) {
-        const b = ex.breathSteps[i];
+      for (let i = 0; i < stepsWithRest.length; i++) {
+        const b = stepsWithRest[i];
         if (cycleBeat < accum + b.beats) {
           chosenIdx = i;
           beatInStep = cycleBeat - accum + 1;
@@ -4249,19 +4375,40 @@ function buildDailyTrainingSessionLab(
         }
         accum += b.beats;
       }
-      const chosenStep = ex.breathSteps[chosenIdx];
+      const chosenStep = stepsWithRest[chosenIdx];
       activeStep = chosenIdx;
-      activeBreathStatus = `${chosenStep.label} · Pulso ${beatInStep}/${chosenStep.beats} — ${chosenStep.cue}`;
+      vocalRestingStep = chosenStep.kind === 'rest';
+      activeBreathStatus = vocalRestingStep
+        ? `🫁 ${chosenStep.label} · Pulso ${beatInStep}/${chosenStep.beats} — ${chosenStep.cue}`
+        : `${chosenStep.label} · Pulso ${beatInStep}/${chosenStep.beats} — ${chosenStep.cue}`;
       if (beatInStep === 1) {
-        const cueMidi = chosenStep.kind === 'inhale' ? 60 : chosenStep.kind === 'hold' ? 64 : 55;
-        audio.playAcousticPiano(cueMidi, 0.25, 0, 0.1, false);
+        const cueMidi =
+          chosenStep.kind === 'inhale'
+            ? 60
+            : chosenStep.kind === 'hold'
+              ? 64
+              : chosenStep.kind === 'rest'
+                ? 62
+                : 55;
+        audio.playAcousticPiano(cueMidi, 0.22, 0, chosenStep.kind === 'rest' ? 0.05 : 0.1, false);
       }
       syncExerciseVisualsDom();
       return;
     }
 
     const base = vocalBaseMidiOverride ?? ex.baseMidi;
-    activeStep = stepIndex % ex.patternOffsets.length;
+    const patState = computeVocalPatternStepState(stepIndex, ex.patternOffsets.length, vocalRestBeats);
+    if (patState.isRest) {
+      activeStep = -1;
+      vocalRestingStep = true;
+      activeBreathStatus = `🫁 Descansa y respira antes del ciclo #${patState.cycleNumber + 1} · Pulso ${patState.restBeat}/${patState.restTotal} (sin cantar)`;
+      syncExerciseVisualsDom();
+      return;
+    }
+
+    vocalRestingStep = false;
+    activeStep = patState.noteIndex;
+    activeBreathStatus = `🎤 Ciclo #${patState.cycleNumber} · Nota ${patState.noteIndex + 1}/${ex.patternOffsets.length} (${midiToNoteName(base + ex.patternOffsets[activeStep])})`;
     const m = base + ex.patternOffsets[activeStep];
     const durSec = Math.max(0.28, (60 / customBpm) * 0.85);
     audio.playAcousticPiano(m, durSec, 0, 0.14, false);
@@ -4299,6 +4446,18 @@ function buildDailyTrainingSessionLab(
     }, stepMs);
   };
 
+  const advanceToNextBlockNow = () => {
+    transitionRestRemaining = 0;
+    blockIdx += 1;
+    customBpm = getDefaultBpm(inst, blockIdx);
+    remainingSec = getBlockSeconds(blockIdx);
+    vocalRestingStep = false;
+    activeBreathStatus = '';
+    render();
+    startExerciseLoop();
+    onStatus(`Siguiente bloque: ${getBlockTitle(inst, blockIdx)}`);
+  };
+
   const startSession = () => {
     stopTimersOnly();
     audio.stopAll();
@@ -4313,17 +4472,33 @@ function buildDailyTrainingSessionLab(
         stopTimersOnly();
         return;
       }
+      if (transitionRestRemaining > 0) {
+        transitionRestRemaining -= 1;
+        if (transitionRestRemaining <= 0) {
+          advanceToNextBlockNow();
+        } else {
+          render();
+        }
+        return;
+      }
       remainingSec -= 1;
       if (remainingSec <= 0) {
-        audio.playAcousticPiano(72, 0.35, 0, 0.16, false);
+        audio.playAcousticPiano(72, 0.35, 0, 0.14, false);
         const totalBlocks = getBlockCount(inst);
         if (blockIdx + 1 < totalBlocks) {
-          blockIdx += 1;
-          customBpm = getDefaultBpm(inst, blockIdx);
-          remainingSec = getBlockSeconds(blockIdx);
-          render();
-          startExerciseLoop();
-          onStatus(`Siguiente bloque: ${getBlockTitle(inst, blockIdx)}`);
+          if (inst === 'canto' && vocalBlockGapSec > 0) {
+            if (stepTimer) {
+              clearInterval(stepTimer);
+              stepTimer = null;
+            }
+            activeStep = -1;
+            vocalRestingStep = true;
+            transitionRestRemaining = vocalBlockGapSec;
+            render();
+            onStatus(`🫁 Descansa ${vocalBlockGapSec}s y toma aire antes del ejercicio #${blockIdx + 2}`);
+          } else {
+            advanceToNextBlockNow();
+          }
         } else {
           stopTimersOnly();
           remainingSec = 0;
@@ -4395,15 +4570,23 @@ function buildDailyTrainingSessionLab(
       if (inst === 'canto') {
         const ex = vocalSeries[blockIdx];
         if (ex.isBreathingOnly && ex.breathSteps?.length) {
+          const stepsWithRest = getVocalCycleWithRest(ex.breathSteps, vocalRestBeats);
           let startBeat = 0;
-          for (let i = 0; i < Math.min(idx, ex.breathSteps.length); i++) {
-            startBeat += ex.breathSteps[i].beats;
+          for (let i = 0; i < Math.min(idx, stepsWithRest.length); i++) {
+            startBeat += stepsWithRest[i].beats;
           }
           triggerExerciseStep(startBeat, sub);
           return;
         }
       }
       triggerExerciseStep(idx, sub);
+      return;
+    }
+
+    if (t.closest('.js-dt-skip-gap')) {
+      if (running && transitionRestRemaining > 0 && blockIdx + 1 < getBlockCount(inst)) {
+        advanceToNextBlockNow();
+      }
       return;
     }
 
@@ -4559,6 +4742,24 @@ function buildDailyTrainingSessionLab(
     } else if (t.classList.contains('js-dt-vocal-base')) {
       vocalBaseMidiOverride = parseInt(t.value, 10);
       render();
+    } else if (t.classList.contains('js-dt-vocal-rest')) {
+      vocalRestBeats = parseInt(t.value, 10);
+      const wasActive = running || demoRunning;
+      if (wasActive && !running) {
+        stopTimersOnly();
+        audio.stopAll();
+        demoRunning = true;
+        render();
+        startExerciseLoop();
+      } else {
+        render();
+        if (running) startExerciseLoop();
+      }
+      onStatus(
+        vocalRestBeats > 0
+          ? `🫁 Pausa de respiración configurada a ${vocalRestBeats} pulsos entre cada ciclo.`
+          : 'Ciclos continuos sin pausa intermedia.'
+      );
     } else if (t.classList.contains('js-dt-click')) {
       clickEnabled = (t as HTMLInputElement).checked;
     }

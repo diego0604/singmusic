@@ -462,6 +462,39 @@
             </button>
           }
         </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+          <div class="flex items-center gap-1.5 flex-wrap" role="group" aria-label="Ocultar piano o elegir mástil en teoría y armonía">
+            <span class="text-[11px] font-semibold text-slate-400 mr-1">Instrumento en Teoría (Secc. 0–1):</span>
+            <button
+              type="button"
+              (click)="setVisualFocus('all')"
+              [attr.aria-pressed]="visualInstrumentFocus() === 'all'"
+              [class]="visualInstrumentFocus() === 'all'
+                ? 'min-h-[32px] px-2.5 py-1 rounded-md text-[11px] font-bold bg-sky-400 text-slate-950 cursor-pointer whitespace-nowrap shrink-0'
+                : 'min-h-[32px] px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800/90 text-slate-300 hover:bg-slate-700 cursor-pointer whitespace-nowrap shrink-0'">
+              🎹 Con Piano
+            </button>
+            <button
+              type="button"
+              (click)="setVisualFocus('guitar-only')"
+              [attr.aria-pressed]="visualInstrumentFocus() === 'guitar-only'"
+              [class]="visualInstrumentFocus() === 'guitar-only'
+                ? 'min-h-[32px] px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-400 text-slate-950 cursor-pointer whitespace-nowrap shrink-0'
+                : 'min-h-[32px] px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800/90 text-slate-300 hover:bg-slate-700 cursor-pointer whitespace-nowrap shrink-0'">
+              🎸 Solo Guitarra (Sin Piano)
+            </button>
+            <button
+              type="button"
+              (click)="setVisualFocus('bass-only')"
+              [attr.aria-pressed]="visualInstrumentFocus() === 'bass-only'"
+              [class]="visualInstrumentFocus() === 'bass-only'
+                ? 'min-h-[32px] px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-400 text-slate-950 cursor-pointer whitespace-nowrap shrink-0'
+                : 'min-h-[32px] px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800/90 text-slate-300 hover:bg-slate-700 cursor-pointer whitespace-nowrap shrink-0'">
+              🎸 Solo Bajo 4c (Sin Piano)
+            </button>
+          </div>
+        </div>
       </div>
 
       @if (showChordDiagram()) {

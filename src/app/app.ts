@@ -30,6 +30,12 @@ import {
   TREATISE_ENRICHMENT_SEARCH_META,
   injectTreatiseEnrichmentIntoCategoryHtml,
 } from './treatise-enrichment';
+import {
+  type VisualInstrumentFocus,
+  getVisualInstrumentFocus,
+  resolveVisualInstrumentView,
+  setVisualInstrumentFocus,
+} from './music-games-logic';
 
 export interface CategoryPart {
   id: string;
@@ -116,6 +122,7 @@ export class App implements OnInit, OnDestroy {
     'Motor de Síntesis Activo (Guitarra / Bajo / Piano / Voz / Vientos Andinos / Batería)'
   );
   readonly currentInstrument = signal<'guitar' | 'piano' | 'bass'>('guitar');
+  readonly visualInstrumentFocus = signal<VisualInstrumentFocus>('all');
 
   // Global Level Filter ('1' = Novato, '2' = Intermedio, '4' = Completo)
   readonly activeLevelFilter = signal<'1' | '2' | '4'>('4');
@@ -146,6 +153,7 @@ export class App implements OnInit, OnDestroy {
   readonly liveNotes = signal<string[]>([]);
   readonly liveNoteKind = signal<'note' | 'chord' | 'idle'>('idle');
   private liveNotesListener: ((ev: Event) => void) | null = null;
+  private visualFocusListener: ((ev: Event) => void) | null = null;
 
   // Guided Learning Paths & Completion Tracking & Chord Diagram Studio
   readonly showChordDiagram = signal<boolean>(false);
@@ -445,6 +453,26 @@ export class App implements OnInit, OnDestroy {
         this.liveNoteKind.set(notes.length === 0 ? 'idle' : custom.detail?.kind || 'note');
       };
       window.addEventListener('enciclopedia:live-notes', this.liveNotesListener);
+
+      const savedFocus = getVisualInstrumentFocus();
+      this.visualInstrumentFocus.set(savedFocus);
+      if (savedFocus === 'guitar-only') {
+        this.currentInstrument.set('guitar');
+      } else if (savedFocus === 'bass-only') {
+        this.currentInstrument.set('bass');
+      }
+
+      this.visualFocusListener = (ev: Event) => {
+        const custom = ev as CustomEvent<{ focus?: VisualInstrumentFocus }>;
+        const nextFocus = custom.detail?.focus || getVisualInstrumentFocus();
+        this.visualInstrumentFocus.set(nextFocus);
+        if (nextFocus === 'guitar-only') {
+          this.currentInstrument.set('guitar');
+        } else if (nextFocus === 'bass-only') {
+          this.currentInstrument.set('bass');
+        }
+      };
+      window.addEventListener('enciclopedia:visual-instrument-change', this.visualFocusListener);
     }
 
     this.buildGlobalSearchIndex();
@@ -453,9 +481,15 @@ export class App implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.audio.stopAll();
-    if (isPlatformBrowser(this.platformId) && this.liveNotesListener) {
-      window.removeEventListener('enciclopedia:live-notes', this.liveNotesListener);
-      this.liveNotesListener = null;
+    if (isPlatformBrowser(this.platformId)) {
+      if (this.liveNotesListener) {
+        window.removeEventListener('enciclopedia:live-notes', this.liveNotesListener);
+        this.liveNotesListener = null;
+      }
+      if (this.visualFocusListener) {
+        window.removeEventListener('enciclopedia:visual-instrument-change', this.visualFocusListener);
+        this.visualFocusListener = null;
+      }
     }
   }
 
@@ -570,6 +604,17 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
+  setVisualFocus(focus: VisualInstrumentFocus): void {
+    this.visualInstrumentFocus.set(focus);
+    setVisualInstrumentFocus(focus);
+    if (focus === 'guitar-only') {
+      this.currentInstrument.set('guitar');
+    } else if (focus === 'bass-only') {
+      this.currentInstrument.set('bass');
+    }
+    this.activeNoteLabel.set(`Vista visual: ${resolveVisualInstrumentView(focus).label}`);
+  }
+
   parseMinNivel(nivelStr: string): number {
     const match = /\d+/.exec(nivelStr || '1');
     return match ? parseInt(match[0], 10) : 1;
@@ -639,9 +684,9 @@ export class App implements OnInit, OnDestroy {
     this.audio.stopAll();
     this.activeCat.set(cat);
     this.mobileMenuOpen.set(false);
-    if (cat.id === 'bajo') {
+    if (cat.id === 'bajo' || this.visualInstrumentFocus() === 'bass-only') {
       this.currentInstrument.set('bass');
-    } else if (this.currentInstrument() === 'bass') {
+    } else if (this.visualInstrumentFocus() === 'guitar-only' || this.currentInstrument() === 'bass') {
       this.currentInstrument.set('guitar');
     }
 
@@ -814,7 +859,10 @@ export class App implements OnInit, OnDestroy {
       const groupsRaw = treatiseBtn.getAttribute('data-groups') || '';
       const label = treatiseBtn.getAttribute('data-label') || 'Ejemplo Armónico';
       const mode = treatiseBtn.getAttribute('data-mode') || 'chord';
-      const timb = (treatiseBtn.getAttribute('data-inst') as 'piano' | 'guitar') || 'piano';
+      const rawTimb = (treatiseBtn.getAttribute('data-inst') as 'piano' | 'guitar') || 'piano';
+      const focus = this.visualInstrumentFocus();
+      const timb: 'piano' | 'guitar' | 'bass' =
+        focus === 'guitar-only' ? 'guitar' : focus === 'bass-only' ? 'bass' : rawTimb;
 
       if (mode === 'prog' && groupsRaw) {
         const groups = groupsRaw
@@ -831,9 +879,14 @@ export class App implements OnInit, OnDestroy {
         this.activeNoteLabel.set(`🔊 ${label} (${groups.length} acordes)`);
         groups.forEach((chord, idx) => {
           this.audio.schedule(() => {
-            this.audio.strumChord(chord, timb, 0, false);
-            const bassMidi = chord[0] >= 48 ? chord[0] - 12 : chord[0];
-            this.audio.playElectricBass(bassMidi, 0.78, 0, 0.28, 'finger', false, { skipGlow: true });
+            if (timb === 'bass') {
+              const bassMidi = chord[0] >= 52 ? chord[0] - 12 : chord[0];
+              this.audio.playElectricBass(bassMidi, 0.78, 0, 0.36, 'finger', false);
+            } else {
+              this.audio.strumChord(chord, timb, 0, false);
+              const bassMidi = chord[0] >= 48 ? chord[0] - 12 : chord[0];
+              this.audio.playElectricBass(bassMidi, 0.78, 0, 0.28, 'finger', false, { skipGlow: true });
+            }
             this.activeNoteLabel.set(`🔊 ${label} [Paso ${idx + 1}/${groups.length}]`);
           }, idx * 820);
         });
@@ -851,12 +904,20 @@ export class App implements OnInit, OnDestroy {
       if (mode === 'seq') {
         midis.forEach((m, i) => {
           this.audio.schedule(() => {
-            if (timb === 'guitar') {
+            if (timb === 'bass') {
+              const bassMidi = m >= 55 ? m - 12 : m;
+              this.audio.playElectricBass(bassMidi, 0.55, 0, 0.36, 'finger', false);
+            } else if (timb === 'guitar') {
               this.audio.playPluckedGuitar(m, 0.55, 0, 0.28, false);
             } else {
               this.audio.playAcousticPiano(m, 0.55, 0, 0.25, false);
             }
           }, i * 270);
+        });
+      } else if (timb === 'bass') {
+        midis.forEach((m, i) => {
+          const bassMidi = m >= 55 ? m - 12 : m;
+          this.audio.playElectricBass(bassMidi, 0.7, i * 0.14, 0.34, 'finger', false);
         });
       } else {
         this.audio.strumChord(midis, timb, 0, false);
@@ -944,14 +1005,16 @@ export class App implements OnInit, OnDestroy {
     if (stopPrev && delay === 0) {
       this.audio.stopAll();
     }
-    if (this.activeCat().id === 'bajo' || this.currentInstrument() === 'bass') {
-      this.audio.playElectricBass(midi, duration, delay, 0.38, 'finger', false);
+    const focus = this.visualInstrumentFocus();
+    if (this.activeCat().id === 'bajo' || focus === 'bass-only' || this.currentInstrument() === 'bass') {
+      const bassMidi = midi >= 55 && focus === 'bass-only' ? midi - 12 : midi;
+      this.audio.playElectricBass(bassMidi, duration, delay, 0.38, 'finger', false);
     } else if (this.activeCat().id === 'canto') {
       this.audio.playAcousticPiano(midi, duration, delay, 0.18, false);
       this.audio.playVocalFormant(midi, duration, delay, 0.25, 'a', false);
     } else if (this.activeCat().id === 'folclore') {
       this.audio.playQuenaFlute(midi, duration, delay, 0.26, false);
-    } else if (this.currentInstrument() === 'guitar') {
+    } else if (focus === 'guitar-only' || this.currentInstrument() === 'guitar') {
       this.audio.playPluckedGuitar(midi, duration, delay, 0.28, false);
     } else {
       this.audio.playAcousticPiano(midi, duration, delay, 0.26, false);

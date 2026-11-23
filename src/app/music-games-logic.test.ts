@@ -10,7 +10,10 @@ import {
   buildStructuredVocalTrainingSeries,
   buildScaleFretboardPath,
   classifyVocalRangeDetailed,
+  computeAppoggioCyclePhase,
   computeChordNeckState,
+  computeEffectiveExplorerInstrument,
+  computeVocalPatternStepState,
   convertProgressionToNashville,
   createPitchAcuityRound,
   CHORD_DIAGRAM_CATALOG,
@@ -19,12 +22,14 @@ import {
   DRUM_TRAINING_BLOCKS,
   evaluateChordMemoryAnswer,
   evaluateGapClickTiming,
+  getVocalCycleWithRest,
   GUITAR_TRAINING_BLOCKS,
   harmonizeMelodyVoices,
   identifyGuitarChordFromFrets,
   reduceLatchGlowState,
   renderTopViewDrumKitSvg,
   resolvePlayableChordVoicing,
+  resolveVisualInstrumentView,
   verifySimonStep,
 } from './music-games-logic';
 
@@ -598,6 +603,71 @@ test('Full playability audit: every chord in CHORD_DIAGRAM_CATALOG and CHORD_MEM
       }
     });
   }
+});
+
+test('VisualInstrumentFocus hides piano and focuses Guitar or Bass cleanly', () => {
+  const allCfg = resolveVisualInstrumentView('all');
+  assert.equal(allCfg.showPiano, true);
+  assert.equal(allCfg.neckMode, 'guitar');
+
+  const gtrCfg = resolveVisualInstrumentView('guitar-only');
+  assert.equal(gtrCfg.showPiano, false);
+  assert.equal(gtrCfg.neckMode, 'guitar');
+  assert.equal(gtrCfg.audioTimbre, 'guitar');
+  assert.equal(computeEffectiveExplorerInstrument('guitar-only', 'piano'), 'guitar');
+  assert.equal(computeEffectiveExplorerInstrument('guitar-only', 'bass'), 'guitar');
+
+  const bassCfg = resolveVisualInstrumentView('bass-only');
+  assert.equal(bassCfg.showPiano, false);
+  assert.equal(bassCfg.neckMode, 'bass');
+  assert.equal(bassCfg.audioTimbre, 'bass');
+  assert.equal(computeEffectiveExplorerInstrument('bass-only', 'piano'), 'bass');
+  assert.equal(computeEffectiveExplorerInstrument('bass-only', 'guitar'), 'bass');
+
+  assert.equal(computeEffectiveExplorerInstrument('all', 'piano'), 'piano');
+});
+
+test('Vocal cycle rest helpers insert breath-recovery pause between breathing cycles, pitched patterns, and Appoggio 4-2-8 timer', () => {
+  const baseBreath = [
+    { label: 'Inhala 4t', cue: 'Expande costillas', beats: 4, kind: 'inhale' as const },
+    { label: 'Suspende 2t', cue: 'Garganta abierta', beats: 2, kind: 'hold' as const },
+    { label: 'Exhala "Sss" 8t', cue: 'Hilo constante', beats: 8, kind: 'exhale' as const },
+  ];
+
+  // Zero rest keeps original steps
+  assert.equal(getVocalCycleWithRest(baseBreath, 0).length, 3);
+
+  // Positive rest appends explicit 'rest' step after exhale, idempotently
+  const withRest = getVocalCycleWithRest(baseBreath, 4);
+  assert.equal(withRest.length, 4);
+  assert.equal(withRest[3].kind, 'rest');
+  assert.equal(withRest[3].beats, 4);
+  assert.equal(getVocalCycleWithRest(withRest, 4).length, 4);
+
+  // Pitched vocal exercise pattern (5 notes + 3 rest beats = 8-beat cycle)
+  const s0 = computeVocalPatternStepState(0, 5, 3);
+  assert.deepEqual(s0, { isRest: false, noteIndex: 0, restBeat: 0, restTotal: 3, cycleNumber: 1 });
+  const s4 = computeVocalPatternStepState(4, 5, 3);
+  assert.deepEqual(s4, { isRest: false, noteIndex: 4, restBeat: 0, restTotal: 3, cycleNumber: 1 });
+  const s5 = computeVocalPatternStepState(5, 5, 3);
+  assert.deepEqual(s5, { isRest: true, noteIndex: -1, restBeat: 1, restTotal: 3, cycleNumber: 1 });
+  const s7 = computeVocalPatternStepState(7, 5, 3);
+  assert.deepEqual(s7, { isRest: true, noteIndex: -1, restBeat: 3, restTotal: 3, cycleNumber: 1 });
+  const s8 = computeVocalPatternStepState(8, 5, 3);
+  assert.deepEqual(s8, { isRest: false, noteIndex: 0, restBeat: 0, restTotal: 3, cycleNumber: 2 });
+
+  // Appoggio 4-2-8 + 4s rest (total 18s cycle)
+  assert.equal(computeAppoggioCyclePhase(0, 4).isRest, false);
+  assert.equal(computeAppoggioCyclePhase(4, 4).phase.startsWith('2.'), true);
+  assert.equal(computeAppoggioCyclePhase(6, 4).phase.startsWith('3.'), true);
+  const restStart = computeAppoggioCyclePhase(14, 4);
+  assert.equal(restStart.isRest, true);
+  assert.equal(restStart.remaining, 4);
+  assert.equal(restStart.totalCycleSec, 18);
+  assert.ok(restStart.phase.includes('DESCANSO'));
+  const wrapBack = computeAppoggioCyclePhase(18, 4);
+  assert.equal(wrapBack.isRest, false);
+  assert.equal(wrapBack.phase.startsWith('1.'), true);
 });
 
 
