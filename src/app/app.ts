@@ -101,7 +101,7 @@ export class App implements OnInit, OnDestroy {
   readonly categories: CategoryPart[] = [
     { id: 'teoria', label: '1. Teoría y Acústica', count: 11 },
     { id: 'armonia', label: '2. Armonía Práctica', count: 17 },
-    { id: 'composicion', label: '3. Composición y Letras', count: 9 },
+    { id: 'composicion', label: '3. Composición y Letras', count: 10 },
     { id: 'guitarra-ac', label: '4. Guitarra Acústica', count: 7 },
     { id: 'guitarra-el', label: '5. Guitarra Eléctrica', count: 6 },
     { id: 'bajo', label: '6. Bajo Eléctrico (4 Cuerdas)', count: 6 },
@@ -110,7 +110,7 @@ export class App implements OnInit, OnDestroy {
     { id: 'folclore', label: '9. Vientos Andinos y Folclore', count: 4 },
     { id: 'arreglos', label: '10. Arreglos y Orquestación', count: 4 },
     { id: 'produccion', label: '11. Producción y Proyectos', count: 3 },
-    { id: 'all', label: '📚 Toda la Enciclopedia Completa', count: 79 },
+    { id: 'all', label: '📚 Toda la Enciclopedia Completa', count: 80 },
   ];
 
   readonly activeCat = signal<CategoryPart>(this.categories[0]);

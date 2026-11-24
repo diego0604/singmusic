@@ -13,6 +13,8 @@ import {
   computeAppoggioCyclePhase,
   computeChordNeckState,
   computeEffectiveExplorerInstrument,
+  computeGuitarNeckWindow,
+  computeVerticalChordBoxData,
   computeVocalPatternStepState,
   convertProgressionToNashville,
   createPitchAcuityRound,
@@ -28,9 +30,29 @@ import {
   identifyGuitarChordFromFrets,
   reduceLatchGlowState,
   renderTopViewDrumKitSvg,
+  renderVerticalGuitarChordSvg,
   resolvePlayableChordVoicing,
   resolveVisualInstrumentView,
   verifySimonStep,
+  analyzeIntervalAndInversion,
+  computeCagedGuitarShape,
+  computeExtensionPyramid,
+  computeNoteExplorerState,
+  computePentatonicBoxWindow,
+  GREEK_MODES_CATALOG,
+  resolveExplorerKind,
+  analyzePoeticProsodyDetailed,
+  classifySpanishPoeticMeter,
+  SONG_FORM_ARCHITECT_TEMPLATES,
+  computeSongFormMetrics,
+  SPANISH_POETIC_WORD_BANK,
+  extractSpanishPoeticRhymeKeys,
+  findSpanishRhymes,
+  NONLINEAR_POETIC_STRUCTURES,
+  generateNonLinearStructure,
+  CREATIVE_WRITING_ADVICE_BY_LEVEL,
+  pickRandomWritingPromptWords,
+  evaluateWritingDraftWithWords,
 } from './music-games-logic';
 
 test('E2 to D5 vocal range is accurately classified as Extended Range / Baritenor (34 semitones)', () => {
@@ -486,9 +508,12 @@ test('buildStructuredVocalTrainingSeries is deterministic by level, puts breathi
 });
 
 test('Guitar, Bass, and Drum training block datasets have valid fingerings, frets, and limb assignments', () => {
-  assert.equal(GUITAR_TRAINING_BLOCKS.length, 4);
+  assert.equal(GUITAR_TRAINING_BLOCKS.length, 8);
+  const ratioSum = GUITAR_TRAINING_BLOCKS.reduce((acc, b) => acc + b.ratio, 0);
+  assert.ok(Math.abs(ratioSum - 1) < 0.01);
   for (const blk of GUITAR_TRAINING_BLOCKS) {
     assert.ok(blk.steps.length >= 4);
+    assert.ok(blk.phaseLabel && blk.phaseLabel.length > 4);
     for (const st of blk.steps) {
       for (const pos of st.positions) {
         assert.ok(pos.sIdx >= 0 && pos.sIdx <= 5);
@@ -669,6 +694,256 @@ test('Vocal cycle rest helpers insert breath-recovery pause between breathing cy
   assert.equal(wrapBack.isRest, false);
   assert.equal(wrapBack.phase.startsWith('1.'), true);
 });
+
+test('computeGuitarNeckWindow computes ergonomic zoomed fret ranges and preserves full 0-12 option', () => {
+  const openWin = computeGuitarNeckWindow([0, 1, 2, 3], 'auto', 12);
+  assert.deepEqual({ minFret: openWin.minFret, maxFret: openWin.maxFret }, { minFret: 0, maxFret: 5 });
+
+  const highWin = computeGuitarNeckWindow([7, 8, 9, 10], 'auto', 12);
+  assert.ok(highWin.minFret >= 5 && highWin.maxFret >= 10 && highWin.fretCount >= 6);
+
+  const allWin = computeGuitarNeckWindow([1, 2, 3], 'all', 12);
+  assert.deepEqual({ minFret: allWin.minFret, maxFret: allWin.maxFret, fretCount: allWin.fretCount }, { minFret: 0, maxFret: 12, fretCount: 13 });
+
+  const midWin = computeGuitarNeckWindow([], 'mid', 12);
+  assert.deepEqual({ minFret: midWin.minFret, maxFret: midWin.maxFret }, { minFret: 4, maxFret: 9 });
+});
+
+test('computeVerticalChordBoxData and renderVerticalGuitarChordSvg capture nut, barre, mutes, and finger numbers cleanly', () => {
+  // F barre: 1-3-3-2-1-1
+  const fBox = computeVerticalChordBoxData({
+    rootPc: 5,
+    positions: [
+      { sIdx: 5, fret: 1, finger: 1 },
+      { sIdx: 4, fret: 3, finger: 3 },
+      { sIdx: 3, fret: 3, finger: 4 },
+      { sIdx: 2, fret: 2, finger: 2 },
+      { sIdx: 1, fret: 1, finger: 1 },
+      { sIdx: 0, fret: 1, finger: 1 },
+    ],
+  });
+  assert.equal(fBox.showNut, true);
+  assert.equal(fBox.tabSummary, '1-3-3-2-1-1');
+  assert.equal(fBox.fingerSummary, '1-3-4-2-1-1');
+  assert.ok(fBox.barre !== null && fBox.barre.relRow === 1);
+
+  const svg = renderVerticalGuitarChordSvg(fBox, { title: 'F Mayor' });
+  assert.ok(svg.includes('<svg'));
+  assert.ok(svg.includes('F Mayor'));
+
+  // Movable Dm9: X-5-3-5-5-X -> starts above nut with 3fr
+  const dm9Box = computeVerticalChordBoxData({
+    rootPc: 2,
+    positions: [
+      { sIdx: 4, fret: 5, finger: 2 },
+      { sIdx: 3, fret: 3, finger: 1 },
+      { sIdx: 2, fret: 5, finger: 3 },
+      { sIdx: 1, fret: 5, finger: 4 },
+    ],
+  });
+  assert.equal(dm9Box.showNut, false);
+  assert.equal(dm9Box.startFret, 3);
+  assert.equal(dm9Box.strings[0].isMuted, true);
+  assert.equal(dm9Box.strings[5].isMuted, true);
+});
+
+test('resolveExplorerKind enforces pedagogical progression without leaking scales into Notes or Intervals chapters', () => {
+  assert.equal(resolveExplorerKind({ labType: 'fretboard-lab', dataMode: 'notes' }), 'notes');
+  assert.equal(resolveExplorerKind({ labType: 'interval-lab', dataMode: 'build' }), 'interval');
+  assert.equal(resolveExplorerKind({ labType: 'scale-explorer', dataSet: 'modes' }), 'modes');
+  assert.equal(resolveExplorerKind({ labType: 'scale-explorer', dataSet: 'all' }), 'scale');
+  assert.equal(resolveExplorerKind({ labType: 'chord-explorer', dataMode: null }), 'chord');
+  assert.equal(resolveExplorerKind({ labType: 'fretboard-lab', dataMode: 'chord-window' }), 'chord');
+});
+
+test('computeNoteExplorerState filters natural, accidental, chromatic, and single-note octaves cleanly', () => {
+  const singleC = computeNoteExplorerState('single', 0);
+  assert.deepEqual(singleC.activePcs, [0]);
+  assert.ok(singleC.summaryTitle.includes('C'));
+
+  const naturals = computeNoteExplorerState('natural', 0);
+  assert.deepEqual(naturals.activePcs, [0, 2, 4, 5, 7, 9, 11]);
+
+  const accidentals = computeNoteExplorerState('accidentals', 0);
+  assert.deepEqual(accidentals.activePcs, [1, 3, 6, 8, 10]);
+
+  const chromatic = computeNoteExplorerState('chromatic', 0);
+  assert.equal(chromatic.activePcs.length, 12);
+});
+
+test('analyzeIntervalAndInversion computes exact target pitch and Ley del 9 / 12 inversion pairs', () => {
+  // C (0) + 4 semitones = E (4) 3M <-> 6m (8 semitones)
+  const maj3 = analyzeIntervalAndInversion(0, 4);
+  assert.equal(maj3.targetPc, 4);
+  assert.equal(maj3.shortLabel, '3M');
+  assert.equal(maj3.invertedSemitones, 8);
+  assert.equal(maj3.invertedShortLabel, '6m (b6)');
+
+  // C (0) + 7 semitones = G (7) 5J <-> 4J (5 semitones)
+  const perf5 = analyzeIntervalAndInversion(0, 7);
+  assert.equal(perf5.targetPc, 7);
+  assert.equal(perf5.shortLabel, '5J');
+  assert.equal(perf5.invertedSemitones, 5);
+  assert.equal(perf5.invertedShortLabel, '4J');
+});
+
+test('GREEK_MODES_CATALOG covers all 7 Greek modes with distinct characteristic offsets', () => {
+  assert.equal(GREEK_MODES_CATALOG.length, 7);
+  const ids = GREEK_MODES_CATALOG.map((m) => m.id);
+  assert.deepEqual(ids, ['major', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'minor', 'locrian']);
+  GREEK_MODES_CATALOG.forEach((m) => {
+    assert.equal(m.intervals.length, 7);
+    assert.ok(m.intervals.includes(m.charOffset), `Characteristic ${m.charOffset} missing in ${m.id}`);
+  });
+});
+
+test('computeCagedGuitarShape computes playable 1-4 fingerings and neck zoom windows across all 5 CAGED shapes', () => {
+  for (const shape of ['C', 'A', 'G', 'E', 'D'] as const) {
+    const res = computeCagedGuitarShape(shape, 0, 'maj'); // C Major in all 5 CAGED forms
+    assert.ok(res.positions.length >= 4, `Expected >=4 strings for shape ${shape}`);
+    assert.ok(res.positions.every((p) => p.fret >= 0 && p.fret <= 15));
+    assert.ok(res.positions.every((p) => p.finger >= 0 && p.finger <= 4));
+    assert.ok(res.neckWindow.maxFret - res.neckWindow.minFret <= 6);
+  }
+});
+
+test('computePentatonicBoxWindow and computeExtensionPyramid compute valid guitar boxes and avoid-note alerts', () => {
+  for (const boxIdx of [1, 2, 3, 4, 5] as const) {
+    const box = computePentatonicBoxWindow(9, boxIdx); // A minor pentatonic boxes 1..5
+    assert.equal(box.positions.length, 12);
+    assert.ok(box.positions.some((p) => p.isRoot));
+    assert.ok(box.neckWindow.maxFret <= 15);
+  }
+
+  // C Major degree I with 6 stacked thirds (1-3-5-7-9-11) triggers avoid-note warning (11 vs 3)
+  const cmaj11 = computeExtensionPyramid({
+    keyRootPc: 0,
+    scaleIntervals: [0, 2, 4, 5, 7, 9, 11],
+    degreeIndex: 0,
+    size: 6,
+    stackMode: 'thirds',
+  });
+  assert.equal(cmaj11.noteNames.length, 6);
+  assert.ok(cmaj11.avoidNotesWarning !== null);
+
+  // D Dorian quartal stack (D-G-C-F) produces clean quartal voicing with no b9 clash warning
+  const dQuartal = computeExtensionPyramid({
+    keyRootPc: 2,
+    scaleIntervals: [0, 2, 3, 5, 7, 9, 10],
+    degreeIndex: 0,
+    size: 4,
+    stackMode: 'fourths',
+  });
+  assert.deepEqual(dQuartal.noteNames, ['D', 'G', 'C', 'F']);
+  assert.equal(dQuartal.avoidNotesWarning, null);
+});
+
+test('analyzePoeticProsodyDetailed detects sinalefas, poetic meter, anacrusis, and vowel openness', () => {
+  const endecas = analyzePoeticProsodyDetailed('Cuando el invierno apague tu calor');
+  assert.equal(endecas.sinalefas, 2);
+  assert.equal(endecas.metricSyllables, 11);
+  assert.ok(endecas.meterName.includes('Endecasílabo'));
+  assert.equal(endecas.hasClosedPeakVowel, false);
+  assert.ok(endecas.scansionTokens.some((t) => t.text.includes('‿')));
+
+  const octos = analyzePoeticProsodyDetailed('El corazón que late hoy');
+  assert.equal(octos.anacrusisSlots[0], 'El');
+  assert.ok(octos.scansionTokens.some((t) => t.stressed && /zón/i.test(t.text)));
+
+  const closedVowel = analyzePoeticProsodyDetailed('Solo en silencio sin ti');
+  assert.equal(closedVowel.hasClosedPeakVowel, true);
+
+  const alex = classifySpanishPoeticMeter(14);
+  assert.ok(alex.meterName.includes('Alejandrino'));
+  assert.equal(alex.artCategory, 'Arte Mayor (≥ 9)');
+});
+
+test('SONG_FORM_ARCHITECT_TEMPLATES includes non-traditional structures and computes duration & golden-ratio climax', () => {
+  assert.ok(SONG_FORM_ARCHITECT_TEMPLATES.some((t) => t.id === 'aaa-strophic'));
+  assert.ok(SONG_FORM_ARCHITECT_TEMPLATES.some((t) => t.id === 'through-composed'));
+  assert.ok(SONG_FORM_ARCHITECT_TEMPLATES.some((t) => t.id === 'hook-first'));
+
+  const classic = SONG_FORM_ARCHITECT_TEMPLATES.find((t) => t.id === 'pop-classic')!;
+  const metrics = computeSongFormMetrics(classic.blocks, 120, 4);
+  assert.equal(metrics.totalBars, 68);
+  assert.equal(metrics.totalSeconds, 136);
+  assert.equal(metrics.formattedDuration, '2:16');
+  assert.equal(metrics.isGoldenRatioPeak, true);
+});
+
+test('extractSpanishPoeticRhymeKeys and findSpanishRhymes distinguish consonant and assonant rhymes accurately', () => {
+  const lunaKeys = extractSpanishPoeticRhymeKeys('luna');
+  assert.equal(lunaKeys.consonantKey, 'una');
+  assert.equal(lunaKeys.assonantKey, 'u-a');
+  assert.equal(lunaKeys.openForHighSinging, false); // stressed U
+
+  const silencioKeys = extractSpanishPoeticRhymeKeys('silencio');
+  assert.equal(silencioKeys.consonantKey, 'encio');
+  assert.equal(silencioKeys.assonantKey, 'e-o');
+  assert.equal(silencioKeys.openForHighSinging, true); // stressed E
+
+  const cancionKeys = extractSpanishPoeticRhymeKeys('canción');
+  assert.equal(cancionKeys.consonantKey, 'on');
+  assert.equal(cancionKeys.assonantKey, 'o');
+
+  // Check rhyme lookup against dictionary + extra test words
+  const lunaRhymes = findSpanishRhymes('luna', ['cuna', 'laguna']);
+  assert.ok(lunaRhymes.consonantMatches.includes('cuna'));
+  assert.ok(lunaRhymes.consonantMatches.includes('laguna'));
+  assert.ok(!lunaRhymes.assonantMatches.includes('cuna'));
+  assert.ok(lunaRhymes.assonantMatches.includes('bruma'));
+  assert.ok(lunaRhymes.assonantMatches.includes('lluvia'));
+
+  const cancionRhymes = findSpanishRhymes('canción');
+  assert.ok(cancionRhymes.consonantMatches.includes('corazón'));
+  assert.ok(cancionRhymes.consonantMatches.includes('razón'));
+  assert.ok(cancionRhymes.assonantMatches.includes('sol'));
+});
+
+test('NONLINEAR_POETIC_STRUCTURES & generateNonLinearStructure provide flujo-conciencia, narrativa-circular and writing skeletons', () => {
+  assert.ok(NONLINEAR_POETIC_STRUCTURES.some((s) => s.id === 'flujo-conciencia'));
+  assert.ok(NONLINEAR_POETIC_STRUCTURES.some((s) => s.id === 'narrativa-circular'));
+  assert.ok(NONLINEAR_POETIC_STRUCTURES.length >= 6);
+
+  const circular = generateNonLinearStructure('narrativa-circular', 0, '3/4 Vals');
+  assert.equal(circular.structure.id, 'narrativa-circular');
+  assert.equal(circular.tempoFeel, '3/4 Vals');
+  assert.ok(circular.skeletonText.includes('Verso Espejo'));
+
+  assert.equal(CREATIVE_WRITING_ADVICE_BY_LEVEL.length, 3);
+  assert.deepEqual(
+    CREATIVE_WRITING_ADVICE_BY_LEVEL.map((l) => l.id),
+    ['principiante', 'intermedio', 'avanzado']
+  );
+});
+
+test('pickRandomWritingPromptWords picks 2..5 distinct words and evaluateWritingDraftWithWords tracks local word usage & scansion', () => {
+  assert.ok(SPANISH_POETIC_WORD_BANK.length >= 120);
+  const picked3 = pickRandomWritingPromptWords(3, 42, 'Todas');
+  assert.equal(picked3.length, 3);
+  assert.equal(new Set(picked3).size, 3);
+
+  const picked5 = pickRandomWritingPromptWords(5, 99, 'Naturaleza y Cosmos');
+  assert.equal(picked5.length, 5);
+  assert.equal(new Set(picked5).size, 5);
+
+  const targets = ['luna', 'cristal', 'silencio'];
+  const evalResult = evaluateWritingDraftWithWords(
+    '[1. Umbral]\nBajo la luna fría tiemblan los cristales.\n',
+    targets
+  );
+  assert.equal(evalResult.totalTargetWords, 3);
+  assert.equal(evalResult.usedCount, 2);
+  assert.equal(evalResult.allWordsUsed, false);
+  assert.equal(evalResult.wordStatuses.find((w) => w.word === 'luna')?.used, true);
+  assert.equal(evalResult.wordStatuses.find((w) => w.word === 'cristal')?.used, true);
+  assert.equal(evalResult.wordStatuses.find((w) => w.word === 'silencio')?.used, false);
+  assert.equal(evalResult.totalLines, 1); // ignores bracket header lines
+  assert.ok(evalResult.lines[0].metricSyllables > 0);
+});
+
+
+
 
 
 

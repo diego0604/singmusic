@@ -2332,6 +2332,8 @@ export interface GuitarTrainingStep {
 export interface GuitarTrainingBlock {
   id: string;
   title: string;
+  phaseLabel?: string;
+  focusTag?: string;
   defaultBpm: number;
   ratio: number;
   subdivisionPerBeat: 1 | 2;
@@ -2343,9 +2345,11 @@ export interface GuitarTrainingBlock {
 export const GUITAR_TRAINING_BLOCKS: GuitarTrainingBlock[] = [
   {
     id: 'gtr_spider',
+    phaseLabel: 'Fase 1 · Motricidad y Calentamiento',
+    focusTag: 'Púa alternada 1-2-3-4',
     title: '1. Calentamiento Motor (Araña 1-2-3-4 en Trastes 5–8)',
     defaultBpm: 72,
-    ratio: 0.25,
+    ratio: 0.125,
     subdivisionPerBeat: 2,
     drill: 'Sube y baja por las cuerdas tocando exactamente 1 dedo por traste con púa alternada (↓ ↑).',
     cue: 'Deja el pulgar detrás del mástil y levanta los dedos apenas unos milímetros.',
@@ -2361,10 +2365,33 @@ export const GUITAR_TRAINING_BLOCKS: GuitarTrainingBlock[] = [
     ],
   },
   {
+    id: 'gtr_perm1324',
+    phaseLabel: 'Fase 1 · Motricidad y Calentamiento',
+    focusTag: 'Disociación 1-3-2-4',
+    title: '2. Velocidad y Permutación Disociada (1-3-2-4 · Am)',
+    defaultBpm: 88,
+    ratio: 0.125,
+    subdivisionPerBeat: 2,
+    drill: 'Alterna dedos 1-3-2-4 entre las cuerdas 4ª, 3ª y 2ª para soltar el anular y meñique sin tensión.',
+    cue: 'Si pierdes limpieza rítmica, baja 5 BPM con el control antes de subir velocidad.',
+    steps: [
+      { label: '4ª tr.5 (Dedo 1)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 3, fret: 5, finger: 1 }] },
+      { label: '4ª tr.7 (Dedo 3)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 3, fret: 7, finger: 3 }] },
+      { label: '4ª tr.6 (Dedo 2)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 3, fret: 6, finger: 2 }] },
+      { label: '4ª tr.8 (Dedo 4)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 3, fret: 8, finger: 4 }] },
+      { label: '3ª tr.5 (Dedo 1)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 2, fret: 5, finger: 1 }] },
+      { label: '3ª tr.7 (Dedo 3)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 2, fret: 7, finger: 3 }] },
+      { label: '2ª tr.5 (Dedo 1)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 1, fret: 5, finger: 1 }] },
+      { label: '2ª tr.8 (Dedo 4)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 1, fret: 8, finger: 4 }] },
+    ],
+  },
+  {
     id: 'gtr_chords',
-    title: '2. Cambio Limpio de Acordes (C – G – Am – Fmaj7)',
+    phaseLabel: 'Fase 2 · Acordes y Cejillas',
+    focusTag: 'Acordes abiertos',
+    title: '3. Cambio Limpio de Acordes (C – G – Am – Fmaj7)',
     defaultBpm: 76,
-    ratio: 0.25,
+    ratio: 0.125,
     subdivisionPerBeat: 1,
     drill: 'Toca cada acorde limpio dejando sonar todas las cuerdas correctas; anticipa mentalmente el siguiente molde.',
     cue: 'Coloca primero el dedo guía del bajo y mantén el péndulo constante en la mano derecha.',
@@ -2424,32 +2451,15 @@ export const GUITAR_TRAINING_BLOCKS: GuitarTrainingBlock[] = [
     ],
   },
   {
-    id: 'gtr_perm1324',
-    title: '3. Velocidad y Permutación Disociada (1-3-2-4 · Escala Am)',
-    defaultBpm: 92,
-    ratio: 0.25,
-    subdivisionPerBeat: 2,
-    drill: 'Alterna dedos 1-3-2-4 entre las cuerdas 4ª, 3ª y 2ª para soltar el anular y meñique sin tensión.',
-    cue: 'Si pierdes limpieza rítmica, baja 5 BPM con el control antes de subir velocidad.',
-    steps: [
-      { label: '4ª tr.5 (Dedo 1)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 3, fret: 5, finger: 1 }] },
-      { label: '4ª tr.7 (Dedo 3)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 3, fret: 7, finger: 3 }] },
-      { label: '4ª tr.6 (Dedo 2)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 3, fret: 6, finger: 2 }] },
-      { label: '4ª tr.8 (Dedo 4)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 3, fret: 8, finger: 4 }] },
-      { label: '3ª tr.5 (Dedo 1)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 2, fret: 5, finger: 1 }] },
-      { label: '3ª tr.7 (Dedo 3)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 2, fret: 7, finger: 3 }] },
-      { label: '2ª tr.5 (Dedo 1)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 1, fret: 5, finger: 1 }] },
-      { label: '2ª tr.8 (Dedo 4)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 1, fret: 8, finger: 4 }] },
-    ],
-  },
-  {
     id: 'gtr_groove_arpegio',
-    title: '4. Arpegio Funcional + Acordes de Color (Em7 – A7 – Dmaj7)',
-    defaultBpm: 88,
-    ratio: 0.25,
+    phaseLabel: 'Fase 2 · Acordes y Cejillas',
+    focusTag: 'Cadencia ii–V–I',
+    title: '4. Acordes de Color ii–V–I (Em7 – A7 – Dmaj7 – D)',
+    defaultBpm: 84,
+    ratio: 0.125,
     subdivisionPerBeat: 1,
     drill: 'Combina el rasgueo de tríadas y séptimas con pulgar e índice siguiendo la progresión ii–V–I en Re.',
-    cue: 'Escucha cómo resuelve el Sol (b7 de A7) bajando medio tono hacia Fa# (3ª de Dmaj7).',
+    cue: 'Escucha cómo resuelve el Sol (♭7 de A7) bajando medio tono hacia Fa♯ (3ª de Dmaj7).',
     steps: [
       {
         label: 'Mi Menor 7 (Em7)',
@@ -2491,7 +2501,7 @@ export const GUITAR_TRAINING_BLOCKS: GuitarTrainingBlock[] = [
         ],
       },
       {
-        label: 'Re 6 / Reposo (D)',
+        label: 'Re Mayor (D)',
         chordSymbol: 'D',
         rightHandCue: 'Rasgueo abierto ↓',
         isChord: true,
@@ -2500,6 +2510,172 @@ export const GUITAR_TRAINING_BLOCKS: GuitarTrainingBlock[] = [
           { sIdx: 2, fret: 2, finger: 1 },
           { sIdx: 1, fret: 3, finger: 3 },
           { sIdx: 0, fret: 2, finger: 2 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'gtr_barre_shapes',
+    phaseLabel: 'Fase 2 · Acordes y Cejillas',
+    focusTag: 'Cejillas móviles',
+    title: '5. Cejillas Móviles en 6ª y 5ª Cuerda (F – Bm7 – C♯m7 – G7)',
+    defaultBpm: 70,
+    ratio: 0.125,
+    subdivisionPerBeat: 1,
+    drill: 'Apoya el canto lateral del dedo 1 (índice) cerca del traste metálico y suelta la pinza entre cambios.',
+    cue: 'No aprietes con el pulgar hacia adentro: usa el peso del brazo izquierdo hacia atrás suavemente.',
+    steps: [
+      {
+        label: 'Fa Cejilla (F tr.1)',
+        chordSymbol: 'F',
+        rightHandCue: 'Rasgueo firme ↓ ↑',
+        isChord: true,
+        positions: [
+          { sIdx: 5, fret: 1, finger: 1 },
+          { sIdx: 4, fret: 3, finger: 3 },
+          { sIdx: 3, fret: 3, finger: 4 },
+          { sIdx: 2, fret: 2, finger: 2 },
+          { sIdx: 1, fret: 1, finger: 1 },
+          { sIdx: 0, fret: 1, finger: 1 },
+        ],
+      },
+      {
+        label: 'Si Menor 7 (Bm7 tr.2)',
+        chordSymbol: 'Bm7',
+        rightHandCue: 'Desde 5ª cuerda ↓ ↑',
+        isChord: true,
+        positions: [
+          { sIdx: 4, fret: 2, finger: 1 },
+          { sIdx: 3, fret: 4, finger: 3 },
+          { sIdx: 2, fret: 2, finger: 1 },
+          { sIdx: 1, fret: 3, finger: 2 },
+          { sIdx: 0, fret: 2, finger: 1 },
+        ],
+      },
+      {
+        label: 'Do♯ Menor 7 (C♯m7 tr.4)',
+        chordSymbol: 'C#m7',
+        rightHandCue: 'Desliza molde +2 tr.',
+        isChord: true,
+        positions: [
+          { sIdx: 4, fret: 4, finger: 1 },
+          { sIdx: 3, fret: 6, finger: 3 },
+          { sIdx: 2, fret: 4, finger: 1 },
+          { sIdx: 1, fret: 5, finger: 2 },
+          { sIdx: 0, fret: 4, finger: 1 },
+        ],
+      },
+      {
+        label: 'Sol Dominante 7 (G7 tr.3)',
+        chordSymbol: 'G7',
+        rightHandCue: 'Cejilla 6ª completa ↓',
+        isChord: true,
+        positions: [
+          { sIdx: 5, fret: 3, finger: 1 },
+          { sIdx: 4, fret: 5, finger: 3 },
+          { sIdx: 3, fret: 3, finger: 1 },
+          { sIdx: 2, fret: 4, finger: 2 },
+          { sIdx: 1, fret: 3, finger: 1 },
+          { sIdx: 0, fret: 3, finger: 1 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'gtr_fingerpicking_pima',
+    phaseLabel: 'Fase 3 · Fingerpicking, Ligados y Groove',
+    focusTag: 'Arpegio P-i-m-a',
+    title: '6. Arpegio Fingerpicking P–i–m–a (Em → Cmaj7)',
+    defaultBpm: 80,
+    ratio: 0.125,
+    subdivisionPerBeat: 2,
+    drill: 'Deja caer el Pulgar (P) en los bajos 6ª/5ª y asigna Índice (3ª), Medio (2ª) y Anular (1ª) con pulso parejo.',
+    cue: 'Mantén los dedos de mano izquierda pisando todo el compás para que las cuerdas resuenen superpuestas.',
+    steps: [
+      { label: 'Em · Bajo E (6ª tr.0)', rightHandCue: 'Pulgar (P) 6ª', positions: [{ sIdx: 5, fret: 0, finger: 0 }] },
+      { label: 'Em · Sol (3ª tr.0)', rightHandCue: 'Índice (i) 3ª', positions: [{ sIdx: 2, fret: 0, finger: 0 }] },
+      { label: 'Em · Si (2ª tr.0)', rightHandCue: 'Medio (m) 2ª', positions: [{ sIdx: 1, fret: 0, finger: 0 }] },
+      { label: 'Em · Mi (1ª tr.0)', rightHandCue: 'Anular (a) 1ª', positions: [{ sIdx: 0, fret: 0, finger: 0 }] },
+      { label: 'Cmaj7 · Do (5ª tr.3)', rightHandCue: 'Pulgar (P) 5ª', positions: [{ sIdx: 4, fret: 3, finger: 3 }] },
+      { label: 'Cmaj7 · Sol (3ª tr.0)', rightHandCue: 'Índice (i) 3ª', positions: [{ sIdx: 2, fret: 0, finger: 0 }] },
+      { label: 'Cmaj7 · Si (2ª tr.0)', rightHandCue: 'Medio (m) 2ª', positions: [{ sIdx: 1, fret: 0, finger: 0 }] },
+      { label: 'Cmaj7 · Mi (1ª tr.0)', rightHandCue: 'Anular (a) 1ª', positions: [{ sIdx: 0, fret: 0, finger: 0 }] },
+    ],
+  },
+  {
+    id: 'gtr_pentatonic_legato',
+    phaseLabel: 'Fase 3 · Fingerpicking, Ligados y Groove',
+    focusTag: 'Pentatónica Am + H/P',
+    title: '7. Pentatónica Menor de La con Ligados (Trastes 5–8)',
+    defaultBpm: 92,
+    ratio: 0.125,
+    subdivisionPerBeat: 2,
+    drill: 'Toca la Caja 1 de La menor pentatónica articulando Hammer-On al subir y Pull-Off limpio al regresar.',
+    cue: 'Púa firme en la primera nota de cada cuerda; deja que el dedo 3 o 4 martille con precisión.',
+    steps: [
+      { label: '6ª tr.5 · La (Dedo 1)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 5, fret: 5, finger: 1 }] },
+      { label: '6ª tr.8 · Do (Hammer 4)', rightHandCue: 'Ligado Hammer (H)', positions: [{ sIdx: 5, fret: 8, finger: 4 }] },
+      { label: '5ª tr.5 · Re (Dedo 1)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 4, fret: 5, finger: 1 }] },
+      { label: '5ª tr.7 · Mi (Hammer 3)', rightHandCue: 'Ligado Hammer (H)', positions: [{ sIdx: 4, fret: 7, finger: 3 }] },
+      { label: '4ª tr.5 · Sol (Dedo 1)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 3, fret: 5, finger: 1 }] },
+      { label: '4ª tr.7 · La (Hammer 3)', rightHandCue: 'Ligado Hammer (H)', positions: [{ sIdx: 3, fret: 7, finger: 3 }] },
+      { label: '3ª tr.7 · Re (Dedo 3)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 2, fret: 7, finger: 3 }] },
+      { label: '3ª tr.5 · Do (Pull-Off 1)', rightHandCue: 'Ligado Pull-Off (P)', positions: [{ sIdx: 2, fret: 5, finger: 1 }] },
+    ],
+  },
+  {
+    id: 'gtr_upper_triads',
+    phaseLabel: 'Fase 3 · Fingerpicking, Ligados y Groove',
+    focusTag: 'Tríadas agudas 1ª–3ª',
+    title: '8. Tríadas Agudas Móviles (C – F – G – Am en Cuerdas 1ª–3ª)',
+    defaultBpm: 86,
+    ratio: 0.125,
+    subdivisionPerBeat: 1,
+    drill: 'Rasguea únicamente las 3 cuerdas agudas (3ª–2ª–1ª) cortando el sonido entre pulsos con la mano izquierda.',
+    cue: 'Ideal para funk, pop y reggae sin chocar con las frecuencias graves del bajo.',
+    steps: [
+      {
+        label: 'Tríada C (2ª inv · tr.3–5)',
+        chordSymbol: 'C',
+        rightHandCue: 'Staccato ↓ ↑ ✕',
+        isChord: true,
+        positions: [
+          { sIdx: 2, fret: 5, finger: 2 },
+          { sIdx: 1, fret: 5, finger: 3 },
+          { sIdx: 0, fret: 3, finger: 1 },
+        ],
+      },
+      {
+        label: 'Tríada F (Fund. · tr.5–6)',
+        chordSymbol: 'F',
+        rightHandCue: 'Staccato ↓ ↑ ✕',
+        isChord: true,
+        positions: [
+          { sIdx: 2, fret: 5, finger: 1 },
+          { sIdx: 1, fret: 6, finger: 2 },
+          { sIdx: 0, fret: 5, finger: 1 },
+        ],
+      },
+      {
+        label: 'Tríada G (Fund. · tr.7–8)',
+        chordSymbol: 'G',
+        rightHandCue: 'Staccato ↓ ↑ ✕',
+        isChord: true,
+        positions: [
+          { sIdx: 2, fret: 7, finger: 1 },
+          { sIdx: 1, fret: 8, finger: 2 },
+          { sIdx: 0, fret: 7, finger: 1 },
+        ],
+      },
+      {
+        label: 'Tríada Am (1ª inv · tr.5)',
+        chordSymbol: 'Am',
+        rightHandCue: 'Media cejilla / 1-2-3 ↓',
+        isChord: true,
+        positions: [
+          { sIdx: 2, fret: 5, finger: 1 },
+          { sIdx: 1, fret: 5, finger: 2 },
+          { sIdx: 0, fret: 5, finger: 3 },
         ],
       },
     ],
@@ -3762,5 +3938,2169 @@ export function computeAppoggioCyclePhase(
     totalCycleSec,
   };
 }
+
+/**
+ * Pure Neck-Window & Vertical Chord Diagram Helpers
+ * Keeps horizontal fretboards readable and easy to tap across desktop and mobile viewports.
+ */
+export type NeckZoneMode = 'auto' | 'all' | 'open' | 'mid' | 'high';
+
+export interface NeckWindowRange {
+  minFret: number;
+  maxFret: number;
+  label: string;
+  fretCount: number;
+}
+
+export function computeGuitarNeckWindow(
+  activeFrets: number[],
+  zoneMode: NeckZoneMode = 'auto',
+  neckMaxFret = 12
+): NeckWindowRange {
+  const safeMax = Math.max(5, Math.round(neckMaxFret));
+  if (zoneMode === 'all') {
+    return { minFret: 0, maxFret: safeMax, label: `0–${safeMax} Completo`, fretCount: safeMax + 1 };
+  }
+  if (zoneMode === 'open') {
+    const hi = Math.min(safeMax, 5);
+    return { minFret: 0, maxFret: hi, label: `Zona Abierta (0–${hi})`, fretCount: hi + 1 };
+  }
+  if (zoneMode === 'mid') {
+    const lo = Math.min(safeMax - 4, 4);
+    const hi = Math.min(safeMax, lo + 5);
+    return { minFret: lo, maxFret: hi, label: `Zona Media (${lo}–${hi})`, fretCount: hi - lo + 1 };
+  }
+  if (zoneMode === 'high') {
+    const lo = Math.max(0, safeMax - 5);
+    return { minFret: lo, maxFret: safeMax, label: `Zona Aguda (${lo}–${safeMax})`, fretCount: safeMax - lo + 1 };
+  }
+
+  // 'auto': focus a crisp 5-6 fret zone around the active fretted notes
+  const fretted = activeFrets.filter((f) => Number.isFinite(f) && f > 0 && f <= safeMax);
+  if (fretted.length === 0) {
+    const hi = Math.min(safeMax, 5);
+    return { minFret: 0, maxFret: hi, label: `Zona Activa (0–${hi})`, fretCount: hi + 1 };
+  }
+
+  const loActive = Math.min(...fretted);
+  const hiActive = Math.max(...fretted);
+  const hasOpen = activeFrets.some((f) => f === 0);
+
+  if (hiActive <= 5 && (loActive <= 3 || hasOpen)) {
+    const hi = Math.min(safeMax, 5);
+    return { minFret: 0, maxFret: hi, label: `Zona Activa (0–${hi})`, fretCount: hi + 1 };
+  }
+
+  let winMin = hasOpen && hiActive <= 6 ? 0 : Math.max(1, loActive - 1);
+  const winMax = Math.min(safeMax, Math.max(winMin + 5, hiActive + 1));
+  if (winMax - winMin < 5) {
+    winMin = Math.max(0, winMax - 5);
+  }
+  return {
+    minFret: winMin,
+    maxFret: winMax,
+    label: `Zona Activa (${winMin}–${winMax})`,
+    fretCount: winMax - winMin + 1,
+  };
+}
+
+export interface VerticalChordStringItem {
+  lowToHighIdx: number; // 0 = 6ª(E) .. 5 = 1ª(e)
+  sIdx: number; // 0 = 1ª(e) .. 5 = 6ª(E)
+  label: string;
+  fret: number; // -1 muted
+  finger: 0 | 1 | 2 | 3 | 4;
+  midi: number;
+  noteName: string;
+  isMuted: boolean;
+  isOpen: boolean;
+  isRoot: boolean;
+  relRow: number; // 1..5 inside box
+}
+
+export interface VerticalChordBoxData {
+  startFret: number;
+  showNut: boolean;
+  fretCount: number;
+  strings: VerticalChordStringItem[];
+  barre: { relRow: number; fromLowIdx: number; toLowIdx: number; finger: number } | null;
+  tabSummary: string;
+  fingerSummary: string;
+}
+
+const DEFAULT_GUITAR_OPEN_HIGH_TO_LOW = [64, 59, 55, 50, 45, 40];
+const DEFAULT_GUITAR_STRING_NAMES_LOW_TO_HIGH = ['E', 'A', 'D', 'G', 'B', 'e'];
+
+export function computeVerticalChordBoxData(params: {
+  positions: { sIdx: number; fret: number; finger?: 0 | 1 | 2 | 3 | 4 }[];
+  rootPc: number;
+  openMidisHighToLow?: number[];
+}): VerticalChordBoxData {
+  const openHigh = params.openMidisHighToLow?.length === 6 ? params.openMidisHighToLow : DEFAULT_GUITAR_OPEN_HIGH_TO_LOW;
+  const chordFretPos: ChordFretPos[] = params.positions
+    .filter((p) => p.sIdx >= 0 && p.sIdx < 6 && p.fret >= 0)
+    .map((p) => ({
+      sIdx: p.sIdx,
+      fret: p.fret,
+      midi: openHigh[p.sIdx] + p.fret,
+    }));
+
+  const explicitFingerBySIdx = new Map<number, 0 | 1 | 2 | 3 | 4>();
+  params.positions.forEach((p) => {
+    if (p.finger !== undefined) {
+      explicitFingerBySIdx.set(p.sIdx, p.finger);
+    }
+  });
+
+  const assigned = assignGuitarChordFingers(chordFretPos, true);
+  const posBySIdx = new Map<number, { fret: number; finger: 0 | 1 | 2 | 3 | 4; midi: number }>();
+  assigned.positions.forEach((p) => {
+    const f = explicitFingerBySIdx.has(p.sIdx) ? explicitFingerBySIdx.get(p.sIdx)! : p.finger;
+    posBySIdx.set(p.sIdx, { fret: p.fret, finger: f, midi: p.midi });
+  });
+
+  const frettedFrets = Array.from(posBySIdx.values())
+    .map((v) => v.fret)
+    .filter((f) => f > 0);
+  const minPos = frettedFrets.length > 0 ? Math.min(...frettedFrets) : 1;
+  const maxPos = frettedFrets.length > 0 ? Math.max(...frettedFrets) : 4;
+  const hasOpen = Array.from(posBySIdx.values()).some((v) => v.fret === 0);
+  const startFret = hasOpen || maxPos <= 4 || minPos <= 2 ? 1 : minPos;
+  const showNut = startFret === 1;
+  const fretCount = Math.max(4, Math.min(5, maxPos - startFret + 1 < 4 ? 4 : maxPos - startFret + 1));
+
+  const strings: VerticalChordStringItem[] = [];
+  for (let lowIdx = 0; lowIdx < 6; lowIdx++) {
+    const sIdx = 5 - lowIdx;
+    const hit = posBySIdx.get(sIdx);
+    const fret = hit ? hit.fret : -1;
+    const finger = hit ? hit.finger : 0;
+    const midi = openHigh[sIdx] + Math.max(0, fret);
+    const pc = ((midi % 12) + 12) % 12;
+    strings.push({
+      lowToHighIdx: lowIdx,
+      sIdx,
+      label: DEFAULT_GUITAR_STRING_NAMES_LOW_TO_HIGH[lowIdx],
+      fret,
+      finger,
+      midi,
+      noteName: LOGIC_NOTE_NAMES[pc],
+      isMuted: fret < 0,
+      isOpen: fret === 0,
+      isRoot: fret >= 0 && pc === ((params.rootPc % 12) + 12) % 12,
+      relRow: fret > 0 ? fret - startFret + 1 : 0,
+    });
+  }
+
+  let barre: VerticalChordBoxData['barre'] = null;
+  if (assigned.barreFret !== null && assigned.barreFret >= startFret) {
+    const barreStrings = strings.filter((s) => s.fret === assigned.barreFret && s.finger === 1);
+    if (barreStrings.length >= 2) {
+      barre = {
+        relRow: assigned.barreFret - startFret + 1,
+        fromLowIdx: Math.min(...barreStrings.map((s) => s.lowToHighIdx)),
+        toLowIdx: Math.max(...barreStrings.map((s) => s.lowToHighIdx)),
+        finger: 1,
+      };
+    }
+  }
+
+  return {
+    startFret,
+    showNut,
+    fretCount,
+    strings,
+    barre,
+    tabSummary: strings.map((s) => (s.isMuted ? 'X' : String(s.fret))).join('-'),
+    fingerSummary: strings.map((s) => (s.isMuted ? 'X' : String(s.finger))).join('-'),
+  };
+}
+
+export function renderVerticalGuitarChordSvg(
+  box: VerticalChordBoxData,
+  options?: { title?: string; subtitle?: string; showNoteNames?: boolean }
+): string {
+  const showNotes = options?.showNoteNames ?? true;
+  const w = 188;
+  const h = 198;
+  const padL = 32;
+  const padT = 38;
+  const gridW = 128;
+  const gridH = 124;
+  const strGap = gridW / 5;
+  const fretGap = gridH / box.fretCount;
+  const parts: string[] = [];
+
+  if (options?.title) {
+    parts.push(
+      `<text x="${w / 2}" y="15" text-anchor="middle" fill="#fbbf24" font-size="11.5" font-weight="800">${options.title}</text>`
+    );
+  }
+
+  if (box.showNut) {
+    parts.push(
+      `<line x1="${padL}" y1="${padT}" x2="${padL + gridW}" y2="${padT}" stroke="#f8fafc" stroke-width="4.2" stroke-linecap="round" />`
+    );
+  } else {
+    parts.push(
+      `<line x1="${padL}" y1="${padT}" x2="${padL + gridW}" y2="${padT}" stroke="#64748b" stroke-width="1.6" />`
+    );
+    parts.push(
+      `<text x="${padL - 7}" y="${padT + fretGap * 0.64}" text-anchor="end" fill="#fbbf24" font-size="11" font-weight="900">${box.startFret}fr</text>`
+    );
+  }
+
+  for (let r = 1; r <= box.fretCount; r++) {
+    const y = padT + r * fretGap;
+    parts.push(`<line x1="${padL}" y1="${y}" x2="${padL + gridW}" y2="${y}" stroke="#334155" stroke-width="1.3" />`);
+  }
+
+  // Optional index-finger barre pill behind individual dots
+  if (box.barre) {
+    const x1 = padL + box.barre.fromLowIdx * strGap;
+    const x2 = padL + box.barre.toLowIdx * strGap;
+    const cy = padT + (box.barre.relRow - 0.5) * fretGap;
+    parts.push(
+      `<rect x="${x1 - 9}" y="${cy - 9}" width="${x2 - x1 + 18}" height="18" rx="9" fill="rgba(245,158,11,0.34)" stroke="#fbbf24" stroke-width="1.4" />`
+    );
+  }
+
+  for (const st of box.strings) {
+    const x = padL + st.lowToHighIdx * strGap;
+    const sw = (2.1 - st.lowToHighIdx * 0.2).toFixed(2);
+    parts.push(
+      `<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT + gridH}" stroke="#94a3b8" stroke-width="${sw}" />`
+    );
+    parts.push(
+      `<text x="${x}" y="${padT + gridH + 15}" text-anchor="middle" fill="${st.isMuted ? '#475569' : '#cbd5e1'}" font-size="10" font-weight="800">${st.label}</text>`
+    );
+
+    if (st.isMuted) {
+      parts.push(
+        `<text x="${x}" y="${padT - 8}" text-anchor="middle" fill="#fb7185" font-size="12" font-weight="900">✕</text>`
+      );
+    } else if (st.isOpen) {
+      parts.push(
+        `<circle cx="${x}" cy="${padT - 11}" r="5.5" fill="${st.isRoot ? '#f59e0b' : 'none'}" stroke="${st.isRoot ? '#fef08a' : '#38bdf8'}" stroke-width="2" />`
+      );
+    } else if (st.relRow >= 1 && st.relRow <= box.fretCount) {
+      const cy = padT + (st.relRow - 0.5) * fretGap;
+      const fill = st.isRoot ? '#f59e0b' : '#0284c7';
+      const stroke = st.isRoot ? '#fef08a' : '#7dd3fc';
+      const innerText = st.finger > 0 ? String(st.finger) : st.noteName;
+      parts.push(
+        `<circle cx="${x}" cy="${cy}" r="10.2" fill="${fill}" stroke="${stroke}" stroke-width="1.8" />`
+      );
+      parts.push(
+        `<text x="${x}" y="${cy + 3.8}" text-anchor="middle" fill="${st.isRoot ? '#090c12' : '#ffffff'}" font-size="10.5" font-weight="900">${innerText}</text>`
+      );
+      if (showNotes && st.finger > 0) {
+        parts.push(
+          `<text x="${x}" y="${padT + gridH + 27}" text-anchor="middle" fill="#94a3b8" font-size="8.2" font-weight="700">${st.noteName}</text>`
+        );
+      }
+    }
+  }
+
+  return `
+    <div class="vertical-chord-card">
+      <svg viewBox="0 0 ${w} ${h}" class="vertical-chord-svg" role="img" aria-label="Diagrama vertical de acorde ${options?.title || ''}">
+        ${parts.join('')}
+      </svg>
+      <div class="vertical-chord-meta">
+        <span>Trastes: <strong>${box.tabSummary}</strong></span>
+        <span>Dedos: <strong>${box.fingerSummary}</strong></span>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Pure Interval & Inversion (Ley del 9 y del 12) Analyzer
+ */
+export interface IntervalAnalysisResult {
+  rootPc: number;
+  targetPc: number;
+  semitones: number;
+  simpleSemitones: number;
+  shortLabel: string;
+  fullName: string;
+  consonance: string;
+  character: string;
+  invertedSemitones: number;
+  invertedShortLabel: string;
+  invertedFullName: string;
+  inversionLawText: string;
+}
+
+const INTERVAL_META_TABLE: Record<
+  number,
+  {
+    short: string;
+    name: string;
+    consonance: string;
+    character: string;
+    invShort: string;
+    invName: string;
+    ordinalSum: string;
+  }
+> = {
+  0: {
+    short: '1J',
+    name: 'Unísono Justo (0 st)',
+    consonance: 'Consonancia Perfecta Absoluta',
+    character: 'Fusión total sin distancia ni fricción.',
+    invShort: '8J',
+    invName: 'Octava Justa (12 st)',
+    ordinalSum: '1ª + 8ª = 9',
+  },
+  1: {
+    short: '2m (b2)',
+    name: 'Segunda Menor (1 st)',
+    consonance: 'Disonancia Fuerte',
+    character: 'Fricción inmediata; color Frigio y flamenca tensión hacia abajo.',
+    invShort: '7M',
+    invName: 'Séptima Mayor (11 st)',
+    ordinalSum: '2ª + 7ª = 9',
+  },
+  2: {
+    short: '2M',
+    name: 'Segunda Mayor (2 st)',
+    consonance: 'Disonancia Suave / Melódica',
+    character: 'Paso diatónico natural (1 Tono) y base de acordes sus2.',
+    invShort: '7m (b7)',
+    invName: 'Séptima Menor (10 st)',
+    ordinalSum: '2ª + 7ª = 9',
+  },
+  3: {
+    short: '3m (b3)',
+    name: 'Tercera Menor (3 st)',
+    consonance: 'Consonancia Imperfecta',
+    character: 'Define el carácter menor, íntimo, serio o melancólico.',
+    invShort: '6M',
+    invName: 'Sexta Mayor (9 st)',
+    ordinalSum: '3ª + 6ª = 9',
+  },
+  4: {
+    short: '3M',
+    name: 'Tercera Mayor (4 st)',
+    consonance: 'Consonancia Imperfecta',
+    character: 'Define el carácter mayor, abierto, cálido y afirmativo.',
+    invShort: '6m (b6)',
+    invName: 'Sexta Menor (8 st)',
+    ordinalSum: '3ª + 6ª = 9',
+  },
+  5: {
+    short: '4J',
+    name: 'Cuarta Justa (5 st)',
+    consonance: 'Consonancia / Suspensión',
+    character: 'Firmeza abierta (afinación estándar de cuerdas en bajo y guitarra).',
+    invShort: '5J',
+    invName: 'Quinta Justa (7 st)',
+    ordinalSum: '4ª + 5ª = 9',
+  },
+  6: {
+    short: '4A / 5d',
+    name: 'Tritono (6 st)',
+    consonance: 'Disonancia Inestable',
+    character: 'Máxima simetría e inestabilidad; motor de resolución dominante.',
+    invShort: '5d / 4A',
+    invName: 'Tritono Espejo (6 st)',
+    ordinalSum: '4ª + 5ª = 9',
+  },
+  7: {
+    short: '5J',
+    name: 'Quinta Justa (7 st)',
+    consonance: 'Consonancia Perfecta',
+    character: 'Pilar estructural (proporción 3:2) sin modo mayor ni menor.',
+    invShort: '4J',
+    invName: 'Cuarta Justa (5 st)',
+    ordinalSum: '5ª + 4ª = 9',
+  },
+  8: {
+    short: '6m (b6)',
+    name: 'Sexta Menor (8 st)',
+    consonance: 'Consonancia Imperfecta',
+    character: 'Expresión dramática y lírica; inversión exacta de la 3ª Mayor.',
+    invShort: '3M',
+    invName: 'Tercera Mayor (4 st)',
+    ordinalSum: '6ª + 3ª = 9',
+  },
+  9: {
+    short: '6M',
+    name: 'Sexta Mayor (9 st)',
+    consonance: 'Consonancia Imperfecta',
+    character: 'Luminosidad pastoral y sabor Dórico/Soul; inversión de la 3ª Menor.',
+    invShort: '3m (b3)',
+    invName: 'Tercera Menor (3 st)',
+    ordinalSum: '6ª + 3ª = 9',
+  },
+  10: {
+    short: '7m (b7)',
+    name: 'Séptima Menor (10 st)',
+    consonance: 'Disonancia Suave',
+    character: 'Impulso blues/rock/mixolidio; inversión de la 2ª Mayor.',
+    invShort: '2M',
+    invName: 'Segunda Mayor (2 st)',
+    ordinalSum: '7ª + 2ª = 9',
+  },
+  11: {
+    short: '7M',
+    name: 'Séptima Mayor (11 st)',
+    consonance: 'Disonancia Brillante / Sensible',
+    character: 'Nostalgia sofisticada (Maj7) y atracción magnética hacia la octava.',
+    invShort: '2m (b2)',
+    invName: 'Segunda Menor (1 st)',
+    ordinalSum: '7ª + 2ª = 9',
+  },
+  12: {
+    short: '8J',
+    name: 'Octava Justa (12 st)',
+    consonance: 'Consonancia Perfecta (2:1)',
+    character: 'Misma nota en registro duplicado (+12 trastes en cada cuerda).',
+    invShort: '1J',
+    invName: 'Unísono Justo (0 st)',
+    ordinalSum: '8ª + 1ª = 9',
+  },
+  14: {
+    short: '9M',
+    name: 'Novena Mayor (14 st)',
+    consonance: 'Intervalo Compuesto (8J + 2M)',
+    character: 'Extensión cristalina sobre octava; base de acordes add9 y Maj9.',
+    invShort: '7m (b7)',
+    invName: 'Séptima Menor simple (10 st)',
+    ordinalSum: '2ª + 7ª = 9',
+  },
+  16: {
+    short: '10M',
+    name: 'Décima Mayor (16 st)',
+    consonance: 'Intervalo Compuesto (8J + 3M)',
+    character: 'Disposición abierta clásica de guitarra acústica (bajo + 3ª alta).',
+    invShort: '6m (b6)',
+    invName: 'Sexta Menor simple (8 st)',
+    ordinalSum: '3ª + 6ª = 9',
+  },
+  17: {
+    short: '11J',
+    name: 'Oncena Justa (17 st)',
+    consonance: 'Intervalo Compuesto (8J + 4J)',
+    character: 'Tensión aérea muy fluida en acordes menores (m11) y cuartales.',
+    invShort: '5J',
+    invName: 'Quinta Justa simple (7 st)',
+    ordinalSum: '4ª + 5ª = 9',
+  },
+  21: {
+    short: '13M',
+    name: 'Trecena Mayor (21 st)',
+    consonance: 'Intervalo Compuesto (8J + 6M)',
+    character: 'Extensión aguda elegante sobre acordes dominantes y Maj7.',
+    invShort: '3m (b3)',
+    invName: 'Tercera Menor simple (3 st)',
+    ordinalSum: '6ª + 3ª = 9',
+  },
+};
+
+export function analyzeIntervalAndInversion(rootPcInput: number, semitonesInput: number): IntervalAnalysisResult {
+  const rootPc = ((rootPcInput % 12) + 12) % 12;
+  const semitones = Math.max(0, Math.min(24, Math.round(semitonesInput)));
+  const simpleSemitones = semitones === 12 ? 12 : semitones % 12;
+  const targetPc = (rootPc + semitones) % 12;
+
+  const meta = INTERVAL_META_TABLE[semitones] || INTERVAL_META_TABLE[simpleSemitones] || INTERVAL_META_TABLE[0];
+  const invBaseSemi = semitones === 0 ? 12 : semitones === 12 ? 0 : 12 - (semitones % 12);
+
+  return {
+    rootPc,
+    targetPc,
+    semitones,
+    simpleSemitones,
+    shortLabel: meta.short,
+    fullName: meta.name,
+    consonance: meta.consonance,
+    character: meta.character,
+    invertedSemitones: invBaseSemi,
+    invertedShortLabel: meta.invShort,
+    invertedFullName: meta.invName,
+    inversionLawText: `${meta.ordinalSum} · ${semitones % 12 === 0 && semitones > 0 ? 12 : semitones % 12} + ${invBaseSemi} = 12 semitonos (Mayor ↔ Menor · Justo ↔ Justo)`,
+  };
+}
+
+/**
+ * Note Explorer (Pre-Scale Theory Chapter 2) Filter Helper
+ */
+export type NoteFilterMode = 'single' | 'natural' | 'accidentals' | 'chromatic';
+
+export interface NoteExplorerResult {
+  filterMode: NoteFilterMode;
+  activePcs: number[];
+  rootPc: number;
+  summaryTitle: string;
+  summaryBody: string;
+}
+
+const NATURAL_PCS = [0, 2, 4, 5, 7, 9, 11];
+const ACCIDENTAL_PCS = [1, 3, 6, 8, 10];
+const ENHARMONIC_TWINS: Record<number, string> = {
+  0: 'C (Do) · sin alteración habitual (B# en contextos teóricos)',
+  1: 'C# ↔ Db (Do# / Reb)',
+  2: 'D (Re)',
+  3: 'D# ↔ Eb (Re# / Mib)',
+  4: 'E (Mi) · a 1 semitono directo de F (Fa)',
+  5: 'F (Fa) · a 1 semitono directo de E (Mi)',
+  6: 'F# ↔ Gb (Fa# / Solb)',
+  7: 'G (Sol)',
+  8: 'G# ↔ Ab (Sol# / Lab)',
+  9: 'A (La · 440 Hz en octava 4)',
+  10: 'A# ↔ Bb (La# / Sib)',
+  11: 'B (Si) · a 1 semitono directo de C (Do)',
+};
+
+export function computeNoteExplorerState(filterMode: NoteFilterMode, rootPcInput: number): NoteExplorerResult {
+  const rootPc = ((rootPcInput % 12) + 12) % 12;
+  if (filterMode === 'natural') {
+    return {
+      filterMode,
+      activePcs: NATURAL_PCS,
+      rootPc,
+      summaryTitle: 'Solo las 7 Notas Naturales (C – D – E – F – G – A – B)',
+      summaryBody: 'Observa que entre E–F y B–C no hay traste vacío en medio (1 semitono directo), mientras que los demás pares saltan 1 traste (2 semitonos).',
+    };
+  }
+  if (filterMode === 'accidentals') {
+    return {
+      filterMode,
+      activePcs: ACCIDENTAL_PCS,
+      rootPc,
+      summaryTitle: 'Las 5 Notas Alteradas (# Sostenidos / b Bemoles)',
+      summaryBody: 'Corresponden exactamente a las 5 teclas negras del piano (grupos de 2 y 3). Cada una comparte traste con dos nombres enarmónicos (ej. C#/Db).',
+    };
+  }
+  if (filterMode === 'chromatic') {
+    return {
+      filterMode,
+      activePcs: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      rootPc,
+      summaryTitle: `Mapa Cromático Completo (12 Semitonos · Referencia ${LOGIC_NOTE_NAMES[rootPc]})`,
+      summaryBody: 'Cada traste hacia la derecha suma +1 semitono; al llegar al traste 12 la nota se repite exactamente una octava más aguda.',
+    };
+  }
+  return {
+    filterMode: 'single',
+    activePcs: [rootPc],
+    rootPc,
+    summaryTitle: `Localizador de Octavas y Unísonos: ${LOGIC_NOTE_NAMES[rootPc]}`,
+    summaryBody: `Enarmónico / Dato clave: ${ENHARMONIC_TWINS[rootPc]}. Regla de octava en el mástil: +2 cuerdas y +2 trastes (o +3 trastes al cruzar de 3ª G a 2ª B).`,
+  };
+}
+
+/**
+ * 7 Greek Modes Parallel Catalog with Characteristic Degrees
+ */
+export interface GreekModeMeta {
+  id: 'major' | 'dorian' | 'phrygian' | 'lydian' | 'mixolydian' | 'minor' | 'locrian';
+  label: string;
+  intervals: number[];
+  charOffset: number;
+  charDegreeName: string;
+  formula: string;
+  degrees: string;
+  character: string;
+}
+
+export const GREEK_MODES_CATALOG: GreekModeMeta[] = [
+  {
+    id: 'major',
+    label: '1. Jónico (Mayor)',
+    intervals: [0, 2, 4, 5, 7, 9, 11],
+    charOffset: 11,
+    charDegreeName: '7M (Sensible)',
+    formula: 'T - T - S - T - T - T - S',
+    degrees: '1 - 2 - 3 - 4 - 5 - 6 - 7',
+    character: 'Luminoso, estable y resolutivo; el grado 4 evita choque si no se sostiene sobre I.',
+  },
+  {
+    id: 'dorian',
+    label: '2. Dórico ★6M',
+    intervals: [0, 2, 3, 5, 7, 9, 10],
+    charOffset: 9,
+    charDegreeName: '6M (Sexta Mayor)',
+    formula: 'T - S - T - T - T - S - T',
+    degrees: '1 - 2 - b3 - 4 - 5 - 6 - b7',
+    character: 'Menor elegante y funk/jazz (Santana, So What); la 6M ilumina la tríada menor.',
+  },
+  {
+    id: 'phrygian',
+    label: '3. Frigio ★b2',
+    intervals: [0, 1, 3, 5, 7, 8, 10],
+    charOffset: 1,
+    charDegreeName: 'b2 (Segunda Menor)',
+    formula: 'S - T - T - T - S - T - T',
+    degrees: '1 - b2 - b3 - 4 - 5 - b6 - b7',
+    character: 'Tensión flamenca y oscura creada por el semitono inmediato entre 1 y b2.',
+  },
+  {
+    id: 'lydian',
+    label: '4. Lidio ★#4',
+    intervals: [0, 2, 4, 6, 7, 9, 11],
+    charOffset: 6,
+    charDegreeName: '#4 (Cuarta Aumentada)',
+    formula: 'T - T - T - S - T - T - S',
+    degrees: '1 - 2 - 3 - #4 - 5 - 6 - 7',
+    character: 'Asombro cinematográfico y flotación espacial al elevar el 4º grado a #4.',
+  },
+  {
+    id: 'mixolydian',
+    label: '5. Mixolidio ★b7',
+    intervals: [0, 2, 4, 5, 7, 9, 10],
+    charOffset: 10,
+    charDegreeName: 'b7 (Séptima Menor)',
+    formula: 'T - T - S - T - T - S - T',
+    degrees: '1 - 2 - 3 - 4 - 5 - 6 - b7',
+    character: 'Mayor con actitud blues, rock y funk gracias a la b7 en lugar de sensible.',
+  },
+  {
+    id: 'minor',
+    label: '6. Eólico ★b6',
+    intervals: [0, 2, 3, 5, 7, 8, 10],
+    charOffset: 8,
+    charDegreeName: 'b6 (Sexta Menor)',
+    formula: 'T - S - T - T - S - T - T',
+    degrees: '1 - 2 - b3 - 4 - 5 - b6 - b7',
+    character: 'Menor natural emotivo y épico; la b6 tira con gravedad hacia la 5ª justa.',
+  },
+  {
+    id: 'locrian',
+    label: '7. Locrio ★b5',
+    intervals: [0, 1, 3, 5, 6, 8, 10],
+    charOffset: 6,
+    charDegreeName: 'b5 (Quinta Disminuida)',
+    formula: 'S - T - T - S - T - T - T',
+    degrees: '1 - b2 - b3 - 4 - b5 - b6 - b7',
+    character: 'Inestable y disonante; al carecer de 5ª justa sirve sobre acordes m7b5.',
+  },
+];
+
+/**
+ * Pedagogical Explorer Mode Resolution (prevents Scale UI leaks in Notes/Intervals chapters)
+ */
+export type PedagogicalExplorerKind = 'notes' | 'interval' | 'scale' | 'modes' | 'chord';
+
+export function resolveExplorerKind(params: {
+  labType: string;
+  dataMode?: string | null;
+  dataSet?: string | null;
+}): PedagogicalExplorerKind {
+  if (params.labType === 'interval-lab') return 'interval';
+  if (params.dataMode === 'notes') return 'notes';
+  if (params.labType === 'scale-explorer' && params.dataSet === 'modes') return 'modes';
+  if (params.labType === 'chord-explorer' || params.labType === 'poly-hybrid' || params.dataMode === 'chord-window' || params.dataMode === 'arpeggio') {
+    return 'chord';
+  }
+  return 'scale';
+}
+
+/**
+ * 5 Movable CAGED Guitar Shapes & Chord Surgery Helpers
+ */
+export type CagedShapeLetter = 'C' | 'A' | 'G' | 'E' | 'D';
+
+export interface CagedComputedShape {
+  shapeLetter: CagedShapeLetter;
+  rootPc: number;
+  quality: 'maj' | 'min';
+  title: string;
+  positions: GuitarFingerPos[];
+  barreFret: number | null;
+  tabSummary: string;
+  fingerSummary: string;
+  neckWindow: NeckWindowRange;
+  rootStringsText: string;
+}
+
+const CAGED_TEMPLATES: Record<
+  CagedShapeLetter,
+  { openRootPc: number; rootDesc: string; majRel: number[]; minRel: number[] }
+> = {
+  C: {
+    openRootPc: 0, // C shape root on 5th (fret 3) & 2nd (fret 1) -> normalized to baseFret = 0 open C
+    rootDesc: 'Raíz en 5ª y 2ª cuerda',
+    majRel: [-1, 3, 2, 0, 1, 0],
+    minRel: [-1, 3, 1, 0, 1, -1],
+  },
+  A: {
+    openRootPc: 9,
+    rootDesc: 'Raíz en 5ª y 3ª cuerda',
+    majRel: [-1, 0, 2, 2, 2, 0],
+    minRel: [-1, 0, 2, 2, 1, 0],
+  },
+  G: {
+    openRootPc: 7,
+    rootDesc: 'Raíz en 6ª, 3ª y 1ª cuerda',
+    majRel: [3, 2, 0, 0, 0, 3],
+    minRel: [3, 1, 0, 0, -1, -1],
+  },
+  E: {
+    openRootPc: 4,
+    rootDesc: 'Raíz en 6ª, 4ª y 1ª cuerda',
+    majRel: [0, 2, 2, 1, 0, 0],
+    minRel: [0, 2, 2, 0, 0, 0],
+  },
+  D: {
+    openRootPc: 2,
+    rootDesc: 'Raíz en 4ª y 2ª cuerda',
+    majRel: [-1, -1, 0, 2, 3, 2],
+    minRel: [-1, -1, 0, 2, 3, 1],
+  },
+};
+
+export function computeCagedGuitarShape(
+  shapeLetter: CagedShapeLetter,
+  rootPcInput: number,
+  quality: 'maj' | 'min' = 'maj'
+): CagedComputedShape {
+  const rootPc = ((rootPcInput % 12) + 12) % 12;
+  const tpl = CAGED_TEMPLATES[shapeLetter];
+  const shift = (rootPc - tpl.openRootPc + 12) % 12;
+  const baseRel = quality === 'min' ? tpl.minRel : tpl.majRel;
+  const guitarOpen = DEFAULT_GUITAR_OPEN_HIGH_TO_LOW;
+
+  const fretsLowToHigh = baseRel.map((f) => (f < 0 ? -1 : f + shift));
+  const maxNeckFret = Math.max(12, ...fretsLowToHigh);
+
+  const voicing: ChordFretPos[] = [];
+  for (let lowIdx = 0; lowIdx < 6; lowIdx++) {
+    const fret = fretsLowToHigh[lowIdx];
+    if (fret >= 0) {
+      const sIdx = 5 - lowIdx;
+      voicing.push({ sIdx, fret, midi: guitarOpen[sIdx] + fret });
+    }
+  }
+
+  const fingerResult = assignGuitarChordFingers(voicing, true);
+  const tabSummary = fretsLowToHigh.map((f) => (f < 0 ? 'X' : String(f))).join('-');
+  const fingerBySIdx = new Map(fingerResult.positions.map((p) => [p.sIdx, p.finger]));
+  const fingerSummary = fretsLowToHigh
+    .map((f, lowIdx) => (f < 0 ? 'X' : String(fingerBySIdx.get(5 - lowIdx) ?? 0)))
+    .join('-');
+  const activeFrets = voicing.map((v) => v.fret);
+
+  return {
+    shapeLetter,
+    rootPc,
+    quality,
+    title: `${LOGIC_NOTE_NAMES[rootPc]}${quality === 'min' ? 'm' : ''} (Molde CAGED "${shapeLetter}")`,
+    positions: fingerResult.positions,
+    barreFret: fingerResult.barreFret,
+    tabSummary,
+    fingerSummary,
+    neckWindow: computeGuitarNeckWindow(activeFrets, 'auto', maxNeckFret),
+    rootStringsText: tpl.rootDesc,
+  };
+}
+
+/**
+ * 5 Pentatonic Boxes Calculator (Minor & Relative Major Boxes)
+ */
+export interface PentatonicBoxResult {
+  boxIndex: 1 | 2 | 3 | 4 | 5;
+  title: string;
+  rootPc: number;
+  positions: { sIdx: number; fret: number; midi: number; isRoot: boolean }[];
+  neckWindow: NeckWindowRange;
+}
+
+const PENT_BOX_OFFSETS: Record<1 | 2 | 3 | 4 | 5, { name: string; relLow: [number, number][]; spanStartRel: number }> = {
+  // Offsets relative to box root fret on 6th string (for Minor Pentatonic Box 1..5)
+  1: { name: 'Caja 1 (Molde Em · Más usada)', spanStartRel: 0, relLow: [[0, 3], [0, 2], [0, 2], [0, 2], [0, 3], [0, 3]] },
+  2: { name: 'Caja 2 (Molde Dm · "B.B. King")', spanStartRel: 2, relLow: [[3, 5], [2, 5], [2, 5], [2, 4], [3, 5], [3, 5]] },
+  3: { name: 'Caja 3 (Molde Cm)', spanStartRel: 5, relLow: [[5, 7], [5, 7], [5, 7], [4, 7], [5, 8], [5, 7]] },
+  4: { name: 'Caja 4 (Molde Am)', spanStartRel: 7, relLow: [[7, 10], [7, 10], [7, 9], [7, 9], [8, 10], [7, 10]] },
+  5: { name: 'Caja 5 (Molde Gm)', spanStartRel: 9, relLow: [[10, 12], [10, 12], [9, 12], [9, 12], [10, 13], [10, 12]] },
+};
+
+export function computePentatonicBoxWindow(rootPcInput: number, boxIndex: 1 | 2 | 3 | 4 | 5): PentatonicBoxResult {
+  const rootPc = ((rootPcInput % 12) + 12) % 12;
+  const guitarOpen = DEFAULT_GUITAR_OPEN_HIGH_TO_LOW;
+  const baseRoot6 = (rootPc - 4 + 12) % 12;
+  const spec = PENT_BOX_OFFSETS[boxIndex];
+
+  // Fold the entire box down 12 frets cleanly if it sits above fret 12
+  const minRel = Math.min(...spec.relLow.flat());
+  const effectiveBase = baseRoot6 + minRel >= 12 ? baseRoot6 - 12 : baseRoot6;
+
+  const positions: PentatonicBoxResult['positions'] = [];
+  for (let lowIdx = 0; lowIdx < 6; lowIdx++) {
+    const sIdx = 5 - lowIdx;
+    for (const relF of spec.relLow[lowIdx]) {
+      const f = effectiveBase + relF;
+      if (f >= 0 && f <= 15) {
+        const midi = guitarOpen[sIdx] + f;
+        positions.push({ sIdx, fret: f, midi, isRoot: midi % 12 === rootPc });
+      }
+    }
+  }
+
+  const maxBoxFret = Math.max(12, ...positions.map((p) => p.fret));
+  return {
+    boxIndex,
+    title: `${LOGIC_NOTE_NAMES[rootPc]}m Pentatónica — ${spec.name}`,
+    rootPc,
+    positions,
+    neckWindow: computeGuitarNeckWindow(positions.map((p) => p.fret), 'auto', maxBoxFret),
+  };
+}
+
+/**
+ * Extension Pyramid & Quartal/Quintal Stack Calculator (`stack-lab`)
+ */
+export type StackModeKind = 'thirds' | 'fourths' | 'fifths' | 'clusters';
+
+export interface StackLabResult {
+  degreeLabel: string;
+  chordSymbol: string;
+  intervalsFromChordRoot: number[];
+  noteNames: string[];
+  midis: number[];
+  avoidNotesWarning: string | null;
+  guitarPositions: GuitarFingerPos[];
+  guitarTab: string;
+  guitarFingers: string;
+}
+
+export function computeExtensionPyramid(params: {
+  keyRootPc: number;
+  scaleIntervals: number[];
+  degreeIndex: number;
+  size: number; // 3..7
+  stackMode: StackModeKind;
+}): StackLabResult {
+  const keyRootPc = ((params.keyRootPc % 12) + 12) % 12;
+  const scale = params.scaleIntervals.length >= 5 ? params.scaleIntervals : [0, 2, 4, 5, 7, 9, 11];
+  const n = scale.length;
+  const degIdx = ((params.degreeIndex % n) + n) % n;
+  const chordRootPc = (keyRootPc + scale[degIdx]) % 12;
+  const stepJump = params.stackMode === 'fourths' ? 3 : params.stackMode === 'fifths' ? 4 : params.stackMode === 'clusters' ? 1 : 2;
+  const count = Math.max(3, Math.min(7, params.size));
+
+  const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][degIdx] || `${degIdx + 1}`;
+  const midis: number[] = [];
+  const rawSteps: number[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const scalePos = degIdx + i * stepJump;
+    const octShift = Math.floor(scalePos / n) * 12;
+    const pcOffset = scale[scalePos % n];
+    const absSemi = pcOffset + octShift;
+    const baseSemi = scale[degIdx];
+    rawSteps.push(absSemi - baseSemi);
+    midis.push(48 + keyRootPc + absSemi);
+  }
+
+  // Keep guitar playable within realistic 4-5 notes if 6 or 7 layers stacked (Root, 3rd/4th, 7th, top extensions)
+  const playMidis = midis.length <= 4 ? midis : [midis[0], midis[1], midis[3], midis[midis.length - 1]];
+  const guitarPositions = resolvePlayableChordVoicing(playMidis, DEFAULT_GUITAR_OPEN_HIGH_TO_LOW, 12);
+  const fingerInfo = assignGuitarChordFingers(guitarPositions, true);
+
+  const pcsMod = rawSteps.map((s) => ((s % 12) + 12) % 12);
+  const has3M = pcsMod.includes(4);
+  const has3m = pcsMod.includes(3);
+  const has4J = rawSteps.includes(17) || rawSteps.includes(5);
+  const hasb9Clash = has3M && rawSteps.includes(17) && params.stackMode === 'thirds';
+
+  let suffix = '';
+  if (params.stackMode === 'fourths') suffix = ' (Voicing Cuartal)';
+  else if (params.stackMode === 'fifths') suffix = ' (Voicing Quintal)';
+  else if (params.stackMode === 'clusters') suffix = ' (Cluster por 2ªs)';
+  else {
+    const q = has3m ? (pcsMod.includes(6) ? 'm7b5' : 'm') : pcsMod.includes(11) ? 'Maj' : '';
+    const extTag = count === 3 ? (has3m ? 'm' : pcsMod.includes(6) ? '°' : '') : count === 4 ? (pcsMod.includes(11) ? (has3m ? 'm(Maj7)' : 'Maj7') : `${q}7`) : count === 5 ? `${q || 'Maj'}9` : count === 6 ? `${q || 'Maj'}11` : `${q || 'Maj'}13`;
+    suffix = extTag;
+  }
+
+  const arrTab = [-1, -1, -1, -1, -1, -1];
+  const arrFin = [-1, -1, -1, -1, -1, -1];
+  fingerInfo.positions.forEach((p) => {
+    const lowIdx = 5 - p.sIdx;
+    arrTab[lowIdx] = p.fret;
+    arrFin[lowIdx] = p.finger;
+  });
+
+  return {
+    degreeLabel: `Grado ${roman} (${LOGIC_NOTE_NAMES[chordRootPc]})`,
+    chordSymbol: `${LOGIC_NOTE_NAMES[chordRootPc]}${suffix}`,
+    intervalsFromChordRoot: rawSteps,
+    noteNames: midis.map((m) => LOGIC_NOTE_NAMES[m % 12]),
+    midis,
+    avoidNotesWarning: hasb9Clash && has4J ? '⚠️ Atención acústica: la 11ª Justa forma choque de 9ª menor (13 st) contra la 3ª Mayor; omite la 3ª o altérala a #11.' : null,
+    guitarPositions: fingerInfo.positions,
+    guitarTab: arrTab.map((f) => (f < 0 ? 'X' : String(f))).join('-'),
+    guitarFingers: arrFin.map((f) => (f < 0 ? 'X' : String(f))).join('-'),
+  };
+}
+
+/**
+ * Detailed Spanish Poetic Scansion & Musical Beat Alignment Analyzer (`prosodia-lab`)
+ */
+export interface PoeticWordScansion {
+  word: string;
+  syllables: string[];
+  stressedSyllableIdx: number;
+  hasSinalefaWithPrev: boolean;
+  stressedVowel: string;
+}
+
+export interface PoeticProsodyDetail extends LyricLineAnalysis {
+  meterName: string;
+  artCategory: 'Arte Menor (≤ 8)' | 'Arte Mayor (≥ 9)' | 'Vacío';
+  scansionTokens: { text: string; stressed: boolean; isSinalefa: boolean }[];
+  anacrusisSlots: string[];
+  vowelRegisterAdvice: string;
+  hasClosedPeakVowel: boolean;
+  wordsAnalysis: PoeticWordScansion[];
+}
+
+function splitSpanishWordSyllables(rawWord: string): {
+  syllables: string[];
+  stressedSyllableIdx: number;
+  stressedVowel: string;
+} {
+  const clean = rawWord.trim();
+  const lower = clean.toLowerCase();
+  if (!clean) return { syllables: [], stressedSyllableIdx: 0, stressedVowel: '' };
+
+  const vowelRe = /[aeiouáéíóúü]/i;
+  const strongRe = /[aeoáéó]/i;
+  const weakAccentedRe = /[íú]/i;
+  const vowelClusters: { start: number; end: number; hasAccent: boolean }[] = [];
+
+  let i = 0;
+  while (i < lower.length) {
+    if (vowelRe.test(lower[i])) {
+      const start = i;
+      let hasAccent = /[áéíóú]/.test(lower[i]);
+      while (i + 1 < lower.length) {
+        const cur = lower[i];
+        const nxt = lower[i + 1];
+        if (cur === 'u' && i > 0 && (lower[i - 1] === 'q' || lower[i - 1] === 'g') && /[eiéí]/.test(nxt)) {
+          i++;
+          hasAccent = hasAccent || /[áéíóú]/.test(lower[i]);
+          continue;
+        }
+        if (vowelRe.test(nxt)) {
+          const curStrong = strongRe.test(cur) || weakAccentedRe.test(cur);
+          const nxtStrong = strongRe.test(nxt) || weakAccentedRe.test(nxt);
+          if (curStrong && nxtStrong) break;
+          i++;
+          hasAccent = hasAccent || /[áéíóú]/.test(lower[i]);
+        } else {
+          break;
+        }
+      }
+      vowelClusters.push({ start, end: i, hasAccent });
+    }
+    i++;
+  }
+
+  if (vowelClusters.length === 0) {
+    return { syllables: [clean], stressedSyllableIdx: 0, stressedVowel: '' };
+  }
+
+  const syllables: string[] = [];
+  let sliceStart = 0;
+  for (let c = 0; c < vowelClusters.length - 1; c++) {
+    const endV = vowelClusters[c].end;
+    const nextV = vowelClusters[c + 1].start;
+    const consCount = nextV - endV - 1;
+    let cut = endV + 1;
+    if (consCount === 1) {
+      cut = endV + 1;
+    } else if (consCount === 2) {
+      const pair = lower.slice(endV + 1, nextV);
+      const inseparable = /^(bl|br|cl|cr|dr|fl|fr|gl|gr|pl|pr|tr|ch|ll|rr)$/.test(pair);
+      cut = inseparable ? endV + 1 : endV + 2;
+    } else if (consCount >= 3) {
+      const lastTwo = lower.slice(nextV - 2, nextV);
+      const inseparable = /^(bl|br|cl|cr|dr|fl|fr|gl|gr|pl|pr|tr|ch|ll|rr)$/.test(lastTwo);
+      cut = inseparable ? nextV - 2 : nextV - 1;
+    }
+    syllables.push(clean.slice(sliceStart, cut));
+    sliceStart = cut;
+  }
+  syllables.push(clean.slice(sliceStart));
+
+  // Locate stressed syllable
+  let stressedIdx = vowelClusters.findIndex((vc) => vc.hasAccent);
+  if (stressedIdx < 0) {
+    if (syllables.length === 1) {
+      stressedIdx = 0;
+    } else if (/[aeiouns]$/i.test(lower)) {
+      stressedIdx = syllables.length - 2; // Grave / Llana
+    } else {
+      stressedIdx = syllables.length - 1; // Aguda without tilde
+    }
+  }
+
+  const stressedSyl = (syllables[stressedIdx] || '').toLowerCase();
+  const vMatch = stressedSyl.normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/[aeiou]/);
+  return {
+    syllables,
+    stressedSyllableIdx: Math.max(0, Math.min(syllables.length - 1, stressedIdx)),
+    stressedVowel: vMatch ? vMatch[0].toUpperCase() : '',
+  };
+}
+
+export function classifySpanishPoeticMeter(metricSyllables: number): {
+  meterName: string;
+  artCategory: 'Arte Menor (≤ 8)' | 'Arte Mayor (≥ 9)' | 'Vacío';
+} {
+  if (metricSyllables <= 0) return { meterName: 'Sin texto', artCategory: 'Vacío' };
+  const artCategory = metricSyllables <= 8 ? 'Arte Menor (≤ 8)' : 'Arte Mayor (≥ 9)';
+  const names: Record<number, string> = {
+    2: 'Bisílabo (2)',
+    3: 'Trisílabo (3)',
+    4: 'Tetrasílabo (4 · Pie quebrado)',
+    5: 'Pentasílabo (5 · Seguidilla / Adónico)',
+    6: 'Hexasílabo (6 · Romancillo / Villancico)',
+    7: 'Heptasílabo (7 · Seguidilla / Anacreóntico)',
+    8: 'Octosílabo (8 · Romance / Décima / Corrido)',
+    9: 'Eneasílabo (9 · Lírica moderna / Trova)',
+    10: 'Decasílabo (10 · Himno / Anapéstico)',
+    11: 'Endecasílabo (11 · Soneto / Lira / Balada)',
+    12: 'Dodecasílabo (12 · Seguidilla compuesta)',
+    14: 'Alejandrino (14 = 7+7 · Hemistiquios clásicos)',
+  };
+  return {
+    meterName: names[metricSyllables] || `Verso libre / compuesto (${metricSyllables} sílabas)`,
+    artCategory,
+  };
+}
+
+export function analyzePoeticProsodyDetailed(line: string): PoeticProsodyDetail {
+  const base = analyzeSpanishLyricLine(line);
+  const rawWords = line
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ]/g, ''))
+    .filter(Boolean);
+
+  if (rawWords.length === 0) {
+    return {
+      ...base,
+      meterName: 'Sin texto',
+      artCategory: 'Vacío',
+      scansionTokens: [],
+      anacrusisSlots: [],
+      vowelRegisterAdvice: 'Escribe o elige un verso para analizar sus sílabas tónicas, sinalefas y apertura vocal.',
+      hasClosedPeakVowel: false,
+      wordsAnalysis: [],
+    };
+  }
+
+  const wordsAnalysis: PoeticWordScansion[] = [];
+  const scansionTokens: { text: string; stressed: boolean; isSinalefa: boolean }[] = [];
+
+  for (let wIdx = 0; wIdx < rawWords.length; wIdx++) {
+    const word = rawWords[wIdx];
+    const info = splitSpanishWordSyllables(word);
+    const prevWord = wIdx > 0 ? rawWords[wIdx - 1].toLowerCase() : '';
+    const currLow = word.toLowerCase();
+    const prevEndsVowel = /[aeiouáéíóúüy]$/i.test(prevWord);
+    const currStartsVowel = /^(?:[aeiouáéíóúü]|h[aeiouáéíóúü])/i.test(currLow);
+    const hasSinalefaWithPrev = wIdx > 0 && prevEndsVowel && currStartsVowel;
+
+    // Function words (articles/prepositions) are prosodically unstressed unless solitary final
+    const isUnstressedFunc =
+      rawWords.length > 1 &&
+      wIdx < rawWords.length - 1 &&
+      /^(el|la|los|las|un|una|de|del|al|a|en|con|sin|por|para|y|o|que|mi|tu|su|se|me|te|le|lo|nos)$/i.test(currLow);
+
+    wordsAnalysis.push({
+      word,
+      syllables: info.syllables,
+      stressedSyllableIdx: isUnstressedFunc ? -1 : info.stressedSyllableIdx,
+      hasSinalefaWithPrev,
+      stressedVowel: info.stressedVowel,
+    });
+
+    info.syllables.forEach((syl, sIdx) => {
+      const stressed = !isUnstressedFunc && sIdx === info.stressedSyllableIdx;
+      if (sIdx === 0 && hasSinalefaWithPrev && scansionTokens.length > 0) {
+        const prev = scansionTokens[scansionTokens.length - 1];
+        prev.text = `${prev.text}‿${syl}`;
+        prev.stressed = prev.stressed || stressed;
+        prev.isSinalefa = true;
+      } else {
+        scansionTokens.push({ text: syl, stressed, isSinalefa: false });
+      }
+    });
+  }
+
+  const { meterName, artCategory } = classifySpanishPoeticMeter(base.metricSyllables);
+  const lastWordObj = wordsAnalysis[wordsAnalysis.length - 1];
+  const peakVowel = lastWordObj?.stressedVowel || 'A';
+  const hasClosedPeakVowel = peakVowel === 'I' || peakVowel === 'U';
+  const vowelRegisterAdvice = hasClosedPeakVowel
+    ? `⚠️ Final en vocal cerrada "${peakVowel}" (palabra "${lastWordObj.word}"): en notas agudas (> G4/C5) estrecha la laringe; úsala en registro medio/íntimo o sustitúyela por vocal abierta (A, O, E) en el clímax.`
+    : `✅ Final resonante en vocal abierta "${peakVowel}" (palabra "${lastWordObj.word}"): ideal para sostener notas largas o agudas en el clímax sin estrangular la voz.`;
+
+  // Build musical alignment hints: lead-in unstressed syllables go into anacrusis before Beat 1
+  const firstStressedIdx = scansionTokens.findIndex((t) => t.stressed);
+  const anacrusisSlots =
+    firstStressedIdx > 0
+      ? scansionTokens.slice(0, firstStressedIdx).map((t) => t.text)
+      : [];
+
+  return {
+    ...base,
+    meterName,
+    artCategory,
+    scansionTokens,
+    anacrusisSlots,
+    vowelRegisterAdvice,
+    hasClosedPeakVowel,
+    wordsAnalysis,
+  };
+}
+
+/**
+ * Song Form Architect Templates (Linear + Non-Traditional Forms)
+ */
+export interface SongFormBlock {
+  id: string;
+  label: string;
+  bars: number;
+  energy: number; // 1..10
+  role: string;
+  color: string;
+  chordSnippet: number[]; // MIDI chords for audio preview
+}
+
+export interface SongFormTemplate {
+  id: string;
+  name: string;
+  category: 'Clásica' | 'No Lineal / Sin Estribillo' | 'Moderna / Invertida' | 'Épica / Progresiva';
+  summary: string;
+  blocks: SongFormBlock[];
+}
+
+export const SONG_FORM_ARCHITECT_TEMPLATES: SongFormTemplate[] = [
+  {
+    id: 'pop-classic',
+    name: 'Verso – Precoro – Coro (Clásico Pop/Rock)',
+    category: 'Clásica',
+    summary: 'Arquitectura estándar con rampa ascendente (Precoro) y estallido en el Coro antes del segundo 45.',
+    blocks: [
+      { id: 'intro', label: 'Intro', bars: 4, energy: 3, role: 'Motivo semilla', color: '#38bdf8', chordSnippet: [48, 60, 64, 67] },
+      { id: 'v1', label: 'Verso 1', bars: 8, energy: 4, role: 'Narrativa íntima', color: '#60a5fa', chordSnippet: [45, 57, 60, 64] },
+      { id: 'pc1', label: 'Precoro', bars: 4, energy: 7, role: 'Escalera de tensión', color: '#a855f7', chordSnippet: [53, 57, 60, 65] },
+      { id: 'c1', label: 'Estribillo 1', bars: 8, energy: 9, role: 'Título + Clímax', color: '#f59e0b', chordSnippet: [48, 60, 64, 67] },
+      { id: 'v2', label: 'Verso 2', bars: 8, energy: 5, role: 'Nueva capa rítmica', color: '#60a5fa', chordSnippet: [45, 57, 60, 64] },
+      { id: 'pc2', label: 'Precoro 2', bars: 4, energy: 7, role: 'Empuje dominante', color: '#a855f7', chordSnippet: [55, 59, 62, 65] },
+      { id: 'c2', label: 'Estribillo 2', bars: 8, energy: 9, role: 'Armonías vocales', color: '#f59e0b', chordSnippet: [48, 60, 64, 67] },
+      { id: 'br', label: 'Puente (Middle 8)', bars: 8, energy: 6, role: 'Giro armónico', color: '#10b981', chordSnippet: [56, 60, 63, 68] },
+      { id: 'c3', label: 'Estribillo Final', bars: 12, energy: 10, role: 'Clímax máximo', color: '#ef4444', chordSnippet: [50, 62, 66, 69] },
+      { id: 'outro', label: 'Outro', bars: 4, energy: 2, role: 'Resolución', color: '#94a3b8', chordSnippet: [48, 60, 64, 67] },
+    ],
+  },
+  {
+    id: 'aaa-strophic',
+    name: 'AAA Estrofa Pura / Folclore / Balada Narrativa (Sin Estribillo)',
+    category: 'No Lineal / Sin Estribillo',
+    summary: 'No hay coro ni precoro: cada estrofa cuenta un capítulo distinto cerrando con el título (Refrán al pie, como Bob Dylan, Silvio Rodríguez o corridos/romances).',
+    blocks: [
+      { id: 'intro', label: 'Intro Acústica', bars: 4, energy: 3, role: 'Establece el paisaje', color: '#38bdf8', chordSnippet: [48, 60, 64, 67] },
+      { id: 'a1', label: 'Estrofa A1 + Refrán', bars: 16, energy: 5, role: 'Planteamiento + verso título', color: '#60a5fa', chordSnippet: [48, 55, 64, 67] },
+      { id: 'a2', label: 'Estrofa A2 + Refrán', bars: 16, energy: 6, role: 'Desarrollo + capa de bajo', color: '#60a5fa', chordSnippet: [45, 57, 60, 64] },
+      { id: 'solo', label: 'Interludio / Solo', bars: 8, energy: 7, role: 'Respiro instrumental', color: '#10b981', chordSnippet: [53, 57, 60, 64] },
+      { id: 'a3', label: 'Estrofa A3 + Refrán', bars: 16, energy: 8, role: 'Clímax narrativo', color: '#f59e0b', chordSnippet: [55, 59, 62, 67] },
+      { id: 'a4', label: 'Estrofa A4 (Desenlace)', bars: 16, energy: 4, role: 'Giro poético final', color: '#94a3b8', chordSnippet: [48, 60, 64, 67] },
+    ],
+  },
+  {
+    id: 'aaba-standard',
+    name: 'AABA de 32 Compases (Jazz, Bolero, Broadway)',
+    category: 'No Lineal / Sin Estribillo',
+    summary: 'Sin estribillo separado: el título abre o cierra la sección A (8 c.), y una sola sección B (Puente) cambia de centro tonal en el compás 17.',
+    blocks: [
+      { id: 'a1', label: 'A1 (Tema + Título)', bars: 8, energy: 5, role: 'Exposición A', color: '#60a5fa', chordSnippet: [48, 60, 64, 67, 71] },
+      { id: 'a2', label: 'A2 (Repetición)', bars: 8, energy: 6, role: 'Fijación en memoria', color: '#60a5fa', chordSnippet: [48, 60, 64, 67, 71] },
+      { id: 'b', label: 'B (Puente / Liberación)', bars: 8, energy: 8, role: 'Contraste al IV o iii', color: '#10b981', chordSnippet: [53, 60, 65, 69] },
+      { id: 'a3', label: 'A3 (Retorno)', bars: 8, energy: 6, role: 'Regreso al hogar', color: '#f59e0b', chordSnippet: [55, 59, 62, 65] },
+      { id: 'tag', label: 'Tag / Turnaround', bars: 4, energy: 4, role: 'Coda de 3 compases', color: '#94a3b8', chordSnippet: [48, 60, 64, 67, 71] },
+    ],
+  },
+  {
+    id: 'hook-first',
+    name: 'Estructura Invertida / Chorus-First (Pop Moderno & Urbano)',
+    category: 'Moderna / Invertida',
+    summary: 'Empieza directamente por el Estribillo/Hook en el segundo 0, alterna Versos breves con Drops instrumentales y evita el precoro largo.',
+    blocks: [
+      { id: 'c0', label: 'Hook / Coro Inicial', bars: 8, energy: 8, role: 'Impacto en segundo 0', color: '#f59e0b', chordSnippet: [48, 60, 64, 67] },
+      { id: 'v1', label: 'Verso 1 (Minimal)', bars: 8, energy: 4, role: 'Voz seca + subgrave', color: '#60a5fa', chordSnippet: [45, 57, 60, 64] },
+      { id: 'c1', label: 'Coro 1', bars: 8, energy: 9, role: 'Regresa el gancho', color: '#f59e0b', chordSnippet: [48, 60, 64, 67] },
+      { id: 'drop', label: 'Post-Coro / Drop', bars: 8, energy: 10, role: 'Clímax rítmico sin voz', color: '#ef4444', chordSnippet: [53, 60, 65, 69] },
+      { id: 'v2', label: 'Verso 2 / Rap', bars: 8, energy: 5, role: 'Flujo denso', color: '#60a5fa', chordSnippet: [45, 57, 60, 64] },
+      { id: 'c2', label: 'Coro + Drop Final', bars: 16, energy: 10, role: 'Cierre explosivo', color: '#ef4444', chordSnippet: [55, 59, 62, 67] },
+    ],
+  },
+  {
+    id: 'through-composed',
+    name: 'Through-Composed / Suite Progresiva (A–B–C–D sin retorno)',
+    category: 'Épica / Progresiva',
+    summary: 'Forma abierta cinematográfica ("Bohemian Rhapsody", rock progresivo, canción de autor épica): cada acto introduce música nueva sin volver al estribillo anterior.',
+    blocks: [
+      { id: 'act1', label: 'Acto I: Prólogo Íntimo', bars: 8, energy: 3, role: 'Piano y voz a capella', color: '#38bdf8', chordSnippet: [46, 58, 62, 65] },
+      { id: 'act2', label: 'Acto II: Balada (B)', bars: 16, energy: 6, role: 'Narración dramática', color: '#60a5fa', chordSnippet: [48, 55, 60, 63] },
+      { id: 'act3', label: 'Acto III: Secc. Contraste (C)', bars: 12, energy: 8, role: 'Cambio de compás / modo', color: '#a855f7', chordSnippet: [51, 58, 63, 67] },
+      { id: 'act4', label: 'Acto IV: Clímax (D)', bars: 16, energy: 10, role: 'Riff pesado / Orquesta', color: '#ef4444', chordSnippet: [53, 60, 65, 68] },
+      { id: 'epil', label: 'Epílogo / Silencio', bars: 8, energy: 2, role: 'Retorno al susurro inicial', color: '#94a3b8', chordSnippet: [46, 58, 62, 65] },
+    ],
+  },
+];
+
+export interface SongFormMetrics {
+  totalBars: number;
+  totalSeconds: number;
+  formattedDuration: string;
+  peakEnergy: number;
+  peakBlockLabel: string;
+  peakPositionPercent: number;
+  isGoldenRatioPeak: boolean;
+}
+
+export function computeSongFormMetrics(blocks: SongFormBlock[], bpm: number, beatsPerBar = 4): SongFormMetrics {
+  const safeBpm = Math.max(40, Math.min(220, bpm || 110));
+  const totalBars = blocks.reduce((acc, b) => acc + Math.max(1, b.bars), 0);
+  const secPerBar = (beatsPerBar * 60) / safeBpm;
+  const totalSeconds = Math.round(totalBars * secPerBar);
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  const formattedDuration = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+  let accBars = 0;
+  let peakEnergy = -1;
+  let peakBlockLabel = blocks[0]?.label || '—';
+  let peakMidBars = 0;
+
+  blocks.forEach((b) => {
+    const mid = accBars + b.bars / 2;
+    if (b.energy >= peakEnergy) {
+      peakEnergy = b.energy;
+      peakBlockLabel = b.label;
+      peakMidBars = mid;
+    }
+    accBars += b.bars;
+  });
+
+  const peakPositionPercent = totalBars > 0 ? Math.round((peakMidBars / totalBars) * 100) : 0;
+  const isGoldenRatioPeak = peakPositionPercent >= 55 && peakPositionPercent <= 85;
+
+  return {
+    totalBars,
+    totalSeconds,
+    formattedDuration,
+    peakEnergy: Math.max(0, peakEnergy),
+    peakBlockLabel,
+    peakPositionPercent,
+    isGoldenRatioPeak,
+  };
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * TALLER DE COMPOSICIÓN POÉTICA (MÓDULO 3 · SECCIÓN 10)
+ * Pure rhyme engine (consonant + assonant), non-linear structure generator,
+ * level-based creative writing advice, and local word-prompt draft evaluator.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */
+
+export type PoeticWordCategory =
+  | 'Naturaleza y Cosmos'
+  | 'Objetos y Lugares'
+  | 'Emoción y Sonido'
+  | 'Tiempo y Movimiento';
+
+export interface PoeticWordBankEntry {
+  word: string;
+  category: PoeticWordCategory;
+}
+
+export const SPANISH_POETIC_WORD_BANK: PoeticWordBankEntry[] = [
+  // Naturaleza y Cosmos
+  { word: 'luna', category: 'Naturaleza y Cosmos' },
+  { word: 'cuna', category: 'Naturaleza y Cosmos' },
+  { word: 'duna', category: 'Naturaleza y Cosmos' },
+  { word: 'laguna', category: 'Naturaleza y Cosmos' },
+  { word: 'fortuna', category: 'Naturaleza y Cosmos' },
+  { word: 'bruma', category: 'Naturaleza y Cosmos' },
+  { word: 'espuma', category: 'Naturaleza y Cosmos' },
+  { word: 'lluvia', category: 'Naturaleza y Cosmos' },
+  { word: 'mar', category: 'Naturaleza y Cosmos' },
+  { word: 'sal', category: 'Naturaleza y Cosmos' },
+  { word: 'sol', category: 'Naturaleza y Cosmos' },
+  { word: 'cielo', category: 'Naturaleza y Cosmos' },
+  { word: 'desvelo', category: 'Naturaleza y Cosmos' },
+  { word: 'consuelo', category: 'Naturaleza y Cosmos' },
+  { word: 'lucero', category: 'Naturaleza y Cosmos' },
+  { word: 'sendero', category: 'Naturaleza y Cosmos' },
+  { word: 'viento', category: 'Naturaleza y Cosmos' },
+  { word: 'invierno', category: 'Naturaleza y Cosmos' },
+  { word: 'eterno', category: 'Naturaleza y Cosmos' },
+  { word: 'niebla', category: 'Naturaleza y Cosmos' },
+  { word: 'estrella', category: 'Naturaleza y Cosmos' },
+  { word: 'huella', category: 'Naturaleza y Cosmos' },
+  { word: 'ceniza', category: 'Naturaleza y Cosmos' },
+  { word: 'río', category: 'Naturaleza y Cosmos' },
+  { word: 'frío', category: 'Naturaleza y Cosmos' },
+  { word: 'rocío', category: 'Naturaleza y Cosmos' },
+  { word: 'luz', category: 'Naturaleza y Cosmos' },
+  { word: 'sur', category: 'Naturaleza y Cosmos' },
+  { word: 'metal', category: 'Objetos y Lugares' },
+  { word: 'señal', category: 'Objetos y Lugares' },
+  { word: 'aurora', category: 'Naturaleza y Cosmos' },
+  { word: 'sombra', category: 'Naturaleza y Cosmos' },
+  { word: 'alfombra', category: 'Naturaleza y Cosmos' },
+  { word: 'raíz', category: 'Naturaleza y Cosmos' },
+  { word: 'flor', category: 'Naturaleza y Cosmos' },
+  { word: 'fuego', category: 'Naturaleza y Cosmos' },
+  { word: 'hielo', category: 'Naturaleza y Cosmos' },
+  { word: 'arena', category: 'Naturaleza y Cosmos' },
+  { word: 'marea', category: 'Naturaleza y Cosmos' },
+  { word: 'bosque', category: 'Naturaleza y Cosmos' },
+  { word: 'nube', category: 'Naturaleza y Cosmos' },
+  { word: 'relámpago', category: 'Naturaleza y Cosmos' },
+  { word: 'piedra', category: 'Naturaleza y Cosmos' },
+  { word: 'tierra', category: 'Naturaleza y Cosmos' },
+  { word: 'alba', category: 'Naturaleza y Cosmos' },
+  { word: 'calma', category: 'Naturaleza y Cosmos' },
+  { word: 'ocaso', category: 'Naturaleza y Cosmos' },
+  { word: 'horizonte', category: 'Naturaleza y Cosmos' },
+  { word: 'monte', category: 'Naturaleza y Cosmos' },
+  { word: 'hoja', category: 'Naturaleza y Cosmos' },
+  { word: 'ola', category: 'Naturaleza y Cosmos' },
+  { word: 'trueno', category: 'Naturaleza y Cosmos' },
+  // Objetos y Lugares
+  { word: 'cristal', category: 'Objetos y Lugares' },
+  { word: 'umbral', category: 'Objetos y Lugares' },
+  { word: 'portal', category: 'Objetos y Lugares' },
+  { word: 'espejo', category: 'Objetos y Lugares' },
+  { word: 'ventana', category: 'Objetos y Lugares' },
+  { word: 'llave', category: 'Objetos y Lugares' },
+  { word: 'nave', category: 'Objetos y Lugares' },
+  { word: 'puente', category: 'Objetos y Lugares' },
+  { word: 'fuente', category: 'Objetos y Lugares' },
+  { word: 'frente', category: 'Objetos y Lugares' },
+  { word: 'ciudad', category: 'Objetos y Lugares' },
+  { word: 'verdad', category: 'Objetos y Lugares' },
+  { word: 'soledad', category: 'Objetos y Lugares' },
+  { word: 'andén', category: 'Objetos y Lugares' },
+  { word: 'tren', category: 'Objetos y Lugares' },
+  { word: 'reloj', category: 'Objetos y Lugares' },
+  { word: 'balcón', category: 'Objetos y Lugares' },
+  { word: 'rincón', category: 'Objetos y Lugares' },
+  { word: 'carta', category: 'Objetos y Lugares' },
+  { word: 'mapa', category: 'Objetos y Lugares' },
+  { word: 'calle', category: 'Objetos y Lugares' },
+  { word: 'valle', category: 'Objetos y Lugares' },
+  { word: 'faro', category: 'Objetos y Lugares' },
+  { word: 'puerto', category: 'Objetos y Lugares' },
+  { word: 'desierto', category: 'Objetos y Lugares' },
+  { word: 'techo', category: 'Objetos y Lugares' },
+  { word: 'lecho', category: 'Objetos y Lugares' },
+  { word: 'mesa', category: 'Objetos y Lugares' },
+  { word: 'fresa', category: 'Objetos y Lugares' },
+  { word: 'promesa', category: 'Objetos y Lugares' },
+  { word: 'muro', category: 'Objetos y Lugares' },
+  { word: 'futuro', category: 'Objetos y Lugares' },
+  { word: 'barco', category: 'Objetos y Lugares' },
+  { word: 'charco', category: 'Objetos y Lugares' },
+  { word: 'hilo', category: 'Objetos y Lugares' },
+  { word: 'filo', category: 'Objetos y Lugares' },
+  { word: 'papel', category: 'Objetos y Lugares' },
+  { word: 'piel', category: 'Objetos y Lugares' },
+  { word: 'miel', category: 'Objetos y Lugares' },
+  { word: 'café', category: 'Objetos y Lugares' },
+  // Emoción y Sonido
+  { word: 'silencio', category: 'Emoción y Sonido' },
+  { word: 'canto', category: 'Emoción y Sonido' },
+  { word: 'llanto', category: 'Emoción y Sonido' },
+  { word: 'manto', category: 'Emoción y Sonido' },
+  { word: 'voz', category: 'Emoción y Sonido' },
+  { word: 'adiós', category: 'Emoción y Sonido' },
+  { word: 'eco', category: 'Emoción y Sonido' },
+  { word: 'hueco', category: 'Emoción y Sonido' },
+  { word: 'susurro', category: 'Emoción y Sonido' },
+  { word: 'latido', category: 'Emoción y Sonido' },
+  { word: 'olvido', category: 'Emoción y Sonido' },
+  { word: 'ruido', category: 'Emoción y Sonido' },
+  { word: 'nido', category: 'Emoción y Sonido' },
+  { word: 'canción', category: 'Emoción y Sonido' },
+  { word: 'corazón', category: 'Emoción y Sonido' },
+  { word: 'razón', category: 'Emoción y Sonido' },
+  { word: 'pasión', category: 'Emoción y Sonido' },
+  { word: 'emoción', category: 'Emoción y Sonido' },
+  { word: 'acorde', category: 'Emoción y Sonido' },
+  { word: 'borde', category: 'Emoción y Sonido' },
+  { word: 'pulso', category: 'Emoción y Sonido' },
+  { word: 'impulso', category: 'Emoción y Sonido' },
+  { word: 'aliento', category: 'Emoción y Sonido' },
+  { word: 'lamento', category: 'Emoción y Sonido' },
+  { word: 'sueño', category: 'Emoción y Sonido' },
+  { word: 'dueño', category: 'Emoción y Sonido' },
+  { word: 'miedo', category: 'Emoción y Sonido' },
+  { word: 'enredo', category: 'Emoción y Sonido' },
+  { word: 'calor', category: 'Emoción y Sonido' },
+  { word: 'dolor', category: 'Emoción y Sonido' },
+  { word: 'temblor', category: 'Emoción y Sonido' },
+  { word: 'rumor', category: 'Emoción y Sonido' },
+  { word: 'melodía', category: 'Emoción y Sonido' },
+  { word: 'armonía', category: 'Emoción y Sonido' },
+  { word: 'nostalgia', category: 'Emoción y Sonido' },
+  { word: 'magia', category: 'Emoción y Sonido' },
+  { word: 'pena', category: 'Emoción y Sonido' },
+  { word: 'serena', category: 'Emoción y Sonido' },
+  { word: 'vértigo', category: 'Emoción y Sonido' },
+  { word: 'grito', category: 'Emoción y Sonido' },
+  // Tiempo y Movimiento
+  { word: 'ayer', category: 'Tiempo y Movimiento' },
+  { word: 'amanecer', category: 'Tiempo y Movimiento' },
+  { word: 'volver', category: 'Tiempo y Movimiento' },
+  { word: 'arder', category: 'Tiempo y Movimiento' },
+  { word: 'caer', category: 'Tiempo y Movimiento' },
+  { word: 'correr', category: 'Tiempo y Movimiento' },
+  { word: 'caminar', category: 'Tiempo y Movimiento' },
+  { word: 'soñar', category: 'Tiempo y Movimiento' },
+  { word: 'cantar', category: 'Tiempo y Movimiento' },
+  { word: 'callar', category: 'Tiempo y Movimiento' },
+  { word: 'volar', category: 'Tiempo y Movimiento' },
+  { word: 'andar', category: 'Tiempo y Movimiento' },
+  { word: 'despertar', category: 'Tiempo y Movimiento' },
+  { word: 'sentir', category: 'Tiempo y Movimiento' },
+  { word: 'huir', category: 'Tiempo y Movimiento' },
+  { word: 'latir', category: 'Tiempo y Movimiento' },
+  { word: 'vivir', category: 'Tiempo y Movimiento' },
+  { word: 'seguir', category: 'Tiempo y Movimiento' },
+  { word: 'instante', category: 'Tiempo y Movimiento' },
+  { word: 'distante', category: 'Tiempo y Movimiento' },
+  { word: 'errante', category: 'Tiempo y Movimiento' },
+  { word: 'eternidad', category: 'Tiempo y Movimiento' },
+  { word: 'madrugada', category: 'Tiempo y Movimiento' },
+  { word: 'mirada', category: 'Tiempo y Movimiento' },
+  { word: 'noche', category: 'Tiempo y Movimiento' },
+  { word: 'derroche', category: 'Tiempo y Movimiento' },
+  { word: 'tarde', category: 'Tiempo y Movimiento' },
+  { word: 'cobarde', category: 'Tiempo y Movimiento' },
+  { word: 'prisa', category: 'Tiempo y Movimiento' },
+  { word: 'brisa', category: 'Tiempo y Movimiento' },
+  { word: 'risa', category: 'Tiempo y Movimiento' },
+  { word: 'regreso', category: 'Tiempo y Movimiento' },
+  { word: 'peso', category: 'Tiempo y Movimiento' },
+  { word: 'beso', category: 'Tiempo y Movimiento' },
+  { word: 'camino', category: 'Tiempo y Movimiento' },
+  { word: 'destino', category: 'Tiempo y Movimiento' },
+  { word: 'paso', category: 'Tiempo y Movimiento' },
+  { word: 'abrazo', category: 'Tiempo y Movimiento' },
+  { word: 'trazo', category: 'Tiempo y Movimiento' },
+  { word: 'ausencia', category: 'Tiempo y Movimiento' },
+  { word: 'paciencia', category: 'Tiempo y Movimiento' },
+  { word: 'esencia', category: 'Emoción y Sonido' },
+  { word: 'presencia', category: 'Emoción y Sonido' },
+  { word: 'conciencia', category: 'Emoción y Sonido' },
+  { word: 'camino', category: 'Tiempo y Movimiento' },
+  { word: 'destino', category: 'Tiempo y Movimiento' },
+  { word: 'peregrino', category: 'Tiempo y Movimiento' },
+  { word: 'molino', category: 'Objetos y Lugares' },
+  { word: 'memoria', category: 'Tiempo y Movimiento' },
+  { word: 'historia', category: 'Tiempo y Movimiento' },
+];
+
+export interface SpanishRhymeKeys {
+  cleanWord: string;
+  normalizedWord: string;
+  consonantKey: string;
+  assonantKey: string;
+  stressedVowel: string;
+  openForHighSinging: boolean;
+}
+
+function stripSpanishDiacritics(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function extractSyllableNucleusVowel(syllable: string): string {
+  const lower = syllable.toLowerCase();
+  const accented = lower.match(/[áéíóú]/);
+  if (accented) {
+    return stripSpanishDiacritics(accented[0]);
+  }
+  const norm = stripSpanishDiacritics(lower);
+  const strong = norm.match(/[aeo]/);
+  if (strong) return strong[0];
+  const vowels = norm.match(/[aeiou]/g);
+  if (!vowels || vowels.length === 0) return '';
+  return vowels[vowels.length - 1];
+}
+
+export function extractSpanishPoeticRhymeKeys(rawWord: string): SpanishRhymeKeys {
+  const cleaned = rawWord
+    .trim()
+    .split(/\s+/)
+    .pop()
+    ?.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ]/g, '') || '';
+
+  if (!cleaned) {
+    return {
+      cleanWord: '',
+      normalizedWord: '',
+      consonantKey: '',
+      assonantKey: '',
+      stressedVowel: '',
+      openForHighSinging: true,
+    };
+  }
+
+  const sylInfo = splitSpanishWordSyllables(cleaned);
+  const stressedSyl = sylInfo.syllables[sylInfo.stressedSyllableIdx] || cleaned;
+  const tailSyllables = sylInfo.syllables.slice(sylInfo.stressedSyllableIdx);
+  const tailJoinedNorm = stripSpanishDiacritics(tailSyllables.join(''));
+  const stressedVowel = extractSyllableNucleusVowel(stressedSyl) || sylInfo.stressedVowel.toLowerCase();
+
+  // Consonant key: from the stressed nucleus vowel inside the stressed syllable to the end of the word
+  const stressedSylNorm = stripSpanishDiacritics(stressedSyl);
+  let startInStressed = stressedSylNorm.indexOf(stressedVowel);
+  if (startInStressed < 0) startInStressed = Math.max(0, stressedSylNorm.search(/[aeiou]/));
+  const restAfterStressedSyl = stripSpanishDiacritics(
+    sylInfo.syllables.slice(sylInfo.stressedSyllableIdx + 1).join('')
+  );
+  const rawConsKey =
+    (startInStressed >= 0 ? stressedSylNorm.slice(startInStressed) : stressedSylNorm) +
+    restAfterStressedSyl;
+
+  // Normalize classic Spanish phonetic consonant equivalences for rhyme matching (z/s, b/v, c/s in -ción? keep exact orthographic tail with gentle z<->s / v<->b optional, keeping pure clean tail first)
+  const consonantKey = rawConsKey || tailJoinedNorm;
+
+  // Assonant key: nuclear vowel of each syllable from stressed syllable to end
+  const assonantVowels = tailSyllables
+    .map((s) => extractSyllableNucleusVowel(s))
+    .filter(Boolean);
+  const assonantKey = assonantVowels.join('-') || stressedVowel || tailJoinedNorm;
+
+  const openForHighSinging =
+    stressedVowel === 'a' || stressedVowel === 'e' || stressedVowel === 'o';
+
+  return {
+    cleanWord: cleaned,
+    normalizedWord: stripSpanishDiacritics(cleaned),
+    consonantKey,
+    assonantKey,
+    stressedVowel: stressedVowel.toUpperCase(),
+    openForHighSinging,
+  };
+}
+
+export interface SpanishRhymeSearchResult {
+  target: SpanishRhymeKeys;
+  consonantMatches: string[];
+  assonantMatches: string[];
+}
+
+export function findSpanishRhymes(
+  targetWord: string,
+  extraWords: readonly string[] = []
+): SpanishRhymeSearchResult {
+  const target = extractSpanishPoeticRhymeKeys(targetWord);
+  if (!target.cleanWord) {
+    return { target, consonantMatches: [], assonantMatches: [] };
+  }
+
+  const seen = new Set<string>();
+  const pool: string[] = [];
+  for (const w of extraWords) {
+    const clean = w.trim();
+    if (!clean) continue;
+    const norm = stripSpanishDiacritics(clean);
+    if (!seen.has(norm)) {
+      seen.add(norm);
+      pool.push(clean);
+    }
+  }
+  for (const entry of SPANISH_POETIC_WORD_BANK) {
+    const norm = stripSpanishDiacritics(entry.word);
+    if (!seen.has(norm)) {
+      seen.add(norm);
+      pool.push(entry.word);
+    }
+  }
+
+  const consonantMatches: string[] = [];
+  const assonantMatches: string[] = [];
+
+  for (const candidate of pool) {
+    const k = extractSpanishPoeticRhymeKeys(candidate);
+    if (!k.cleanWord || k.normalizedWord === target.normalizedWord) continue;
+    if (k.consonantKey && k.consonantKey === target.consonantKey) {
+      consonantMatches.push(k.cleanWord);
+    } else if (k.assonantKey && k.assonantKey === target.assonantKey) {
+      assonantMatches.push(k.cleanWord);
+    }
+  }
+
+  return {
+    target,
+    consonantMatches,
+    assonantMatches,
+  };
+}
+
+export interface NonLinearBlockSpec {
+  step: number;
+  name: string;
+  barsLabel: string;
+  creativePrompt: string;
+  exampleLine: string;
+}
+
+export interface NonLinearPoeticStructure {
+  id:
+    | 'flujo-conciencia'
+    | 'narrativa-circular'
+    | 'polifonia-voces'
+    | 'montaje-cinematico'
+    | 'espiral-inversa'
+    | 'letania-expansiva';
+  name: string;
+  tagline: string;
+  theoryNote: string;
+  recommendedMeter: string;
+  blocks: NonLinearBlockSpec[];
+}
+
+export const NONLINEAR_POETIC_STRUCTURES: NonLinearPoeticStructure[] = [
+  {
+    id: 'flujo-conciencia',
+    name: 'Flujo de Conciencia (Stream of Consciousness)',
+    tagline: 'Pensamiento asociativo continuo sin estribillo fijo ni puntuación rígida.',
+    theoryNote:
+      'Inspirada en Joyce, Cortázar y la canción de autor experimental: una imagen dispara un recuerdo, el recuerdo detona un sonido y una frase ancla reaparece cada 4–6 líneas como un latido.',
+    recommendedMeter: 'Verso libre o polimetría (6–13 sílabas)',
+    blocks: [
+      {
+        step: 1,
+        name: 'Detonante Sensorial',
+        barsLabel: '4 compases · Sin rima forzada',
+        creativePrompt: 'Arranca en mitad de un pensamiento físico: un olor, ruido de calle o detalle mínimo.',
+        exampleLine: 'El vapor de la taza borra la fecha del billete...',
+      },
+      {
+        step: 2,
+        name: 'Deriva Asociativa (Salto de Memoria)',
+        barsLabel: '6–8 compases · Encabalgamiento',
+        creativePrompt: 'Conecta el objeto con otra época sin decir "me acuerdo de"; encabalga dos frases seguidas.',
+        exampleLine: 'y en esa mancha tibia vuelven los patios donde nadie cerraba las puertas',
+      },
+      {
+        step: 3,
+        name: 'Imagen Ancla (Estribillo Líquido)',
+        barsLabel: '2 compases · Frase breve',
+        creativePrompt: 'Inserta una frase corta de 3–5 palabras que corte la deriva y vuelva al presente.',
+        exampleLine: 'Todo sigue girando afuera.',
+      },
+      {
+        step: 4,
+        name: 'Aceleración y Disolución',
+        barsLabel: '8 compases · Sinestesia / Pregunta abierta',
+        creativePrompt: 'Acumula verbos rápidos o imágenes simultáneas y termina dejando una puerta entreabierta.',
+        exampleLine: 'El semáforo respira verde sobre tus zapatos vacíos y el reloj aún late...',
+      },
+    ],
+  },
+  {
+    id: 'narrativa-circular',
+    name: 'Narrativa Circular (Anillo / Ouroboros)',
+    tagline: 'El último verso es idéntico al primero, pero cambia por completo de significado.',
+    theoryNote:
+      'En lugar de resolver en un coro triunfal, el poema da una vuelta de 360 grados: empiezas con una escena enigmática, recorres sus grietas y al repetirla al final el oyente comprende por fin la verdad oculta.',
+    recommendedMeter: 'Octosílabo (8) o Endecasílabo (11) con rima asonante',
+    blocks: [
+      {
+        step: 1,
+        name: 'Umbral / Verso Espejo (Inicio)',
+        barsLabel: '4 compases · Frase memorable',
+        creativePrompt: 'Escribe 2 versos de apertura ambiguos (una escena concreta sin explicar el porqué).',
+        exampleLine: 'Dejé las llaves sobre la mesa antes que despertara el mar.',
+      },
+      {
+        step: 2,
+        name: 'Órbita Exterior (Contexto y Tensiones)',
+        barsLabel: '8 compases · Detalles físicos',
+        creativePrompt: 'Recorre la habitación o el paisaje añadiendo 2 pistas sutiles sobre lo ocurrido.',
+        exampleLine: 'Quedó tu abrigo doblado en la silla y un vaso quieto junto al cristal.',
+      },
+      {
+        step: 3,
+        name: 'Punto de Giro (El Núcleo Oculto)',
+        barsLabel: '4–8 compases · Cambio armónico / Silencio',
+        creativePrompt: 'Revela una sola verdad emotiva breve en segunda o primera persona.',
+        exampleLine: 'No era huida: era devolverte el silencio que te robé.',
+      },
+      {
+        step: 4,
+        name: 'Retorno al Umbral (Verso Espejo Final)',
+        barsLabel: '4 compases · Repetición exacta resignificada',
+        creativePrompt: 'Repite literalmente los versos del paso 1: tras el giro, ahora suenan totalmente distintos.',
+        exampleLine: 'Dejé las llaves sobre la mesa antes que despertara el mar.',
+      },
+    ],
+  },
+  {
+    id: 'polifonia-voces',
+    name: 'Polifonía de Voces (Perspectivas Alternas)',
+    tagline: 'Dos o tres narradores / tiempos responden sobre la misma escena sin coro central.',
+    theoryNote:
+      'Ideal para duetos, canciones narrativas y letras dramáticas: cada sección cambia de pronombre ("Yo" → "Tú" → "La Ciudad / El Objeto") mostrando las aristas del mismo instante.',
+    recommendedMeter: 'Arte menor (7–8 sílabas) o contraste 11 + 5',
+    blocks: [
+      {
+        step: 1,
+        name: 'Voz A · Primera Persona (Urgencia)',
+        barsLabel: '4–6 compases',
+        creativePrompt: 'Habla desde el "Yo" usando verbos presentes e inmediatos.',
+        exampleLine: 'Camino rápido para no oír tus pasos tras la esquina.',
+      },
+      {
+        step: 2,
+        name: 'Voz B · Segunda Persona (Réplica)',
+        barsLabel: '4–6 compases',
+        creativePrompt: 'Responde desde el "Tú" contradiciendo o matizando la escena anterior.',
+        exampleLine: 'No me oías porque el viento llevaba otro nombre en tu boca.',
+      },
+      {
+        step: 3,
+        name: 'Voz C · El Testigo Mudo (Objeto o Espacio)',
+        barsLabel: '4 compases · Tercera persona imparcial',
+        creativePrompt: 'Describe qué observan las cosas inanimadas (el banco, el farol, la lluvia) sin juzgar.',
+        exampleLine: 'La lluvia borra dos huellas distintas sobre la misma acera.',
+      },
+      {
+        step: 4,
+        name: 'Cruce Final (Nosotros / Silencio)',
+        barsLabel: '4 compases',
+        creativePrompt: 'Funde las voces en una sola imagen breve compartida.',
+        exampleLine: 'Y abajo, el puente guarda las dos mitades de la misma canción.',
+      },
+    ],
+  },
+  {
+    id: 'montaje-cinematico',
+    name: 'Montaje Cinemático / Collage de Viñetas',
+    tagline: 'Escenas breves aparentemente inconexas unidas por un hilo sensorial oculto.',
+    theoryNote:
+      'Basado en el efecto Kuleshov del cine: al yuxtaponer 3 o 4 postales de tiempos y lugares distintos que comparten un color, sonido o materia, el cerebro del oyente inventa la historia emocional entre los cortes.',
+    recommendedMeter: 'Estrofas de 3 versos (Tercetos) o Verso Libre visual',
+    blocks: [
+      {
+        step: 1,
+        name: 'Viñeta 1 · Plano Detalle (Interior)',
+        barsLabel: '4 compases · Luz / Color',
+        creativePrompt: 'Describe un micro-momento doméstico con un color o textura protagonista.',
+        exampleLine: 'Un hilo de polvo dorado cruza la persiana de las cuatro.',
+      },
+      {
+        step: 2,
+        name: 'Viñeta 2 · Corte Brusco (Exterior / Infancia)',
+        barsLabel: '4 compases · Mismo motivo sensorial',
+        creativePrompt: 'Salta a otro lugar u otra edad donde aparezca ese mismo color, sonido o luz.',
+        exampleLine: 'En el andén de agosto un tren deja chispas del mismo oro breve.',
+      },
+      {
+        step: 3,
+        name: 'Viñeta 3 · Plano Nocturno (Presente)',
+        barsLabel: '4 compases · Transformación del motivo',
+        creativePrompt: 'Muestra el mismo elemento transformado en sombra, eco o calma.',
+        exampleLine: 'Ahora solo brilla la sal seca en el borde de tu cuaderno.',
+      },
+      {
+        step: 4,
+        name: 'Sutura Final (Un Solo Verso Blanco)',
+        barsLabel: '2–4 compases',
+        creativePrompt: 'Cierra con una línea serena que revele qué une a las tres postales.',
+        exampleLine: 'Todo lo que amamos dura lo que tarda una tarde en doblarse.',
+      },
+    ],
+  },
+  {
+    id: 'espiral-inversa',
+    name: 'Espiral Inversa (Del Desenlace al Origen)',
+    tagline: 'Comienza en las consecuencias del final y retrocede en el tiempo hacia la chispa inicial.',
+    theoryNote:
+      'Al revelar el desenlace en el primer verso, eliminas el suspense barato ("¿qué pasará?") y conviertes toda la canción en una búsqueda poética profunda ("¿cómo llegamos a sentir esto?").',
+    recommendedMeter: 'Endecasílabo (11) o Alejandrino (14)',
+    blocks: [
+      {
+        step: 1,
+        name: 'Las Ruinas o la Calma Final (T = 0)',
+        barsLabel: '4 compases',
+        creativePrompt: 'Muestra el resultado ya consumado (la maleta hecha, la ceniza fría, el silencio después).',
+        exampleLine: 'Ya no queda humo ni rastro de voces en este cuarto.',
+      },
+      {
+        step: 2,
+        name: 'Un Paso Atrás (La Víspera)',
+        barsLabel: '6–8 compases',
+        creativePrompt: 'Retrocede horas o meses: muestra la duda o la palabra que aún pudo cambiarlo todo.',
+        exampleLine: 'Anoche todavía buscabas el acorde exacto bajo la lluvia.',
+      },
+      {
+        step: 3,
+        name: 'El Origen Luminoso (El Primer Día)',
+        barsLabel: '6–8 compases',
+        creativePrompt: 'Llega al principio inocente: describe el primer gesto con máxima ternura o claridad.',
+        exampleLine: 'Pero antes de todo fue solo una risa compartida frente al mar.',
+      },
+    ],
+  },
+  {
+    id: 'letania-expansiva',
+    name: 'Letanía / Mantra en Expansión',
+    tagline: 'Una célula verbal se repite y va ganando capas léxicas y tensión rítmica.',
+    theoryNote:
+      'Potente para post-rock, folclore hipnótico, rap poético o indie: usa la anáfora ("Sin X / Con Y / Hasta que Z") expandiendo cada ciclo de 4 a 8 a 12 sílabas hasta romper en quietud.',
+    recommendedMeter: 'Crecimiento progresivo (5 → 8 → 11 → 5 sílabas)',
+    blocks: [
+      {
+        step: 1,
+        name: 'Semilla (Anáfora Mínima)',
+        barsLabel: '4 compases · 5 sílabas/línea',
+        creativePrompt: 'Elige una preposición o verbo inicial fijo y repite 2 líneas cortas.',
+        exampleLine: 'Guardo tu nombre / guardo la brisa.',
+      },
+      {
+        step: 2,
+        name: 'Expansión Media (Adición de Lugar)',
+        barsLabel: '4–6 compases · 8 sílabas/línea',
+        creativePrompt: 'Conserva el inicio exacto pero alarga la línea añadiendo un lugar o tiempo.',
+        exampleLine: 'Guardo tu nombre en el cristal / guardo la brisa del portal.',
+      },
+      {
+        step: 3,
+        name: 'Desborde (Clímax Acumulativo)',
+        barsLabel: '8 compases · 11+ sílabas',
+        creativePrompt: 'Lleva el mantra a su máxima intensidad combinando imágenes rápidas sin pausa.',
+        exampleLine: 'Guardo tu nombre donde la ciudad apaga su miedo y vuelve a latir.',
+      },
+      {
+        step: 4,
+        name: 'Desnudez Final',
+        barsLabel: '2–4 compases · Reducción súbita',
+        creativePrompt: 'Reduce todo de golpe a un verso de 3–5 palabras sin acompañamiento denso.',
+        exampleLine: 'Solo queda el eco.',
+      },
+    ],
+  },
+];
+
+export interface GeneratedNonLinearPlan {
+  structure: NonLinearPoeticStructure;
+  tempoFeel: string;
+  skeletonText: string;
+}
+
+export function generateNonLinearStructure(
+  structureId?: string,
+  seed = 0,
+  tempoFeel: '4/4 Balada' | '3/4 Vals' | '6/8 Folclore' | 'Verso Libre' = 'Verso Libre'
+): GeneratedNonLinearPlan {
+  const pool = NONLINEAR_POETIC_STRUCTURES;
+  const chosen =
+    (structureId ? pool.find((s) => s.id === structureId) : undefined) ||
+    pool[Math.abs(seed) % pool.length];
+
+  const skeletonText = chosen.blocks
+    .map(
+      (b) =>
+        `[${b.step}. ${b.name} — ${b.creativePrompt}]\n`
+    )
+    .join('\n');
+
+  return {
+    structure: chosen,
+    tempoFeel,
+    skeletonText: skeletonText.trim(),
+  };
+}
+
+export type CreativeWritingLevelId = 'principiante' | 'intermedio' | 'avanzado';
+
+export interface CreativeWritingTipCard {
+  title: string;
+  principle: string;
+  beforeExample: string;
+  afterExample: string;
+  musicTip: string;
+}
+
+export interface CreativeWritingLevelGuide {
+  id: CreativeWritingLevelId;
+  label: string;
+  subtitle: string;
+  cards: CreativeWritingTipCard[];
+}
+
+export const CREATIVE_WRITING_ADVICE_BY_LEVEL: CreativeWritingLevelGuide[] = [
+  {
+    id: 'principiante',
+    label: 'Nivel 1 · Principiante (Desbloqueo y Verdad)',
+    subtitle:
+      'Pasa de frases genéricas y rimas forzadas a escenas físicas que cualquier oyente pueda ver y sentir.',
+    cards: [
+      {
+        title: '1. Sustituye emociones abstractas por objetos tocables ("Muestra, no expliques")',
+        principle:
+          'Palabras como "tristeza", "amor", "dolor" o "soledad" son etiquetas vacías si no hay una escena concreta detrás.',
+        beforeExample: 'Siento una gran tristeza desde que te fuiste de mi vida.',
+        afterExample: 'Quedaron dos tazas frías y tu chaqueta colgada en la silla.',
+        musicTip: 'Las palabras concretas de 1–2 sílabas (mar, luz, sal, voz) encajan mejor en notas largas.',
+      },
+      {
+        title: '2. Evita el "Relleno por Rima" (el yugo del consonante fácil)',
+        principle:
+          'Nunca tuerzas el sentido de una frase solo para hacer rimar "corazón / pasión / ilusión". Si la rima consonante suena forzada, usa rima asonante o verso blanco.',
+        beforeExample: 'Eres mi única ilusión / dentro de este corazón.',
+        afterExample: 'Tu nombre cabe en un suspiro / aunque la calle siga en ruido.',
+        musicTip: 'En música, la melodía ya aporta estructura; la rima asonante suena moderna y natural.',
+      },
+      {
+        title: '3. Regla de los 5 Minutos Sin Borrar (Separar Creatividad de Edición)',
+        principle:
+          'Escribir y juzgar al mismo tiempo bloquea la página. Escribe primero todo el borrador crudo con tus palabras elegidas y edita la métrica después.',
+        beforeExample: 'Quedarse 20 minutos mirando la primera línea buscando la palabra perfecta.',
+        afterExample: 'Escribir 12 líneas libres seguidas y subrayar solo las 4 imágenes más vivas.',
+        musicTip: 'Tararea un pulso de 4/4 mientras lees tu borrador en voz alta para detectar trabas.',
+      },
+    ],
+  },
+  {
+    id: 'intermedio',
+    label: 'Nivel 2 · Intermedio (Arquitectura, Ritmo y Voz)',
+    subtitle:
+      'Controla el tamaño de los versos, el encabalgamiento y la tensión cinemática entre estrofas.',
+    cards: [
+      {
+        title: '1. Alterna Plano General y Plano Detalle (Zoom Narrativo)',
+        principle:
+          'Si toda la canción describe paisajes enormes ("el universo, el océano") cansa; alterna una toma amplia con un detalle microscópico.',
+        beforeExample: 'El cielo inmenso cubre el mundo entero bajo la noche eterna.',
+        afterExample: 'Cruza la lluvia toda la ciudad / mientras tiembla una gota en tu reloj.',
+        musicTip: 'Plano detalle en estrofa íntima (guitarra/piano suave); plano abierto en clímax.',
+      },
+      {
+        title: '2. Usa el Encabalgamiento para Romper el Compás Cuadrado',
+        principle:
+          'No cierres siempre la idea al final de cada línea. Deja que una frase continúe en el verso siguiente para crear elegancia y movimiento.',
+        beforeExample: 'Te busqué en el andén. / Ya no estaba el tren.',
+        afterExample: 'Guardé en el borde del andén / las palabras que el último tren se llevó.',
+        musicTip: 'Permite empezar la siguiente línea en anacrusa fluida en lugar de cortar siempre en silencio.',
+      },
+      {
+        title: '3. Cuida la Sonoridad de las Vocales y Consonantes (Instrumentación Verbal)',
+        principle:
+          'Las consonantes líquidas y nasales (l, m, n, s) calman; las oclusivas y vibrantes (t, k, p, r) golpean como percusión.',
+        beforeExample: 'Camino despacio en la noche tranquila sin ruido.',
+        afterExample: 'Lenta la bruma lame el cristal (calma) vs. Rompe el pulso contra el portón (garra).',
+        musicTip: 'En notas agudas sostenidas (> G4) prioriza vocales abiertas A, E, O en la sílaba tónica.',
+      },
+    ],
+  },
+  {
+    id: 'avanzado',
+    label: 'Nivel 3 · Avanzado (Subtexto, Extrañamiento y Contradicción)',
+    subtitle:
+      'Domina el arte de decir más omitiendo lo obvio, crear giros insólitos y contrastar texto con armonía.',
+    cards: [
+      {
+        title: '1. El Extrañamiento Poético (Ostranenie)',
+        principle:
+          'Desautomatiza la mirada: describe un objeto cotidiano o un sentimiento gastado desde una metáfora física inesperada, sin nombrarlo directamente.',
+        beforeExample: 'Tengo miedo de olvidarte con el paso de los años.',
+        afterExample: 'El calendario empieza a borrar con tiza blanca la tinta de tu voz.',
+        musicTip: 'Ideal para estructuras no lineales como Flujo de Conciencia o Montaje Cinemático.',
+      },
+      {
+        title: '2. Contradicción Tonal (Fricción Emocional Texto ↔ Música)',
+        principle:
+          'Letra triste con música triste es predecible. Prueba letra luminosa sobre armonía menor dórica, o confesión cruda sobre un groove alegre.',
+        beforeExample: 'Letra de ruptura sobre progresión lenta menor tradicional.',
+        afterExample: 'Celebrar con ironía una despedida sobre un ritmo bailable luminoso en modo Lidio.',
+        musicTip: 'La fricción entre letra y acorde multiplica la profundidad dramática sin melodrama.',
+      },
+      {
+        title: '3. Economía Extrema y Omisión (La Técnica del Iceberg)',
+        principle:
+          'Elimina el 30% de adjetivos explicativos. Si el lector entiende la herida por lo que los personajes hacen con sus manos, jamás expliques lo que sienten.',
+        beforeExample: 'Estaba tan nervioso y arrepentido que no me atrevía a hablarte.',
+        afterExample: 'Doblé cuatro veces el mismo papel hasta partirlo por la mitad.',
+        musicTip: 'Dejar compases respirar sin texto permite que un solo acorde o silencio "diga" la frase omitida.',
+      },
+    ],
+  },
+];
+
+export function pickRandomWritingPromptWords(
+  count: number,
+  seed = Date.now(),
+  categoryFilter: PoeticWordCategory | 'Todas' = 'Todas'
+): string[] {
+  const safeCount = Math.max(2, Math.min(5, Math.round(count) || 3));
+  const candidates =
+    categoryFilter === 'Todas'
+      ? SPANISH_POETIC_WORD_BANK
+      : SPANISH_POETIC_WORD_BANK.filter((e) => e.category === categoryFilter);
+
+  if (candidates.length <= safeCount) {
+    return candidates.map((c) => c.word);
+  }
+
+  // Deterministic LCG PRNG from seed so tests and UI both behave predictably & evenly
+  let state = (Math.abs(Math.floor(seed)) % 2147483646) + 1;
+  const nextRand = (): number => {
+    state = (state * 48271) % 2147483647;
+    return (state - 1) / 2147483646;
+  };
+
+  if (categoryFilter === 'Todas') {
+    // Prefer cross-category evocative combinations first!
+    const cats: PoeticWordCategory[] = [
+      'Naturaleza y Cosmos',
+      'Objetos y Lugares',
+      'Emoción y Sonido',
+      'Tiempo y Movimiento',
+    ];
+    const picked: string[] = [];
+    const used = new Set<string>();
+    for (let i = 0; i < safeCount; i++) {
+      const cat = cats[(i + Math.floor(nextRand() * cats.length)) % cats.length];
+      const catPool = SPANISH_POETIC_WORD_BANK.filter(
+        (e) => e.category === cat && !used.has(e.word)
+      );
+      if (catPool.length > 0) {
+        const pick = catPool[Math.floor(nextRand() * catPool.length)].word;
+        picked.push(pick);
+        used.add(pick);
+      }
+    }
+    while (picked.length < safeCount) {
+      const pick = candidates[Math.floor(nextRand() * candidates.length)].word;
+      if (!used.has(pick)) {
+        used.add(pick);
+        picked.push(pick);
+      }
+    }
+    return picked;
+  }
+
+  const shuffled = [...candidates];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(nextRand() * (i + 1));
+    const tmp = shuffled[i];
+    shuffled[i] = shuffled[j];
+    shuffled[j] = tmp;
+  }
+  return shuffled.slice(0, safeCount).map((c) => c.word);
+}
+
+export interface WritingDraftWordStatus {
+  word: string;
+  used: boolean;
+}
+
+export interface WritingDraftLineTelemetry {
+  lineNumber: number;
+  text: string;
+  metricSyllables: number;
+  meterName: string;
+  rhymeAssonant: string;
+  rhymeConsonant: string;
+  sinalefas: number;
+}
+
+export interface WritingDraftEvaluation {
+  wordStatuses: WritingDraftWordStatus[];
+  usedCount: number;
+  totalTargetWords: number;
+  allWordsUsed: boolean;
+  totalLines: number;
+  totalWordsWritten: number;
+  lines: WritingDraftLineTelemetry[];
+}
+
+export function evaluateWritingDraftWithWords(
+  draft: string,
+  targetWords: readonly string[]
+): WritingDraftEvaluation {
+  const nonEmptyLines = draft
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0 && !l.startsWith('['));
+
+  const userBodyText = nonEmptyLines.join(' ');
+  const normalizedDraftTokens = stripSpanishDiacritics(userBodyText)
+    .split(/[^a-zñ]+/)
+    .filter(Boolean);
+
+  const wordStatuses: WritingDraftWordStatus[] = targetWords.map((w) => {
+    const targetNorm = stripSpanishDiacritics(w.trim());
+    if (!targetNorm) return { word: w, used: false };
+    // Match exact word or Spanish plural/simple inflection starting cleanly on word boundary
+    const used = normalizedDraftTokens.some(
+      (tok) =>
+        tok === targetNorm ||
+        tok === `${targetNorm}s` ||
+        tok === `${targetNorm}es` ||
+        (targetNorm.length >= 4 &&
+          (targetNorm.endsWith('a') || targetNorm.endsWith('o') || targetNorm.endsWith('e')) &&
+          tok.startsWith(targetNorm.slice(0, -1)) &&
+          tok.length <= targetNorm.length + 3)
+    );
+    return { word: w, used };
+  });
+
+  const usedCount = wordStatuses.filter((s) => s.used).length;
+
+  const lines: WritingDraftLineTelemetry[] = nonEmptyLines.map((line, idx) => {
+    const scansion = analyzePoeticProsodyDetailed(line);
+    const lastWord = line
+      .split(/\s+/)
+      .map((t) => t.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ]/g, ''))
+      .filter(Boolean)
+      .pop() || '';
+    const rhyme = extractSpanishPoeticRhymeKeys(lastWord);
+    return {
+      lineNumber: idx + 1,
+      text: line,
+      metricSyllables: scansion.metricSyllables,
+      meterName: scansion.meterName,
+      rhymeAssonant: rhyme.assonantKey || '—',
+      rhymeConsonant: rhyme.consonantKey || '—',
+      sinalefas: scansion.sinalefas,
+    };
+  });
+
+  return {
+    wordStatuses,
+    usedCount,
+    totalTargetWords: targetWords.length,
+    allWordsUsed: targetWords.length > 0 && usedCount === targetWords.length,
+    totalLines: nonEmptyLines.length,
+    totalWordsWritten: normalizedDraftTokens.length,
+    lines,
+  };
+}
+
+
+
+
 
 

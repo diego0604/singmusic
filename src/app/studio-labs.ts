@@ -10,6 +10,8 @@ import {
   buildChordMemorySequence,
   buildStructuredVocalTrainingSeries,
   computeAppoggioCyclePhase,
+  computeGuitarNeckWindow,
+  computeVerticalChordBoxData,
   computeVocalPatternStepState,
   convertProgressionToNashville,
   evaluateChordMemoryAnswer,
@@ -21,6 +23,7 @@ import {
   midiToNoteName,
   reduceLatchGlowState,
   renderTopViewDrumKitSvg,
+  renderVerticalGuitarChordSvg,
   resolvePlayableChordVoicing,
   type ChordMemoryItem,
   type ChordMemoryPoolKey,
@@ -28,6 +31,7 @@ import {
   type DrumLimbHit,
   type LatchedGlowState,
   type NashvilleChordInput,
+  type NeckZoneMode,
   type VocalTrainingExercise,
   type VocalTrainingLevel,
 } from './music-games-logic';
@@ -122,29 +126,45 @@ const BASS_5C = [
   { label: 'B (5ª)', openMidi: 23 },
 ];
 
+interface CompactNeckOptions {
+  minFret?: number;
+  maxFret?: number;
+  fingerPriority?: boolean;
+  mutedStrings?: Set<number>;
+}
+
 function renderCompactNeckHtml(
   strings: { label: string; openMidi: number }[],
   activeMidis: number[],
   rootPc: number,
   maxFret = 12,
   guitarFingers?: Map<string, number>,
-  exactPositions?: Set<string>
+  exactPositions?: Set<string>,
+  options?: CompactNeckOptions
 ): string {
+  const minF = Math.max(0, options?.minFret ?? 0);
+  const maxF = Math.max(minF, options?.maxFret ?? maxFret);
+  const fingerPriority = !!options?.fingerPriority;
+  const mutedStrings = options?.mutedStrings;
+  const isZoomed = maxF - minF <= 7;
+
   const activeMidiSet = new Set(activeMidis);
   const activePcSet = new Set(activeMidis.map((m) => ((m % 12) + 12) % 12));
   const useExactPos = !!exactPositions && exactPositions.size > 0;
 
-  let header = `<div class="fretboard-row" style="border-bottom:1px solid rgba(255,255,255,0.12); margin-bottom:4px;"><div class="string-label" style="color:#94a3b8; font-size:0.68rem;">Traste</div>`;
-  for (let f = 0; f <= maxFret; f++) {
+  let header = `<div class="fretboard-row"><div class="string-label" style="color:#94a3b8; font-size:0.7rem;">Traste</div>`;
+  for (let f = minF; f <= maxF; f++) {
     const dot = [3, 5, 7, 9, 12].includes(f) ? '•' : '';
-    header += `<div class="fret-cell" style="height:20px; border:none; color:#94a3b8; font-size:0.7rem; font-weight:700;">${f}${dot}</div>`;
+    header += `<div class="fret-cell" data-fret="${f}" style="height:24px; border:none; color:#94a3b8; font-size:0.72rem; font-weight:800; cursor:default;">${f}${dot}</div>`;
   }
   header += `</div>`;
 
   const rows = strings
     .map((str, sIdx) => {
-      let row = `<div class="fretboard-row"><div class="string-label">${str.label}</div>`;
-      for (let f = 0; f <= maxFret; f++) {
+      const isMuted = !!mutedStrings?.has(sIdx);
+      const muteTag = isMuted ? `<span class="string-mute-tag" title="Cuerda silenciada (X)">✕</span>` : '';
+      let row = `<div class="fretboard-row"><div class="string-label" style="${isMuted ? 'color:#64748b;' : ''}"><span>${str.label}</span>${muteTag}</div>`;
+      for (let f = minF; f <= maxF; f++) {
         const midi = str.openMidi + f;
         const pc = midi % 12;
         const posKey = `${sIdx}:${f}`;
@@ -161,18 +181,20 @@ function renderCompactNeckHtml(
             : '';
         const ring = isExact ? 'outline:2px solid #ffffff;' : '';
         const fingerNum = guitarFingers?.get(posKey) || 0;
-        const fingerHtml =
+        const showFingerMain = fingerPriority && fingerNum > 0 && f > 0;
+        const noteText = showFingerMain ? String(fingerNum) : LOGIC_NOTE_NAMES[pc];
+        const cornerBadge =
           fingerNum > 0 && f > 0
-            ? `<span class="finger-badge" title="Dedo ${fingerNum}">${fingerNum}</span>`
+            ? `<span class="finger-badge ${showFingerMain ? 'is-note-corner' : ''}" title="${showFingerMain ? `Nota ${LOGIC_NOTE_NAMES[pc]}` : `Dedo ${fingerNum}`}">${showFingerMain ? LOGIC_NOTE_NAMES[pc] : fingerNum}</span>`
             : '';
-        row += `<div class="fret-cell js-studio-fret" data-sidx="${sIdx}" data-fret="${f}" data-midi="${midi}" title="${midiToNoteName(midi)} (Traste ${f})${fingerNum > 0 ? ` · Dedo ${fingerNum}` : ''}"><div class="fret-note ${cls}" style="${ring}">${LOGIC_NOTE_NAMES[pc]}${fingerHtml}</div></div>`;
+        row += `<div class="fret-cell js-studio-fret" data-sidx="${sIdx}" data-fret="${f}" data-midi="${midi}" title="${midiToNoteName(midi)} (Traste ${f})${fingerNum > 0 ? ` · Dedo ${fingerNum}` : ''}"><div class="fret-note ${cls} ${fingerNum > 0 && f > 0 ? 'has-finger' : ''}" style="${ring}">${noteText}${cornerBadge}</div></div>`;
       }
       row += `</div>`;
       return row;
     })
     .join('');
 
-  return `<div class="fretboard-wrapper ${maxFret <= 7 ? 'compact-neck' : ''}">${header}${rows}</div>`;
+  return `<div class="fretboard-wrapper ${isZoomed ? 'neck-zoomed' : ''} ${fingerPriority ? 'finger-priority' : ''}">${header}${rows}</div>`;
 }
 
 /**
@@ -512,6 +534,8 @@ function buildGuitarStrummingLab(
 
   let activePresetIdx = 0;
   let activeProgKey = 'pop4';
+  let strumNeckZone: NeckZoneMode = 'auto';
+  let strumFingerPrio = false;
   let bpm = 92;
   let customPattern: StrumToken[] = [...PATTERNS[0].pattern];
   let activeChordIdx = 0;
@@ -616,7 +640,7 @@ function buildGuitarStrummingLab(
     }
 
     if (neckEl) {
-      const chordKey = `${curChord.name}:${curChord.frets.join(',')}`;
+      const chordKey = `${curChord.name}:${curChord.frets.join(',')}:${strumNeckZone}:${strumFingerPrio ? 'f' : 'n'}`;
       if (neckEl.getAttribute('data-chord-key') !== chordKey) {
         neckEl.setAttribute('data-chord-key', chordKey);
         const lowToHigh = [40, 45, 50, 55, 59, 64];
@@ -630,46 +654,86 @@ function buildGuitarStrummingLab(
         const fingerInfo = assignGuitarChordFingers(posList, true);
         const fingerMap = new Map<string, number>();
         const exactSet = new Set<string>();
-        posList.forEach((p) => exactSet.add(`${p.sIdx}:${p.fret}`));
+        const mutedStrings = new Set<number>([0, 1, 2, 3, 4, 5]);
+        posList.forEach((p) => {
+          exactSet.add(`${p.sIdx}:${p.fret}`);
+          mutedStrings.delete(p.sIdx);
+        });
         const fingersSummaryArr: string[] = ['X', 'X', 'X', 'X', 'X', 'X'];
         fingerInfo.positions.forEach((fp) => {
           const lowIdx = 5 - fp.sIdx;
           if (lowIdx >= 0 && lowIdx < 6) fingersSummaryArr[lowIdx] = String(fp.finger);
           if (fp.finger > 0 && fp.fret > 0) fingerMap.set(`${fp.sIdx}:${fp.fret}`, fp.finger);
         });
-        const maxNeckFret = Math.max(5, ...curChord.frets.filter((f) => f > 0));
+        const win = computeGuitarNeckWindow(
+          curChord.frets.filter((f) => f >= 0),
+          strumNeckZone,
+          12
+        );
+        const vBox = computeVerticalChordBoxData({
+          positions: fingerInfo.positions.map((fp) => ({ sIdx: fp.sIdx, fret: fp.fret, finger: fp.finger })),
+          rootPc: curChord.rootPc,
+        });
         neckEl.innerHTML = `
-          <div style="font-size:0.78rem; color:#fbbf24; font-weight:700; margin-bottom:4px;">
-            🎸 Acorde Activo: ${curChord.name} · Dedos Izq: <span style="color:#fde047; font-family:monospace;">${fingersSummaryArr.join('-')}</span> (1=Índice, 2=Medio, 3=Anular, 4=Meñique)
+          <div class="guitar-ux-toolbar">
+            <div style="font-size:0.78rem; color:#fbbf24; font-weight:700;">
+              🎸 Acorde: <strong>${curChord.name}</strong> · Dedos Izq: <span style="color:#fde047; font-family:monospace;">${fingersSummaryArr.join('-')}</span>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+              <div class="guitar-seg-group">
+                <button type="button" class="guitar-seg-btn js-strum-zone ${strumNeckZone === 'auto' ? 'active' : ''}" data-z="auto">Auto (${win.minFret}–${win.maxFret})</button>
+                <button type="button" class="guitar-seg-btn js-strum-zone ${strumNeckZone === 'all' ? 'active' : ''}" data-z="all">0–12</button>
+              </div>
+              <div class="guitar-seg-group">
+                <button type="button" class="guitar-seg-btn js-strum-prio ${!strumFingerPrio ? 'active' : ''}" data-p="0">Notas</button>
+                <button type="button" class="guitar-seg-btn js-strum-prio ${strumFingerPrio ? 'active' : ''}" data-p="1">Dedos 1–4</button>
+              </div>
+            </div>
           </div>
-          ${renderCompactNeckHtml(GUITAR_6C, midis, curChord.rootPc, Math.min(8, maxNeckFret), fingerMap, exactSet)}
+          <div class="guitar-stage-grid">
+            ${renderCompactNeckHtml(GUITAR_6C, midis, curChord.rootPc, 12, fingerMap, exactSet, {
+              minFret: win.minFret,
+              maxFret: win.maxFret,
+              fingerPriority: strumFingerPrio,
+              mutedStrings,
+            })}
+            ${renderVerticalGuitarChordSvg(vBox, { title: curChord.name })}
+          </div>
         `;
       }
     }
   };
 
   stage.innerHTML = `
-    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin-bottom:12px;">
-      <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-        <select class="lab-select js-strum-preset" aria-label="Seleccionar patrón de rasgueo">
-          ${PATTERNS.map((p, idx) => `<option value="${idx}">${p.name}</option>`).join('')}
-        </select>
-        <select class="lab-select js-strum-prog" aria-label="Seleccionar progresión de acordes">
-          ${Object.entries(PROGRESSIONS)
-            .map(([k, v]) => `<option value="${k}">${v.label}</option>`)
-            .join('')}
-        </select>
-        <label style="font-size:0.8rem; color:#cbd5e1; display:flex; align-items:center; gap:6px;">
-          Tempo: <strong class="js-strum-bpm-val">${bpm}</strong> BPM
-          <input type="range" class="js-strum-bpm" min="60" max="145" value="${bpm}" style="width:95px;" />
-        </label>
-      </div>
-      <div style="display:flex; flex-wrap:wrap; gap:6px;">
-        <button type="button" class="btn btn-primary js-strum-play">▶ Reproducir Patrón</button>
-        <button type="button" class="btn js-strum-drill" data-drill="mute">🎯 Ejercicio Apagados</button>
+    <div class="neck-control-deck neck-deck-standalone">
+      <div class="neck-deck-row">
+        <div class="neck-deck-fields">
+          <div class="neck-field">
+            <label>Patrón:</label>
+            <select class="lab-select js-strum-preset" aria-label="Seleccionar patrón de rasgueo">
+              ${PATTERNS.map((p, idx) => `<option value="${idx}">${p.name}</option>`).join('')}
+            </select>
+          </div>
+          <div class="neck-field">
+            <label>Progresión:</label>
+            <select class="lab-select js-strum-prog" aria-label="Seleccionar progresión de acordes">
+              ${Object.entries(PROGRESSIONS)
+                .map(([k, v]) => `<option value="${k}">${v.label}</option>`)
+                .join('')}
+            </select>
+          </div>
+          <label class="text-xs" style="color:#cbd5e1; display:flex; align-items:center; gap:6px;">
+            Tempo: <strong class="js-strum-bpm-val">${bpm}</strong> BPM
+            <input type="range" class="js-strum-bpm" min="60" max="145" value="${bpm}" style="width:90px;" />
+          </label>
+        </div>
+        <div class="neck-deck-actions">
+          <button type="button" class="btn btn-primary js-strum-play">▶ Reproducir Patrón</button>
+          <button type="button" class="btn js-strum-drill" data-drill="mute">🎯 Apagados</button>
+        </div>
       </div>
     </div>
-    <div class="js-strum-grid" style="margin-bottom:12px;"></div>
+    <div class="js-strum-grid" style="margin-bottom:8px;"></div>
     <div class="js-strum-neck"></div>
   `;
 
@@ -780,6 +844,18 @@ function buildGuitarStrummingLab(
       if (sel) sel.value = '2';
       startPlay();
       onStatus('Ejercicio Guiado: Acentúa ↓ y corta limpiamente en ✕ sin detener el péndulo');
+      return;
+    }
+    const zoneBtn = t.closest<HTMLElement>('.js-strum-zone');
+    if (zoneBtn) {
+      strumNeckZone = (zoneBtn.getAttribute('data-z') as NeckZoneMode) === 'all' ? 'all' : 'auto';
+      renderGridOnly();
+      return;
+    }
+    const prioBtn = t.closest<HTMLElement>('.js-strum-prio');
+    if (prioBtn) {
+      strumFingerPrio = prioBtn.getAttribute('data-p') === '1';
+      renderGridOnly();
     }
   });
 }
@@ -2191,23 +2267,30 @@ function buildBassLockLab(
         : bassArr;
 
       body = `
-        <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
-            <select class="lab-select js-bl-groove" aria-label="Groove de bajo y bombo">
-              ${Object.entries(GROOVES)
-                .map(([k, v]) => `<option value="${k}" ${k === grooveName ? 'selected' : ''}>${v.label}</option>`)
-                .join('')}
-            </select>
-            <label class="text-xs" style="color:#cbd5e1;">BPM: <strong class="js-bl-bpm-val">${bassBpm}</strong>
-              <input type="range" class="js-bl-bpm" min="65" max="135" value="${bassBpm}" style="width:90px;" />
-            </label>
-            <button type="button" class="btn js-bl-5c ${use5Strings ? 'active' : ''}">${use5Strings ? '5 Cuerdas (Con B0)' : '4 Cuerdas (E1–G2)'}</button>
-            <button type="button" class="btn js-bl-sus ${sustainMode ? 'active' : ''}">${sustainMode ? 'Sustain (Legato)' : 'Staccato (Corto)'}</button>
-            <button type="button" class="btn js-bl-ant ${anticipate ? 'active' : ''}">${anticipate ? 'Anticipación -1/16 ON' : 'Anticipación OFF'}</button>
+        <div class="neck-control-deck neck-deck-standalone">
+          <div class="neck-deck-row">
+            <div class="neck-deck-fields">
+              <div class="neck-field">
+                <label>Groove:</label>
+                <select class="lab-select js-bl-groove" aria-label="Groove de bajo y bombo">
+                  ${Object.entries(GROOVES)
+                    .map(([k, v]) => `<option value="${k}" ${k === grooveName ? 'selected' : ''}>${v.label}</option>`)
+                    .join('')}
+                </select>
+              </div>
+              <label class="text-xs" style="color:#cbd5e1;">BPM: <strong class="js-bl-bpm-val">${bassBpm}</strong>
+                <input type="range" class="js-bl-bpm" min="65" max="135" value="${bassBpm}" style="width:85px;" />
+              </label>
+              <button type="button" class="btn js-bl-5c ${use5Strings ? 'active' : ''}">${use5Strings ? '5 Cuerdas (Con B0)' : '4 Cuerdas (E1–G2)'}</button>
+              <button type="button" class="btn js-bl-sus ${sustainMode ? 'active' : ''}">${sustainMode ? 'Sustain (Legato)' : 'Staccato (Corto)'}</button>
+              <button type="button" class="btn js-bl-ant ${anticipate ? 'active' : ''}">${anticipate ? 'Anticipación -1/16 ON' : 'Anticipación OFF'}</button>
+            </div>
+            <div class="neck-deck-actions">
+              <button type="button" class="btn btn-primary js-bl-play">${playing ? '⏹ Detener' : '▶ Escuchar Lock-In'}</button>
+            </div>
           </div>
-          <button type="button" class="btn btn-primary js-bl-play">${playing ? '⏹ Detener' : '▶ Escuchar Lock-In'}</button>
         </div>
-        <div class="seq-grid" style="margin-bottom:10px;">
+        <div class="seq-grid" style="margin-bottom:8px;">
           <div class="seq-label">🥁 Bombo</div>
           ${kickArr.map((v, i) => `<button type="button" class="seq-cell js-bl-k ${v ? 'on' : ''} ${stepIdx === i ? 'playing-step' : ''}" data-i="${i}">${v ? '●' : ''}</button>`).join('')}
           <div class="seq-label">🎸 Bajo</div>
@@ -3040,12 +3123,13 @@ function buildVocalAgilityLab(
 }
 
 /**
- * LAB G: Guitar Fingering, Motor Skills & Speed Lab (BPM + Progressive Ramp + Interactive Neck 1-4)
+ * LAB G: Guitar Fingering, Motor Skills & Speed Lab (10 Exercises + BPM + Neck Zone Zoom + Large 1-4 Fingers)
  */
-function buildGuitarDexterityLab(
+export function buildGuitarDexterityLab(
   stage: HTMLElement,
   audio: StudioAudioPort,
-  onStatus: (msg: string) => void
+  onStatus: (msg: string) => void,
+  style: 'acoustic' | 'electric' = 'electric'
 ): void {
   interface DexStep {
     sIdx: number; // 0=e(1ª)..5=E(6ª)
@@ -3056,10 +3140,11 @@ function buildGuitarDexterityLab(
 
   const EXERCISES: Record<
     string,
-    { title: string; focus: string; cue: string; steps: DexStep[] }
+    { title: string; levelTag: string; focus: string; cue: string; steps: DexStep[] }
   > = {
     spider1234: {
-      title: '1. Araña Clásica (1–2–3–4 · Independencia Total)',
+      title: '1. Araña Clásica (1–2–3–4 · Independencia Base)',
+      levelTag: 'Nivel 1 · Base',
       focus: 'Motricidad base · Púa alternada (↓ ↑) + 1 dedo por traste',
       cue: 'Mantén los dedos previos cerca de la cuerda al avanzar al siguiente; cero tensión en el pulgar.',
       steps: [
@@ -3079,6 +3164,7 @@ function buildGuitarDexterityLab(
     },
     perm1324: {
       title: '2. Permutación Disociada (1–3–2–4)',
+      levelTag: 'Nivel 1 · Control',
       focus: 'Coordinación interdigital · Evita que los dedos 3 y 4 se levanten',
       cue: 'Ideal para destrabar el anular (3) respecto al medio (2). Toca ligado y uniforme al pulso.',
       steps: [
@@ -3094,6 +3180,7 @@ function buildGuitarDexterityLab(
     },
     perm1423: {
       title: '3. Permutación de Meñique Fuerte (1–4–2–3)',
+      levelTag: 'Nivel 1 · Fuerza 4',
       focus: 'Fuerza y puntería del dedo 4 (meñique)',
       cue: 'Curva el dedo 4 para pisar con la punta, no plano. Mantiene la muñeca alineada.',
       steps: [
@@ -3107,8 +3194,25 @@ function buildGuitarDexterityLab(
         { sIdx: 2, relFret: 2, finger: 3, label: '3ª-3' },
       ],
     },
+    perm4321: {
+      title: '4. Descenso Invertido de Control (4–3–2–1)',
+      levelTag: 'Nivel 2 · Precisión',
+      focus: 'Sincronización descendente sin precipitar el dedo 4',
+      cue: 'Coloca los 4 dedos suavemente y ve soltando de a uno al pasar al siguiente ataque con púa alternada.',
+      steps: [
+        { sIdx: 0, relFret: 3, finger: 4, label: '1ª-4' },
+        { sIdx: 0, relFret: 2, finger: 3, label: '1ª-3' },
+        { sIdx: 0, relFret: 1, finger: 2, label: '1ª-2' },
+        { sIdx: 0, relFret: 0, finger: 1, label: '1ª-1' },
+        { sIdx: 1, relFret: 3, finger: 4, label: '2ª-4' },
+        { sIdx: 1, relFret: 2, finger: 3, label: '2ª-3' },
+        { sIdx: 1, relFret: 1, finger: 2, label: '2ª-2' },
+        { sIdx: 1, relFret: 0, finger: 1, label: '2ª-1' },
+      ],
+    },
     cross3rds: {
-      title: '4. Cruce de Cuerdas en Terceras (Salto de Púa)',
+      title: '5. Cruce de Cuerdas en Terceras (Salto de Púa)',
+      levelTag: 'Nivel 2 · Púa Alternada',
       focus: 'Motricidad de salto entre cuerdas vecinas y agudas',
       cue: 'Alterna púa abajo (cuerda grave) y púa arriba (cuerda aguda) con economía de movimiento.',
       steps: [
@@ -3122,8 +3226,41 @@ function buildGuitarDexterityLab(
         { sIdx: 1, relFret: 3, finger: 4, label: '2ª-4' },
       ],
     },
+    stringSkip: {
+      title: '6. Salto de Cuerda Amplio (6ª↔4ª / 5ª↔3ª)',
+      levelTag: 'Nivel 2 · String Skipping',
+      focus: 'Puntería de mano derecha saltando una cuerda intermedia',
+      cue: 'Evita que suene la cuerda saltada apoyando suavemente el índice izquierdo sobre ella.',
+      steps: [
+        { sIdx: 5, relFret: 0, finger: 1, label: '6ª-1' },
+        { sIdx: 3, relFret: 2, finger: 3, label: '4ª-3' },
+        { sIdx: 5, relFret: 3, finger: 4, label: '6ª-4' },
+        { sIdx: 3, relFret: 0, finger: 1, label: '4ª-1' },
+        { sIdx: 4, relFret: 0, finger: 1, label: '5ª-1' },
+        { sIdx: 2, relFret: 2, finger: 3, label: '3ª-3' },
+        { sIdx: 4, relFret: 3, finger: 4, label: '5ª-4' },
+        { sIdx: 2, relFret: 0, finger: 1, label: '3ª-1' },
+      ],
+    },
+    wideStretch: {
+      title: '7. Apertura de Mano 1–2–4 (+1 Traste de Extensión)',
+      levelTag: 'Nivel 2 · Elasticidad',
+      focus: 'Extensión de 5 trastes para escalas de 3 notas por cuerda',
+      cue: 'Baja el pulgar hacia el centro del mástil para abrir entre dedos 1–2 y 2–4 sin doblar la muñeca.',
+      steps: [
+        { sIdx: 3, relFret: 0, finger: 1, label: '4ª-1' },
+        { sIdx: 3, relFret: 2, finger: 2, label: '4ª-2 (+2)' },
+        { sIdx: 3, relFret: 4, finger: 4, label: '4ª-4 (+4)' },
+        { sIdx: 3, relFret: 2, finger: 2, label: '4ª-2' },
+        { sIdx: 2, relFret: 0, finger: 1, label: '3ª-1' },
+        { sIdx: 2, relFret: 2, finger: 2, label: '3ª-2 (+2)' },
+        { sIdx: 2, relFret: 4, finger: 4, label: '3ª-4 (+4)' },
+        { sIdx: 2, relFret: 2, finger: 2, label: '3ª-2' },
+      ],
+    },
     legatoHp: {
-      title: '5. Ligados Hammer-On y Pull-Off (1–H–3–H–4–P–3–P–1)',
+      title: '8. Ligados Hammer-On y Pull-Off (1–H–3–H–4–P–3–P–1)',
+      levelTag: 'Nivel 3 · Legato',
       focus: 'Velocidad fluida sin fatigar la mano derecha',
       cue: 'Golpea como un martillo (Hammer) y pellizca ligeramente hacia abajo al soltar (Pull-Off) para mantener volumen parejo.',
       steps: [
@@ -3137,9 +3274,26 @@ function buildGuitarDexterityLab(
         { sIdx: 1, relFret: 3, finger: 4, label: '2ª-4(H)' },
       ],
     },
+    arpeggioSweep: {
+      title: '9. Arpegio Diagonal 4ª→1ª (Economía de Púa / Sweep)',
+      levelTag: 'Nivel 3 · Arpegios',
+      focus: 'Deslizamiento continuo de púa (↓ ↓ ↓ ↑) sobre tríada menor',
+      cue: 'Levanta cada dedo justo al pasar a la siguiente cuerda para que las notas no se empasten como acorde.',
+      steps: [
+        { sIdx: 3, relFret: 2, finger: 3, label: '4ª-3 (Raíz)' },
+        { sIdx: 2, relFret: 0, finger: 1, label: '3ª-1 (♭3)' },
+        { sIdx: 1, relFret: 1, finger: 2, label: '2ª-2 (5ª)' },
+        { sIdx: 0, relFret: 0, finger: 1, label: '1ª-1 (8ª)' },
+        { sIdx: 0, relFret: 3, finger: 4, label: '1ª-4 (♭3 ag)' },
+        { sIdx: 0, relFret: 0, finger: 1, label: '1ª-1 (8ª)' },
+        { sIdx: 1, relFret: 1, finger: 2, label: '2ª-2 (5ª)' },
+        { sIdx: 2, relFret: 0, finger: 1, label: '3ª-1 (♭3)' },
+      ],
+    },
     shiftPos: {
-      title: '6. Cambio Limpio de Posición (+2 Trastes)',
-      focus: 'Desplazamiento horizontal del brazo en bloque',
+      title: '10. Cambio Limpio de Posición (+2 Trastes en Bloque)',
+      levelTag: 'Nivel 3 · Desplazamiento',
+      focus: 'Desplazamiento horizontal del brazo en bloque por el mástil',
       cue: 'Relaja el pulgar un milisegundo al deslizar el dedo 1 dos trastes arriba sin arrastrar ruido.',
       steps: [
         { sIdx: 4, relFret: 0, finger: 1, label: 'Pos A-1' },
@@ -3154,11 +3308,13 @@ function buildGuitarDexterityLab(
     },
   };
 
-  let exKey = 'spider1234';
-  let baseFret = 5;
+  let exKey = style === 'acoustic' ? 'arpeggioSweep' : 'spider1234';
+  let baseFret = style === 'acoustic' ? 1 : 5;
   let bpm = 75;
   let clickEnabled = true;
   let autoRamp = false;
+  let neckZone: NeckZoneMode = 'auto';
+  let fingerPriority = true;
   let playing = false;
   let currentStep = -1;
   let laps = 0;
@@ -3184,7 +3340,7 @@ function buildGuitarDexterityLab(
     const step = currentStep >= 0 ? ex.steps[currentStep] : null;
     stage.querySelectorAll<HTMLElement>('.js-gd-pill').forEach((pill, idx) => {
       const lit = idx === currentStep;
-      pill.style.background = lit ? '#f59e0b' : 'rgba(56,189,248,0.12)';
+      pill.style.background = lit ? '#f59e0b' : 'rgba(15,23,42,0.88)';
       pill.style.borderColor = lit ? '#fef08a' : '#334155';
       pill.style.color = lit ? '#090c12' : '#e2e8f0';
     });
@@ -3212,6 +3368,7 @@ function buildGuitarDexterityLab(
     const fingerMap = new Map<string, number>();
     const exactPositions = new Set<string>();
     const activeMidis: number[] = [];
+    const activeFrets: number[] = [];
 
     ex.steps.forEach((st) => {
       const f = Math.min(12, baseFret + st.relFret);
@@ -3219,51 +3376,90 @@ function buildGuitarDexterityLab(
       exactPositions.add(key);
       if (!fingerMap.has(key)) fingerMap.set(key, st.finger);
       activeMidis.push(GUITAR_6C[st.sIdx].openMidi + f);
+      activeFrets.push(f);
     });
 
+    const win = computeGuitarNeckWindow(activeFrets, neckZone, 12);
     const rootPc = (GUITAR_6C[ex.steps[0].sIdx].openMidi + baseFret) % 12;
-    const neckHtml = renderCompactNeckHtml(GUITAR_6C, activeMidis, rootPc, 12, fingerMap, exactPositions);
+    const neckHtml = renderCompactNeckHtml(GUITAR_6C, activeMidis, rootPc, 12, fingerMap, exactPositions, {
+      minFret: win.minFret,
+      maxFret: win.maxFret,
+      fingerPriority,
+    });
 
     stage.innerHTML = `
-      <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
-          <select class="lab-select js-gd-ex" aria-label="Ejercicio de digitación">
-            ${Object.entries(EXERCISES).map(([k, v]) => `<option value="${k}" ${k === exKey ? 'selected' : ''}>${v.title}</option>`).join('')}
-          </select>
-          <select class="lab-select js-gd-fret" aria-label="Traste inicial">
-            ${[1, 3, 5, 7].map((f) => `<option value="${f}" ${f === baseFret ? 'selected' : ''}>Desde Traste ${f}</option>`).join('')}
-          </select>
-          <label class="text-xs" style="color:#cbd5e1;">Tempo: <strong class="js-gd-bpm-val">${bpm}</strong> BPM
-            <input type="range" class="js-gd-bpm" min="50" max="180" value="${bpm}" style="width:95px;" />
-          </label>
-          <label class="text-xs" style="color:#cbd5e1; display:flex; align-items:center; gap:4px; cursor:pointer;">
-            <input type="checkbox" class="js-gd-click" ${clickEnabled ? 'checked' : ''} /> Metrónomo
-          </label>
-          <label class="text-xs" style="color:#34d399; display:flex; align-items:center; gap:4px; cursor:pointer;">
-            <input type="checkbox" class="js-gd-ramp" ${autoRamp ? 'checked' : ''} /> +5 BPM por vuelta
-          </label>
+      <div class="neck-control-deck neck-deck-standalone">
+        <div class="neck-deck-row">
+          <div class="neck-deck-fields">
+            <div class="neck-field">
+              <label>Ejercicio:</label>
+              <select class="lab-select js-gd-ex" aria-label="Ejercicio de digitación">
+                ${Object.entries(EXERCISES).map(([k, v]) => `<option value="${k}" ${k === exKey ? 'selected' : ''}>${v.title}</option>`).join('')}
+              </select>
+            </div>
+            <div class="neck-field">
+              <label>Inicio:</label>
+              <select class="lab-select js-gd-fret" aria-label="Traste inicial">
+                ${[1, 3, 5, 7].map((f) => `<option value="${f}" ${f === baseFret ? 'selected' : ''}>Traste ${f}</option>`).join('')}
+              </select>
+            </div>
+            <div class="guitar-seg-group">
+              ${[60, 80, 100, 120]
+                .map(
+                  (p) =>
+                    `<button type="button" class="guitar-seg-btn js-gd-bpm-preset ${bpm === p ? 'active' : ''}" data-bpm="${p}">${p}</button>`
+                )
+                .join('')}
+            </div>
+            <button type="button" class="btn js-gd-bpm-nudge" data-d="-5" style="min-height:32px; padding:3px 8px;">-5</button>
+            <label class="text-xs" style="color:#cbd5e1; display:flex; align-items:center; gap:5px; font-variant-numeric:tabular-nums;">
+              <strong class="js-gd-bpm-val" style="color:#fbbf24; min-width:52px;">${bpm} BPM</strong>
+              <input type="range" class="js-gd-bpm" min="50" max="180" value="${bpm}" style="width:82px;" />
+            </label>
+            <button type="button" class="btn js-gd-bpm-nudge" data-d="5" style="min-height:32px; padding:3px 8px;">+5</button>
+          </div>
+          <div class="neck-deck-actions">
+            <button type="button" class="btn btn-primary js-gd-play">${playing ? '⏹ Detener' : '▶ Iniciar Digitación'}</button>
+          </div>
         </div>
-        <button type="button" class="btn btn-primary js-gd-play">${playing ? '⏹ Detener' : '▶ Iniciar Digitación'}</button>
+
+        <div class="neck-legend-row">
+          <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+            <label class="text-xs" style="color:#cbd5e1; display:flex; align-items:center; gap:4px; cursor:pointer;">
+              <input type="checkbox" class="js-gd-click" ${clickEnabled ? 'checked' : ''} /> Metrónomo
+            </label>
+            <label class="text-xs" style="color:#34d399; display:flex; align-items:center; gap:4px; cursor:pointer;">
+              <input type="checkbox" class="js-gd-ramp" ${autoRamp ? 'checked' : ''} /> +5 BPM por vuelta
+            </label>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+            <div class="guitar-seg-group">
+              <button type="button" class="guitar-seg-btn js-gd-zone ${neckZone === 'auto' ? 'active' : ''}" data-z="auto">Zona (${win.minFret}–${win.maxFret})</button>
+              <button type="button" class="guitar-seg-btn js-gd-zone ${neckZone === 'all' ? 'active' : ''}" data-z="all">0–12 Completo</button>
+            </div>
+            <div class="guitar-seg-group">
+              <button type="button" class="guitar-seg-btn js-gd-prio ${!fingerPriority ? 'active' : ''}" data-p="0">Notas + Dedos</button>
+              <button type="button" class="guitar-seg-btn js-gd-prio ${fingerPriority ? 'active' : ''}" data-p="1">🖐️ Dedos 1–4</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="neck-readout-bar" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; align-items:center;">
+          <span><strong style="color:#38bdf8;">${ex.levelTag} · ${ex.focus}:</strong> ${ex.cue} (1=Índice · 2=Medio · 3=Anular · 4=Meñique)</span>
+          <span style="color:#94a3b8; font-variant-numeric:tabular-nums;">Vueltas: <strong class="js-gd-laps" style="color:#fbbf24;">${laps}</strong></span>
+        </div>
       </div>
 
-      <div class="callout-box mb-3" style="padding:10px 12px; border-left:3px solid #38bdf8;">
-        <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; align-items:center;">
-          <span class="text-xs" style="color:#38bdf8; font-weight:800;">${ex.focus}</span>
-          <span class="text-xs" style="color:#94a3b8;">Vueltas completadas: <strong class="js-gd-laps" style="color:#fbbf24;">${laps}</strong></span>
-        </div>
-        <p class="text-xs" style="margin:4px 0 0; color:#cbd5e1;">${ex.cue} · Círculos numéricos: <strong>1</strong> Índice · <strong>2</strong> Medio · <strong>3</strong> Anular · <strong>4</strong> Meñique.</p>
-      </div>
-
-      <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;">
+      <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px;">
         ${ex.steps
           .map((st, idx) => {
             const lit = idx === currentStep;
             const f = Math.min(12, baseFret + st.relFret);
             return `
-              <div class="js-gd-pill" style="padding:5px 8px; border-radius:8px; border:1px solid ${lit ? '#fef08a' : '#334155'}; background:${lit ? '#f59e0b' : 'rgba(56,189,248,0.12)'}; color:${lit ? '#090c12' : '#e2e8f0'}; font-size:0.74rem; font-weight:800; text-align:center;">
+              <button type="button" class="js-gd-pill" data-step="${idx}" style="min-height:36px; padding:4px 8px; border-radius:7px; border:1px solid ${lit ? '#fef08a' : '#334155'}; background:${lit ? '#f59e0b' : 'rgba(15,23,42,0.88)'}; color:${lit ? '#090c12' : '#e2e8f0'}; font-size:0.72rem; font-weight:800; text-align:center; cursor:pointer;">
                 <div>Dedo ${st.finger}</div>
-                <div style="font-size:0.66rem; opacity:0.85;">${st.label} (tr.${f})</div>
-              </div>
+                <div style="font-size:0.64rem; opacity:0.86;">${st.label} (tr.${f})</div>
+              </button>
             `;
           })
           .join('')}
@@ -3329,6 +3525,48 @@ function buildGuitarDexterityLab(
       }
       return;
     }
+    const zoneBtn = t.closest<HTMLElement>('.js-gd-zone');
+    if (zoneBtn) {
+      neckZone = (zoneBtn.getAttribute('data-z') as NeckZoneMode) === 'all' ? 'all' : 'auto';
+      render();
+      syncLiveStepDom();
+      return;
+    }
+    const prioBtn = t.closest<HTMLElement>('.js-gd-prio');
+    if (prioBtn) {
+      fingerPriority = prioBtn.getAttribute('data-p') === '1';
+      render();
+      syncLiveStepDom();
+      return;
+    }
+    const presetBpmBtn = t.closest<HTMLElement>('.js-gd-bpm-preset');
+    if (presetBpmBtn) {
+      bpm = parseInt(presetBpmBtn.getAttribute('data-bpm') || '80', 10);
+      if (playing) startPlay();
+      else render();
+      return;
+    }
+    const nudgeBtn = t.closest<HTMLElement>('.js-gd-bpm-nudge');
+    if (nudgeBtn) {
+      bpm = Math.max(50, Math.min(180, bpm + parseInt(nudgeBtn.getAttribute('data-d') || '0', 10)));
+      if (playing) startPlay();
+      else render();
+      return;
+    }
+    const stepPill = t.closest<HTMLElement>('.js-gd-pill');
+    if (stepPill) {
+      const idx = parseInt(stepPill.getAttribute('data-step') || '0', 10);
+      const ex = EXERCISES[exKey];
+      const st = ex.steps[idx];
+      if (st) {
+        currentStep = idx;
+        const fret = Math.min(12, baseFret + st.relFret);
+        const midi = GUITAR_6C[st.sIdx].openMidi + fret;
+        audio.playPluckedGuitar(midi, 0.7, 0, 0.2, true, { sIdx: st.sIdx, fret, scopeEl: stage });
+        syncLiveStepDom();
+      }
+      return;
+    }
     const fretEl = t.closest<HTMLElement>('.js-studio-fret');
     if (fretEl) {
       const m = parseInt(fretEl.getAttribute('data-midi') || '60', 10);
@@ -3343,7 +3581,7 @@ function buildGuitarDexterityLab(
     if (t.classList.contains('js-gd-bpm')) {
       bpm = parseInt(t.value, 10);
       const valEl = stage.querySelector('.js-gd-bpm-val');
-      if (valEl) valEl.textContent = String(bpm);
+      if (valEl) valEl.textContent = `${bpm} BPM`;
     }
   });
 
@@ -3380,6 +3618,8 @@ function buildChordMemoryLab(
   let seqLength = 4;
   let bpm = 52;
   let showFingeringInQuiz = true;
+  let cmNeckZone: NeckZoneMode = 'auto';
+  let cmFingerPriority = false;
   let sequence: ChordMemoryItem[] = buildChordMemorySequence(poolKey, seqLength);
 
   type Phase = 'idle' | 'study' | 'quiz' | 'done';
@@ -3430,22 +3670,62 @@ function buildChordMemoryLab(
     const fingerMap = new Map<string, number>();
     const exactPositions = new Set<string>();
     const activeMidis: number[] = [];
+    const mutedStrings = new Set<number>([0, 1, 2, 3, 4, 5]);
+    const boxPosList: { sIdx: number; fret: number; finger?: 0 | 1 | 2 | 3 | 4 }[] = [];
 
     activeItem.fretsLowToHigh.forEach((fret, rawIdx) => {
       if (fret < 0) return;
       const sIdx = 5 - rawIdx;
+      mutedStrings.delete(sIdx);
       const key = `${sIdx}:${fret}`;
       exactPositions.add(key);
       const canonicalFinger = activeItem.fingersLowToHigh[rawIdx];
       if (canonicalFinger > 0) fingerMap.set(key, canonicalFinger);
       activeMidis.push(GUITAR_6C[sIdx].openMidi + fret);
+      boxPosList.push({
+        sIdx,
+        fret,
+        finger: canonicalFinger >= 0 && canonicalFinger <= 4 ? (canonicalFinger as 0 | 1 | 2 | 3 | 4) : 0,
+      });
     });
     const fingerSummary = activeItem.fingersLowToHigh.map((f) => (f < 0 ? 'X' : String(f))).join('-');
 
     const hideChordName = phase === 'quiz' && !answeredCurrent;
     const showNeck = phase !== 'quiz' || showFingeringInQuiz || answeredCurrent;
+    const win = computeGuitarNeckWindow(
+      activeItem.fretsLowToHigh.filter((f) => f >= 0),
+      cmNeckZone,
+      12
+    );
+    const vBox = computeVerticalChordBoxData({
+      positions: boxPosList,
+      rootPc: activeItem.rootPc,
+    });
     const neckHtml = showNeck
-      ? renderCompactNeckHtml(GUITAR_6C, activeMidis, activeItem.rootPc, 9, fingerMap, exactPositions)
+      ? `
+        <div class="guitar-ux-toolbar">
+          <div style="font-size:0.74rem; color:#94a3b8;">Zoom mástil: <strong style="color:#fbbf24;">${win.label}</strong></div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            <div class="guitar-seg-group">
+              <button type="button" class="guitar-seg-btn js-cm-zone ${cmNeckZone === 'auto' ? 'active' : ''}" data-z="auto">Auto (${win.minFret}–${win.maxFret})</button>
+              <button type="button" class="guitar-seg-btn js-cm-zone ${cmNeckZone === 'all' ? 'active' : ''}" data-z="all">0–12</button>
+            </div>
+            <div class="guitar-seg-group">
+              <button type="button" class="guitar-seg-btn js-cm-prio ${!cmFingerPriority ? 'active' : ''}" data-p="0">Notas</button>
+              <button type="button" class="guitar-seg-btn js-cm-prio ${cmFingerPriority ? 'active' : ''}" data-p="1">Dedos 1–4</button>
+            </div>
+          </div>
+        </div>
+        <div class="guitar-stage-grid">
+          ${renderCompactNeckHtml(GUITAR_6C, activeMidis, activeItem.rootPc, 12, fingerMap, exactPositions, {
+            minFret: win.minFret,
+            maxFret: win.maxFret,
+            fingerPriority: cmFingerPriority,
+            mutedStrings,
+          })}
+          ${renderVerticalGuitarChordSvg(vBox, { title: hideChordName ? '❓ Adivina' : activeItem.symbol })}
+        </div>
+      `
       : `<div style="background:#090d16; border:1px dashed #334155; border-radius:10px; padding:26px; text-align:center; color:#94a3b8; font-size:0.85rem;">👂 Modo Solo Oído activo en Fase 2: escucha el acorde y toca en tu guitarra antes de seleccionar la respuesta.</div>`;
 
     const headerStatus =
@@ -3460,48 +3740,56 @@ function buildChordMemoryLab(
             : `Secuencia lista (${sequence.length} acordes aleatorios) · Pulsa Fase 1 para estudiar`;
 
     stage.innerHTML = `
-      <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
-          <select class="lab-select js-cm-pool" aria-label="Colección de acordes">
-            <option value="basic" ${poolKey === 'basic' ? 'selected' : ''}>Básicos Abiertos (C, A, G, E, D, Am, Em, Dm)</option>
-            <option value="barre7" ${poolKey === 'barre7' ? 'selected' : ''}>Cejillas y Séptimas (F, B7, Bm, F#m, C7, G7...)</option>
-            <option value="jazz" ${poolKey === 'jazz' ? 'selected' : ''}>Color y Jazz (Maj7, m7, Add9, Sus4)</option>
-            <option value="all" ${poolKey === 'all' ? 'selected' : ''}>Todos los Acordes (${CHORD_MEMORY_LIBRARY.length})</option>
-          </select>
-          <select class="lab-select js-cm-len" aria-label="Cantidad de acordes">
-            ${[3, 4, 5, 6].map((n) => `<option value="${n}" ${n === seqLength ? 'selected' : ''}>${n} Acordes</option>`).join('')}
-          </select>
-          <label class="text-xs" style="color:#cbd5e1;">Ritmo cambio: <strong>${bpm}</strong> BPM
-            <input type="range" class="js-cm-bpm" min="40" max="90" value="${bpm}" style="width:85px;" />
-          </label>
+      <div class="neck-control-deck neck-deck-standalone">
+        <div class="neck-deck-row">
+          <div class="neck-deck-fields">
+            <div class="neck-field">
+              <label>Colección:</label>
+              <select class="lab-select js-cm-pool" aria-label="Colección de acordes">
+                <option value="basic" ${poolKey === 'basic' ? 'selected' : ''}>Básicos Abiertos (C, A, G, E, D, Am, Em, Dm)</option>
+                <option value="barre7" ${poolKey === 'barre7' ? 'selected' : ''}>Cejillas y Séptimas (F, B7, Bm, F#m, C7, G7...)</option>
+                <option value="jazz" ${poolKey === 'jazz' ? 'selected' : ''}>Color y Jazz (Maj7, m7, Add9, Sus4)</option>
+                <option value="all" ${poolKey === 'all' ? 'selected' : ''}>Todos los Acordes (${CHORD_MEMORY_LIBRARY.length})</option>
+              </select>
+            </div>
+            <div class="neck-field">
+              <label>Cantidad:</label>
+              <select class="lab-select js-cm-len" aria-label="Cantidad de acordes">
+                ${[3, 4, 5, 6].map((n) => `<option value="${n}" ${n === seqLength ? 'selected' : ''}>${n} Acordes</option>`).join('')}
+              </select>
+            </div>
+            <label class="text-xs" style="color:#cbd5e1; display:flex; align-items:center; gap:5px;">Ritmo: <strong>${bpm}</strong> BPM
+              <input type="range" class="js-cm-bpm" min="40" max="90" value="${bpm}" style="width:82px;" />
+            </label>
+          </div>
+          <div class="neck-deck-actions">
+            <button type="button" class="btn btn-primary js-cm-study">▶ Fase 1: Ver y Tocar</button>
+            <button type="button" class="btn js-cm-quiz" style="border-color:#38bdf8; color:#38bdf8;">🎯 Fase 2: Adivinar</button>
+            <button type="button" class="btn js-cm-new">🎲 Nueva</button>
+            <button type="button" class="btn js-cm-stop">⏹ Detener</button>
+          </div>
         </div>
-        <div style="display:flex; flex-wrap:wrap; gap:6px;">
-          <button type="button" class="btn btn-primary js-cm-study">▶ Fase 1: Ver y Tocar</button>
-          <button type="button" class="btn js-cm-quiz" style="border-color:#38bdf8; color:#38bdf8;">🎯 Fase 2: Repetir y Adivinar</button>
-          <button type="button" class="btn js-cm-new">🎲 Nueva Secuencia</button>
-          <button type="button" class="btn js-cm-stop">⏹ Detener</button>
+
+        <div class="neck-readout-bar" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center;">
+          <span>${headerStatus}</span>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <label style="color:#cbd5e1; display:flex; align-items:center; gap:4px; cursor:pointer;">
+              <input type="checkbox" class="js-cm-guide" ${showFingeringInQuiz ? 'checked' : ''} /> Posición en Fase 2
+            </label>
+            <span style="color:#34d399; font-weight:800; font-variant-numeric:tabular-nums;">Aciertos: ${score} · Racha: 🔥 ${streak}</span>
+          </div>
         </div>
       </div>
 
-      <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center; background:#090d16; border:1px solid #1e293b; border-radius:10px; padding:10px 12px; margin-bottom:10px;">
-        <div class="text-xs">${headerStatus}</div>
-        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-          <label class="text-xs" style="color:#cbd5e1; display:flex; align-items:center; gap:5px; cursor:pointer;">
-            <input type="checkbox" class="js-cm-guide" ${showFingeringInQuiz ? 'checked' : ''} /> Mostrar posición en mástil (sin nombre) en Fase 2
-          </label>
-          <span class="text-xs" style="color:#34d399; font-weight:800;">Aciertos: ${score} · Racha: 🔥 ${streak}</span>
-        </div>
-      </div>
-
-      <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
+      <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
         ${sequence
           .map((item, idx) => {
             const active = idx === stepIdx && phase !== 'idle';
             const masked = phase === 'quiz' && idx >= stepIdx && !(idx === stepIdx && answeredCurrent);
             return `
-              <div style="flex:1; min-width:74px; padding:8px; border-radius:8px; text-align:center; border:1px solid ${active ? '#f59e0b' : '#334155'}; background:${active ? 'rgba(245,158,11,0.18)' : '#0f172a'};">
+              <div style="flex:1; min-width:74px; padding:6px 8px; border-radius:7px; text-align:center; border:1px solid ${active ? '#f59e0b' : '#334155'}; background:${active ? 'rgba(245,158,11,0.18)' : '#0f172a'};">
                 <div class="text-xs" style="color:#94a3b8;">Paso ${idx + 1}</div>
-                <div style="font-weight:900; font-size:0.95rem; color:${active ? '#fbbf24' : '#f8fafc'};">${masked ? '❓' : item.symbol}</div>
+                <div style="font-weight:900; font-size:0.9rem; color:${active ? '#fbbf24' : '#f8fafc'};">${masked ? '❓' : item.symbol}</div>
               </div>
             `;
           })
@@ -3512,13 +3800,13 @@ function buildChordMemoryLab(
 
       <div class="text-xs mt-2" style="color:#cbd5e1; display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px;">
         <span>${hideChordName ? 'Dedos mano izquierda visibles: 1=Índice, 2=Medio, 3=Anular, 4=Meñique' : `Digitación ${activeItem.symbol}: <strong>${activeItem.fretsLowToHigh.map((f) => (f < 0 ? 'X' : f)).join('-')}</strong> · Dedos: <strong>${fingerSummary}</strong> · <em>${activeItem.hint}</em>`}</span>
-        <button type="button" class="btn js-cm-replay" style="padding:3px 10px; font-size:0.75rem;">🔊 Escuchar Acorde Actual</button>
+        <button type="button" class="btn js-cm-replay" style="padding:4px 12px; font-size:0.75rem;">🔊 Escuchar Acorde Actual</button>
       </div>
 
       ${
         phase === 'quiz'
           ? `
-        <div class="callout-box mt-3" style="border-left:3px solid #38bdf8;">
+        <div class="guitar-card-clean mt-3" style="border-color:rgba(56,189,248,0.4);">
           <div class="text-xs mb-2" style="font-weight:800; color:#38bdf8;">Selecciona qué acorde está sonando (Paso ${stepIdx + 1} de ${sequence.length}):</div>
           <div style="display:flex; flex-wrap:wrap; gap:6px;">
             ${pool
@@ -3603,6 +3891,26 @@ function buildChordMemoryLab(
     }
     if (t.closest('.js-cm-replay')) {
       playChordItem(sequence[stepIdx] || sequence[0]);
+      return;
+    }
+    const cmZoneBtn = t.closest<HTMLElement>('.js-cm-zone');
+    if (cmZoneBtn) {
+      cmNeckZone = (cmZoneBtn.getAttribute('data-z') as NeckZoneMode) === 'all' ? 'all' : 'auto';
+      render();
+      return;
+    }
+    const cmPrioBtn = t.closest<HTMLElement>('.js-cm-prio');
+    if (cmPrioBtn) {
+      cmFingerPriority = cmPrioBtn.getAttribute('data-p') === '1';
+      render();
+      return;
+    }
+    const cmFret = t.closest<HTMLElement>('.js-studio-fret');
+    if (cmFret) {
+      const m = parseInt(cmFret.getAttribute('data-midi') || '60', 10);
+      const sIdx = parseInt(cmFret.getAttribute('data-sidx') || '0', 10);
+      const fret = parseInt(cmFret.getAttribute('data-fret') || '0', 10);
+      audio.playPluckedGuitar(m, 0.9, 0, 0.24, true, { sIdx, fret, scopeEl: stage });
       return;
     }
     const pickBtn = t.closest<HTMLElement>('.js-cm-pick');
@@ -3693,6 +4001,8 @@ function buildDailyTrainingSessionLab(
   let activeBreathStatus = '';
   let vocalRestingStep = false;
   let bassStringsCount: 4 | 5 = 4;
+  let guitarNeckZone: NeckZoneMode = 'auto';
+  let guitarFingerPriority = false;
 
   const getDefaultBpm = (k: InstKey, idx: number): number => {
     if (k === 'guitarra') return GUITAR_TRAINING_BLOCKS[idx].defaultBpm;
@@ -3814,20 +4124,43 @@ function buildDailyTrainingSessionLab(
     const fingerMap = new Map<string, number>();
     const exactPositions = new Set<string>();
     const activeMidis: number[] = [];
+    const activeFrets: number[] = [];
+    const mutedStrings = new Set<number>([0, 1, 2, 3, 4, 5]);
     const isChordBlock = blk.steps.some((s) => s.isChord);
-    const stepsToShow = isChordBlock
-      ? [blk.steps[activeStep >= 0 ? activeStep % blk.steps.length : 0]]
-      : blk.steps;
+    const activeStepObj = blk.steps[activeStep >= 0 ? activeStep % blk.steps.length : 0];
+    const stepsToShow = isChordBlock ? [activeStepObj] : blk.steps;
     stepsToShow.forEach((st) => {
       st.positions.forEach((p) => {
         const key = `${p.sIdx}:${p.fret}`;
         exactPositions.add(key);
+        mutedStrings.delete(p.sIdx);
         if (p.finger > 0 && !fingerMap.has(key)) fingerMap.set(key, p.finger);
         activeMidis.push(GUITAR_6C[p.sIdx].openMidi + p.fret);
+        activeFrets.push(p.fret);
       });
     });
     const rootPc = activeMidis.length > 0 ? activeMidis[0] % 12 : 0;
-    return renderCompactNeckHtml(GUITAR_6C, activeMidis, rootPc, 12, fingerMap, exactPositions);
+    const win = computeGuitarNeckWindow(activeFrets, guitarNeckZone, 12);
+    const neckRendered = renderCompactNeckHtml(GUITAR_6C, activeMidis, rootPc, 12, fingerMap, exactPositions, {
+      minFret: win.minFret,
+      maxFret: win.maxFret,
+      fingerPriority: guitarFingerPriority,
+      mutedStrings: isChordBlock ? mutedStrings : undefined,
+    });
+
+    if (isChordBlock && activeStepObj) {
+      const vBox = computeVerticalChordBoxData({
+        positions: activeStepObj.positions.map((p) => ({ sIdx: p.sIdx, fret: p.fret, finger: p.finger })),
+        rootPc,
+      });
+      return `
+        <div class="guitar-stage-grid">
+          ${neckRendered}
+          ${renderVerticalGuitarChordSvg(vBox, { title: activeStepObj.chordSymbol || activeStepObj.label })}
+        </div>
+      `;
+    }
+    return neckRendered;
   };
 
   const syncExerciseVisualsDom = () => {
@@ -3946,19 +4279,34 @@ function buildDailyTrainingSessionLab(
 
     if (inst === 'guitarra') {
       const blk = GUITAR_TRAINING_BLOCKS[blockIdx];
+      const activeFrets = blk.steps.flatMap((s) => s.positions.map((p) => p.fret));
+      const win = computeGuitarNeckWindow(activeFrets, guitarNeckZone, 12);
       const neckHtml = buildGuitarNeckHtmlForBlock();
 
       return `
         <div style="margin-top:10px; border-top:1px solid #1e293b; padding-top:10px;">
-          <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:8px;">
-            <span class="text-xs" style="color:#fbbf24; font-weight:800;">🎸 Mástil Interactivo del Bloque (Dedos 1–4 marcados · Haz clic en trastes o pasos)</span>
+          <div class="guitar-ux-toolbar" style="margin-top:0; margin-bottom:8px;">
+            <span class="text-xs" style="color:#fbbf24; font-weight:800;">🎸 Mástil Interactivo (${win.label}) · Dedos 1–4</span>
+            <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+              <div class="guitar-seg-group">
+                <button type="button" class="guitar-seg-btn js-dt-gzone ${guitarNeckZone === 'auto' ? 'active' : ''}" data-z="auto">Auto</button>
+                <button type="button" class="guitar-seg-btn js-dt-gzone ${guitarNeckZone === 'open' ? 'active' : ''}" data-z="open">0–5</button>
+                <button type="button" class="guitar-seg-btn js-dt-gzone ${guitarNeckZone === 'mid' ? 'active' : ''}" data-z="mid">4–9</button>
+                <button type="button" class="guitar-seg-btn js-dt-gzone ${guitarNeckZone === 'high' ? 'active' : ''}" data-z="high">7–12</button>
+                <button type="button" class="guitar-seg-btn js-dt-gzone ${guitarNeckZone === 'all' ? 'active' : ''}" data-z="all">0–12</button>
+              </div>
+              <div class="guitar-seg-group">
+                <button type="button" class="guitar-seg-btn js-dt-gfprio ${!guitarFingerPriority ? 'active' : ''}" data-p="0">Notas + Dedos</button>
+                <button type="button" class="guitar-seg-btn js-dt-gfprio ${guitarFingerPriority ? 'active' : ''}" data-p="1">🖐️ Dedos 1–4</button>
+              </div>
+            </div>
           </div>
           <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
             ${blk.steps
               .map((st, idx) => {
                 const lit = idx === activeStep;
                 return `
-                  <button type="button" class="btn js-dt-step-pill" data-step="${idx}" style="display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:2px; padding:6px 10px; border-radius:8px; border:1px solid ${lit ? '#fef08a' : '#334155'}; background:${lit ? '#f59e0b' : 'rgba(15,23,42,0.9)'}; color:${lit ? '#090c12' : '#e2e8f0'}; text-align:left;">
+                  <button type="button" class="btn js-dt-step-pill" data-step="${idx}" style="display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:2px; min-height:42px; padding:6px 10px; border-radius:8px; border:1px solid ${lit ? '#fef08a' : '#334155'}; background:${lit ? '#f59e0b' : 'rgba(15,23,42,0.9)'}; color:${lit ? '#090c12' : '#e2e8f0'}; text-align:left;">
                     <div style="font-size:0.74rem; font-weight:800;">${st.label}</div>
                     <div style="font-size:0.65rem; opacity:0.86;">${st.rightHandCue}</div>
                   </button>
@@ -4164,19 +4512,21 @@ function buildDailyTrainingSessionLab(
             : `Sílaba guía: ${vocalSeries[blockIdx].syllableCue}`;
 
     stage.innerHTML = `
-      <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <div style="display:flex; flex-wrap:wrap; gap:6px;">
-          {INST_BTNS}
-        </div>
-        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-          <select class="lab-select js-dt-mins" aria-label="Duración de sesión">
-            <option value="10" ${totalMinutes === 10 ? 'selected' : ''}>Sesión Exprés (10 min)</option>
-            <option value="20" ${totalMinutes === 20 ? 'selected' : ''}>Sesión Completa (20 min)</option>
-            <option value="30" ${totalMinutes === 30 ? 'selected' : ''}>Sesión Profunda (30 min)</option>
-          </select>
-          <label class="text-xs" style="color:#cbd5e1; display:flex; align-items:center; gap:4px; cursor:pointer;">
-            <input type="checkbox" class="js-dt-click" ${clickEnabled ? 'checked' : ''} /> Metrónomo guía
-          </label>
+      <div class="neck-control-deck neck-deck-standalone">
+        <div class="neck-deck-row">
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            {INST_BTNS}
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+            <select class="lab-select js-dt-mins" aria-label="Duración de sesión">
+              <option value="10" ${totalMinutes === 10 ? 'selected' : ''}>Sesión Exprés (10 min)</option>
+              <option value="20" ${totalMinutes === 20 ? 'selected' : ''}>Sesión Completa (20 min)</option>
+              <option value="30" ${totalMinutes === 30 ? 'selected' : ''}>Sesión Profunda (30 min)</option>
+            </select>
+            <label class="text-xs" style="color:#cbd5e1; display:flex; align-items:center; gap:4px; cursor:pointer;">
+              <input type="checkbox" class="js-dt-click" ${clickEnabled ? 'checked' : ''} /> Metrónomo guía
+            </label>
+          </div>
         </div>
       </div>
 
@@ -4222,25 +4572,66 @@ function buildDailyTrainingSessionLab(
                 .join('')}
             </div>
           `
-          : `
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:6px; margin-bottom:10px;">
-              ${Array.from({ length: count }, (_, idx) => {
-                const active = idx === blockIdx;
-                const mins = (getBlockSeconds(idx) / 60).toFixed(1).replace('.0', '');
-                const bTitle = getBlockTitle(inst, idx).replace(/^\d+\.\s*/, '');
-                const bBpm = idx === blockIdx ? customBpm : getDefaultBpm(inst, idx);
-                return `
-                  <button type="button" class="btn js-dt-pick-block" data-idx="${idx}" style="display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:3px; text-align:left; padding:8px 10px; border-color:${active ? meta.color : '#334155'}; background:${active ? 'rgba(56,189,248,0.12)' : '#0f172a'};">
-                    <div class="text-xs" style="color:${active ? meta.color : '#94a3b8'}; font-weight:800;">Bloque ${idx + 1} · ${mins}m · ${bBpm} BPM</div>
-                    <div class="text-xs" style="color:#f8fafc; font-weight:700; line-height:1.3;">${bTitle}</div>
-                  </button>
-                `;
-              }).join('')}
-            </div>
-          `
+          : inst === 'guitarra'
+            ? `
+              <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;">
+                ${[
+                  'Fase 1 · Motricidad y Calentamiento',
+                  'Fase 2 · Acordes y Cejillas',
+                  'Fase 3 · Fingerpicking, Ligados y Groove',
+                ]
+                  .map((phaseName) => {
+                    const phaseItems = GUITAR_TRAINING_BLOCKS.map((ex, idx) => ({ ex, idx })).filter(
+                      (item) => item.ex.phaseLabel === phaseName
+                    );
+                    if (phaseItems.length === 0) return '';
+                    return `
+                      <div style="background:#0b101b; border:1px solid #1e293b; border-radius:10px; padding:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:6px;">
+                          <span class="text-xs" style="color:#fbbf24; font-weight:800;">${phaseName}</span>
+                          <span class="text-xs" style="color:#94a3b8;">${phaseItems.length} ejercicios</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(195px, 1fr)); gap:6px;">
+                          ${phaseItems
+                            .map(({ ex, idx }) => {
+                              const active = idx === blockIdx;
+                              const bSec = getBlockSeconds(idx);
+                              const mins = (bSec / 60).toFixed(1).replace('.0', '');
+                              const bBpm = idx === blockIdx ? customBpm : ex.defaultBpm;
+                              return `
+                                <button type="button" class="btn js-dt-pick-block" data-idx="${idx}" style="display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:3px; min-height:48px; text-align:left; padding:8px 10px; border-color:${active ? meta.color : '#334155'}; background:${active ? 'rgba(245,158,11,0.14)' : '#0f172a'};">
+                                  <div class="text-xs" style="color:${active ? '#fbbf24' : '#94a3b8'}; font-weight:800; font-variant-numeric:tabular-nums;">#${idx + 1} · ${ex.focusTag || 'Guitarra'} · ${mins}m · ${bBpm} BPM</div>
+                                  <div class="text-xs" style="color:#f8fafc; font-weight:700; line-height:1.3;">${ex.title.replace(/^\d+\.\s*/, '')}</div>
+                                </button>
+                              `;
+                            })
+                            .join('')}
+                        </div>
+                      </div>
+                    `;
+                  })
+                  .join('')}
+              </div>
+            `
+            : `
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:6px; margin-bottom:10px;">
+                ${Array.from({ length: count }, (_, idx) => {
+                  const active = idx === blockIdx;
+                  const mins = (getBlockSeconds(idx) / 60).toFixed(1).replace('.0', '');
+                  const bTitle = getBlockTitle(inst, idx).replace(/^\d+\.\s*/, '');
+                  const bBpm = idx === blockIdx ? customBpm : getDefaultBpm(inst, idx);
+                  return `
+                    <button type="button" class="btn js-dt-pick-block" data-idx="${idx}" style="display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:3px; text-align:left; padding:8px 10px; border-color:${active ? meta.color : '#334155'}; background:${active ? 'rgba(56,189,248,0.12)' : '#0f172a'};">
+                      <div class="text-xs" style="color:${active ? meta.color : '#94a3b8'}; font-weight:800;">Bloque ${idx + 1} · ${mins}m · ${bBpm} BPM</div>
+                      <div class="text-xs" style="color:#f8fafc; font-weight:700; line-height:1.3;">${bTitle}</div>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            `
       }
 
-      <div class="card" style="border-left:4px solid ${meta.color}; background:#090d16;">
+      <div class="card" style="border:1px solid #1e293b; border-top:3px solid ${meta.color}; background:#090d16;">
         <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px;">
           <div style="flex:1; min-width:220px;">
             <div class="text-xs" style="color:${meta.color}; font-weight:800;">${meta.icon} ${meta.label} · Metrónomo actual: <strong class="js-dt-bpm-readout">${customBpm}</strong> BPM (sugerido ${recBpm})</div>
@@ -4609,6 +5000,25 @@ function buildDailyTrainingSessionLab(
     if (bassStrBtn) {
       bassStringsCount = bassStrBtn.getAttribute('data-c') === '5' ? 5 : 4;
       render();
+      return;
+    }
+
+    const gZoneBtn = t.closest<HTMLElement>('.js-dt-gzone');
+    if (gZoneBtn) {
+      const z = gZoneBtn.getAttribute('data-z') as NeckZoneMode | null;
+      if (z === 'auto' || z === 'open' || z === 'mid' || z === 'high' || z === 'all') {
+        guitarNeckZone = z;
+        render();
+        syncExerciseVisualsDom();
+      }
+      return;
+    }
+
+    const gPrioBtn = t.closest<HTMLElement>('.js-dt-gfprio');
+    if (gPrioBtn) {
+      guitarFingerPriority = gPrioBtn.getAttribute('data-p') === '1';
+      render();
+      syncExerciseVisualsDom();
       return;
     }
 

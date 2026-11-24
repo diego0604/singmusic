@@ -2043,18 +2043,18 @@ function buildGuitarDexterityAndMemorySectionHtml(): string {
 
     <article class="interactive-widget mt-4" id="lab-digitacion-guitarra" data-lab="guitar-dexterity-lab" data-nivel="1">
       <div class="widget-header">
-        <span class="widget-tag">Motricidad y Velocidad · 6 Ejercicios + Mástil 1–4 + BPM Progresivo</span>
-        <h3>⚡ Gimnasio de Digitación en Guitarra (Araña, Permutaciones y Ligados)</h3>
-        <p class="text-sm">Elige el patrón (<code>1-2-3-4</code>, <code>1-3-2-4</code>, <code>1-4-2-3</code>, cruce en terceras, ligados H/P o cambio de posición), ajusta tu BPM de 50 a 180 y sigue cada dedo iluminado en el mástil.</p>
+        <span class="widget-tag">Motricidad y Velocidad · 10 Ejercicios + Zoom de Mástil + Dedos 1–4</span>
+        <h3>⚡ Gimnasio de Digitación en Guitarra (Araña, Permutaciones, Ligados y Barridos)</h3>
+        <p class="text-sm">Elige entre <strong>10 rutinas progresivas</strong> (<code>1-2-3-4</code>, <code>1-3-2-4</code>, <code>1-4-2-3</code>, <code>4-3-2-1</code>, cruce en terceras, salto de cuerda, extensión, ligados H/P, arpegio Sweep y cambio de posición), haz zoom a la zona activa para ver botones grandes y alterna entre <strong>Dedos Grandes 1–4</strong> o notas con BPM progresivo.</p>
       </div>
       <div class="lab-stage"></div>
     </article>
 
     <article class="interactive-widget mt-5" id="lab-memoria-acordes" data-lab="chord-memory-lab" data-nivel="1">
       <div class="widget-header">
-        <span class="widget-tag">Memoria Motora + Oído · Secuencias Aleatorias en Mástil</span>
+        <span class="widget-tag">Memoria Motora + Oído · Mástil con Zoom + Caja Vertical de Acorde</span>
         <h3>🎯 Entrenador y Memorizador Aleatorio de Acordes en el Mástil</h3>
-        <p class="text-sm">Genera secuencias aleatorias (básicos, cejillas o jazz), repásalas en <strong>Fase 1</strong> con dedos <code>1–4</code> y luego pon a prueba tu memoria en <strong>Fase 2</strong> tocando encima mientras ocultamos el nombre del acorde.</p>
+        <p class="text-sm">Genera secuencias aleatorias (básicos, cejillas o jazz), repásalas en <strong>Fase 1</strong> con el mástil ampliado por zona y su <strong>Caja Vertical (1–4)</strong>, y pon a prueba tu oído en <strong>Fase 2</strong> tocando encima mientras ocultamos el nombre del acorde.</p>
       </div>
       <div class="lab-stage"></div>
     </article>
@@ -2066,16 +2066,16 @@ function buildDailyTrainingSectionHtml(): string {
   return `
   <section id="entreno-diario" class="module-section" data-cat="guitarra-ac" data-nivel="1-3" data-menu="3D. Sesión Diaria de Entrenamiento (4 Instrumentos)">
     <div class="module-header">
-      <span class="nav-badge badge-lvl2">Rutina Completa · Guitarra, Bajo, Batería y Canto</span>
+      <span class="nav-badge badge-lvl2">Rutina Completa · 8 Bloques de Guitarra, Bajo, Batería y Canto</span>
       <h2 class="module-title">3D. Sesión de Entrenamiento Guiada (10, 20 o 30 Minutos)</h2>
-      <p class="module-subtitle">Alterna entre <strong>Guitarra, Bajo Eléctrico, Batería y Canto</strong> para seguir una sesión cronometrada con metrónomo guía y bloques de motricidad, técnica, oído y groove.</p>
+      <p class="module-subtitle">Alterna entre <strong>Guitarra (8 ejercicios en 3 fases: motricidad, acordes con Caja Vertical y arpegios/ligados/tríadas)</strong>, Bajo Eléctrico, Batería y Canto con metrónomo guía integrado.</p>
     </div>
 
     <article class="interactive-widget mt-3" id="lab-sesion-entrenamiento" data-lab="daily-training-session-lab" data-preset="guitarra" data-nivel="1">
       <div class="widget-header">
-        <span class="widget-tag">Entrenador Cronometrado · 4 Instrumentos + Metrónomo por Bloque</span>
+        <span class="widget-tag">Entrenador Cronometrado · 4 Instrumentos + Zoom por Zona y Dedos 1–4</span>
         <h3>⏱️ Planificador y Temporizador de Práctica Diaria</h3>
-        <p class="text-sm">Elige tu instrumento y duración, activa el metrónomo integrado y completa cada bloque paso a paso sin perder el foco.</p>
+        <p class="text-sm">Elige tu instrumento y duración, haz zoom a cualquier zona del mástil y completa cada bloque paso a paso sin perder el foco.</p>
       </div>
       <div class="lab-stage"></div>
     </article>
@@ -2085,13 +2085,13 @@ function buildDailyTrainingSectionHtml(): string {
 
 function buildInstrumentSessionCalloutHtml(inst: 'guitarra' | 'bajo' | 'bateria' | 'canto', suffix: string): string {
   const labels: Record<string, string> = {
-    guitarra: 'Guitarra Eléctrica (Motricidad, Púa Alternada y Riffs)',
+    guitarra: 'Guitarra (8 Ejercicios: Araña, Permutaciones, Cejillas, Fingerpicking PIMA, Ligados y Tríadas)',
     bajo: 'Bajo Eléctrico (Alternancia I–M, Lock-In y Walking)',
     bateria: 'Batería (Rudimentos, Gap Click, Ghost Notes y Fills)',
     canto: 'Canto (Appoggio 4-2-8, SOVT, Passaggio y Agilidad)',
   };
   return `
-  <div class="callout-box mt-5" style="border-left:4px solid #10b981;" data-nivel="1">
+  <div class="callout-box guitar-card-clean mt-5" style="border-top:3px solid #10b981;" data-nivel="1">
     <h3>⏱️ Sesión Guiada de Entrenamiento — ${labels[inst]}</h3>
     <p class="text-xs mb-2">Practica con reloj real por bloques (10, 20 o 30 minutos) y metrónomo integrado adaptado a este instrumento:</p>
     <article class="interactive-widget mt-2" id="lab-sesion-${suffix}" data-lab="daily-training-session-lab" data-preset="${inst}" data-nivel="1">
@@ -2107,7 +2107,7 @@ function buildInstrumentSessionCalloutHtml(inst: 'guitarra' | 'bajo' | 'bateria'
 
 function buildNotationWriterIntroAndLabHtml(preset: string): string {
   return `
-  <div class="callout-box mt-6" style="border-left: 4px solid #38bdf8;" data-nivel="1">
+  <div class="callout-box guitar-card-clean mt-6" style="border-top:3px solid #38bdf8;" data-nivel="1">
     <h3>🎼 Taller Interactivo de Escritura Musical, Band Charts y Arreglo Coral</h3>
     <p class="text-sm mb-3">
       Leer es solo la mitad del camino: escribir directamente sobre el pentagrama, cifrar con el <strong>Sistema Nashville</strong> para tu banda o repartir una melodía entre <strong>2, 3 o 4 voces</strong> fija la lectura para siempre.
