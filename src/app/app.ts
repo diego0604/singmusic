@@ -36,6 +36,39 @@ import {
   resolveVisualInstrumentView,
   setVisualInstrumentFocus,
 } from './music-games-logic';
+import {
+  ACADEMY_LEARNING_PATHS,
+  ACADEMY_STAGES,
+  assembleAcademyCategoryHtml,
+  extractIntraLessonAnchors,
+  extractSingleSectionHtml,
+  findStageForSection,
+  getStageProgress,
+  resolveCategoryForSectionId,
+  type AcademyLearningPath,
+  type AcademyStage,
+  type IntraLessonJumpItem,
+} from './academy-curriculum';
+import { applyStage1LessonUpgrades } from './academy-lessons';
+import { LessonPracticeDeck, playAcademyAudioPrompt } from './lesson-practice-deck';
+import {
+  buildActiveReviewQueue,
+  detectLessonFrameworkPhases,
+  getDueReviews,
+  getStageGraduationSummary,
+  getTotalGraduationsCount,
+  normalizeStageRubricEntry,
+  scheduleNextReview,
+  type AcademyAudioPrompt,
+  type AcademyQuizQuestion,
+  type DeliverableMasteryRating,
+  type DueReviewItem,
+  type GraduationRubricState,
+  type LessonFrameworkPhase,
+  type LessonReviewRecord,
+  type StageGraduationSummary,
+  type StageRubricEntry,
+} from './academy-practice';
 
 export interface CategoryPart {
   id: string;
@@ -82,25 +115,32 @@ export interface LearningPathTrack {
 }
 
 const COMPLETED_STORAGE_KEY = 'enciclopedia_completed_sections_v1';
+const REVIEW_RECORDS_STORAGE_KEY = 'academy_review_records_v1';
+const GRADUATION_RUBRIC_STORAGE_KEY = 'academy_graduation_rubrics_v1';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-root',
-  imports: [ChordDiagram],
+  imports: [ChordDiagram, LessonPracticeDeck],
   templateUrl: './app.html',
   styleUrl: './app.css',
+  host: {
+    '(document:keydown.escape)': 'closeAllOverlays()',
+  },
 })
 export class App implements OnInit, OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly modalManager = inject(DiagramModalManager);
   readonly audio = new MusicAudioEngine();
+  private sectionObserver: IntersectionObserver | null = null;
+  private isProgrammaticScroll = false;
 
   readonly contentHost = viewChild<ElementRef<HTMLElement>>('contentHost');
 
   readonly categories: CategoryPart[] = [
-    { id: 'teoria', label: '1. Teoría y Acústica', count: 11 },
-    { id: 'armonia', label: '2. Armonía Práctica', count: 17 },
+    { id: 'teoria', label: '1. Teoría y Acústica', count: 9 },
+    { id: 'armonia', label: '2. Armonía Práctica', count: 19 },
     { id: 'composicion', label: '3. Composición y Letras', count: 10 },
     { id: 'guitarra-ac', label: '4. Guitarra Acústica', count: 7 },
     { id: 'guitarra-el', label: '5. Guitarra Eléctrica', count: 6 },
@@ -115,16 +155,20 @@ export class App implements OnInit, OnDestroy {
 
   readonly activeCat = signal<CategoryPart>(this.categories[0]);
   readonly safeContent = signal<SafeHtml>('');
+  readonly fullCategoryHtml = signal<string>('');
   readonly loading = signal<boolean>(false);
   readonly sections = signal<SectionAnchor[]>([]);
   readonly mobileMenuOpen = signal<boolean>(false);
   readonly activeNoteLabel = signal<string>(
-    'Motor de Síntesis Activo (Guitarra / Bajo / Piano / Voz / Vientos Andinos / Batería)'
+    'Listo · Pulsa cualquier nota, acorde o laboratorio'
   );
   readonly currentInstrument = signal<'guitar' | 'piano' | 'bass'>('guitar');
   readonly visualInstrumentFocus = signal<VisualInstrumentFocus>('all');
 
-  // Global Level Filter ('1' = Novato, '2' = Intermedio, '4' = Completo)
+  // Reader Mode: 'full' renders the entire module continuously so the user scrolls freely; 'focused' isolates 1 section
+  readonly lessonViewMode = signal<'focused' | 'full'>('full');
+
+  // Global Level Filter ('4' = Completo by default so deep pedagogical explanations are never hidden)
   readonly activeLevelFilter = signal<'1' | '2' | '4'>('4');
   readonly hiddenBlocksCount = signal<number>(0);
 
@@ -134,6 +178,42 @@ export class App implements OnInit, OnDestroy {
     if (maxLvl >= 4) return all;
     const filtered = all.filter((sec) => this.parseMinNivel(sec.nivel) <= maxLvl);
     return filtered.length > 0 ? filtered : all.slice(0, 1);
+  });
+
+  readonly activeSectionIndex = computed<number>(() => {
+    const list = this.sections();
+    const idx = list.findIndex((s) => s.id === this.activeSectionId());
+    return idx >= 0 ? idx : 0;
+  });
+
+  readonly prevLesson = computed<SectionAnchor | null>(() => {
+    const list = this.sections();
+    const idx = this.activeSectionIndex();
+    return idx > 0 ? list[idx - 1] : null;
+  });
+
+  readonly nextLesson = computed<SectionAnchor | null>(() => {
+    const list = this.sections();
+    const idx = this.activeSectionIndex();
+    return idx >= 0 && idx < list.length - 1 ? list[idx + 1] : null;
+  });
+
+  readonly activeStageForSection = computed<AcademyStage>(() => {
+    return findStageForSection(this.activeSectionId()) || ACADEMY_STAGES[0];
+  });
+
+  readonly intraLessonAnchors = computed<IntraLessonJumpItem[]>(() => {
+    const full = this.fullCategoryHtml();
+    if (!full || this.lessonViewMode() === 'full') return [];
+    const activeHtml = extractSingleSectionHtml(full, this.activeSectionId());
+    return extractIntraLessonAnchors(activeHtml);
+  });
+
+  readonly lessonFrameworkPhases = computed<LessonFrameworkPhase[]>(() => {
+    const full = this.fullCategoryHtml();
+    if (!full || this.lessonViewMode() !== 'focused' || this.activeCat().id === 'all') return [];
+    const activeHtml = extractSingleSectionHtml(full, this.activeSectionId());
+    return detectLessonFrameworkPhases(activeHtml);
   });
 
   readonly prevCategory = computed<CategoryPart | null>(() => {
@@ -155,84 +235,90 @@ export class App implements OnInit, OnDestroy {
   private liveNotesListener: ((ev: Event) => void) | null = null;
   private visualFocusListener: ((ev: Event) => void) | null = null;
 
-  // Guided Learning Paths & Completion Tracking & Chord Diagram Studio
+  // Guided Academy (8 Stages), Learning Paths, Completion, Spaced Reviews & Graduation Rubrics
+  readonly academyStages = ACADEMY_STAGES;
   readonly showChordDiagram = signal<boolean>(false);
   readonly showPaths = signal<boolean>(false);
+  readonly academyDrawerTab = signal<'stages' | 'paths' | 'reviews'>('stages');
+  readonly selectedStageId = signal<string>('etapa-0');
   readonly selectedPathId = signal<string>('cero-a-musico');
   readonly activeSectionId = signal<string>('intro');
   readonly completedSections = signal<string[]>([]);
+  readonly reviewRecords = signal<Record<string, LessonReviewRecord>>({});
+  readonly graduationRubrics = signal<GraduationRubricState>({});
+  readonly reviewClock = signal<number>(Date.now());
 
-  readonly learningPaths: LearningPathTrack[] = [
-    {
-      id: 'cero-a-musico',
-      title: '🌱 De Cero a Músico Completo',
-      subtitle: 'Empieza sin conocimientos previos: sonido, notas, alteraciones, intervalos, escalas, tríadas y ritmo.',
-      steps: [
-        { catId: 'teoria', sectionId: 'intro', title: 'Mapa de Navegación y Cómo Estudiar', badge: 'N1' },
-        { catId: 'teoria', sectionId: 't-sonido', title: 'El Sonido y la Acústica Musical', badge: 'N1' },
-        { catId: 'teoria', sectionId: 't-notas', title: 'Notas, Alteraciones, Enarmonía y Reloj Cromático', badge: 'N1' },
-        { catId: 'teoria', sectionId: 't-intervalos', title: 'Intervalos: La Geometría de la Música', badge: 'N1–N2' },
-        { catId: 'teoria', sectionId: 't-escalas', title: 'Escalas Mayores, Menores y Pentatónicas', badge: 'N1–N2' },
-        { catId: 'teoria', sectionId: 't-ritmo', title: 'Ritmo, Compases y Métricas Irregulares', badge: 'N1–N3' },
-        { catId: 'teoria', sectionId: 't-lectura', title: 'Lectura Musical, Claves y Escritura de Banda', badge: 'N1–N3' },
-        { catId: 'armonia', sectionId: 'h-triadas', title: 'Tríadas: Los Cuatro Ladrillos Armónicos', badge: 'N1' },
-      ],
-    },
-    {
-      id: 'guitarra',
-      title: '🎸 Guitarra Rítmica, Rasgueos y Armónica',
-      subtitle: 'Acordes abiertos, patrones de rasgueo con púa/mano, fingerstyle y escalas por todo el mástil.',
-      steps: [
-        { catId: 'teoria', sectionId: 't-notas', title: 'Notas, Alteraciones y Reloj Cromático', badge: 'N1' },
-        { catId: 'guitarra-ac', sectionId: 'ga-acordes', title: 'Vocabulario de Acordes y Cejillas', badge: 'N1–N2' },
-        { catId: 'guitarra-ac', sectionId: 'ga-rasgueos', title: 'Rasgueos, Púa y Patrones Rítmicos', badge: 'N1–N2' },
-        { catId: 'guitarra-ac', sectionId: 'ga-ritmo-fingerstyle', title: 'Ritmo, Arpegios y Fingerstyle', badge: 'N2–N3' },
-        { catId: 'armonia', sectionId: 'h-diatonica', title: 'Armonía Diatónica y Funciones Tonales', badge: 'N2' },
-        { catId: 'guitarra-el', sectionId: 'ge-escalas-modos', title: 'Escalas, Modos y Tríadas en el Mástil', badge: 'N2–N3' },
-        { catId: 'guitarra-el', sectionId: 'ge-tecnicas', title: 'Articulación y Técnicas Expresivas', badge: 'N2–N4' },
-      ],
-    },
-    {
-      id: 'bajo',
-      title: '🎸 Bajista y Lock-In con Batería',
-      subtitle: 'Fundamentos en 4/5 cuerdas, muteo profesional, enlace bajo-bombo y recursos expresivos.',
-      steps: [
-        { catId: 'teoria', sectionId: 't-notas', title: 'Notas y Enarmonía en el Mástil', badge: 'N1' },
-        { catId: 'teoria', sectionId: 't-ritmo', title: 'Subdivisión Rítmica y Síncopa', badge: 'N1–N2' },
-        { catId: 'bajo', sectionId: 'b-fundamentos', title: 'Fundamentos del Bajo Eléctrico', badge: 'N1' },
-        { catId: 'bajo', sectionId: 'b-mutear-articulacion', title: 'Floating Thumb, Muteo y Slap', badge: 'N2–N3' },
-        { catId: 'bajo', sectionId: 'b-bajo-bateria', title: 'Lock-In Bajo + Bombo y Recursos Expresivos', badge: 'N2–N3' },
-        { catId: 'bajo', sectionId: 'b-armonia', title: 'Tríadas, Arpegios y Walking Bass', badge: 'N2–N3' },
-      ],
-    },
-    {
-      id: 'bateria',
-      title: '🥁 Batería, Notación PAS y Tempo Interno',
-      subtitle: 'Rudimentos, lectura de pentagrama sincronizada, Gap Click y técnicas del kit.',
-      steps: [
-        { catId: 'teoria', sectionId: 't-ritmo', title: 'Pulso, Compases y Síncopa', badge: 'N1' },
-        { catId: 'bateria', sectionId: 'd-fundamentos', title: 'Rudimentos, Agarre y Ghost Notes', badge: 'N1–N2' },
-        { catId: 'bateria', sectionId: 'd-grooves', title: 'Grooves Esenciales y Pentagrama PAS', badge: 'N1–N3' },
-        { catId: 'bateria', sectionId: 'd-fills-transiciones', title: 'Fills, Transiciones y Gap Click', badge: 'N2–N3' },
-        { catId: 'bateria', sectionId: 'd-independencia', title: 'Independencia de 4 Extremidades', badge: 'N3–N4' },
-      ],
-    },
-    {
-      id: 'canto-arreglo',
-      title: '🎤 Canto, Melismas y Arreglo a Voces',
-      subtitle: 'Calentamiento SOVT, apoyo, agilidad vocal, modificación de vocales y armonización a 2–4 voces.',
-      steps: [
-        { catId: 'canto', sectionId: 'v-calentamiento', title: 'Rutina Diaria SOVT y Cuidado Vocal', badge: 'N1' },
-        { catId: 'canto', sectionId: 'v-fundamentos', title: 'Respiración Costo-Diafragmática y Apoyo', badge: 'N1–N2' },
-        { catId: 'canto', sectionId: 'v-afinacion-registros', title: 'Registros, Passaggio y Modificación Vocal', badge: 'N2–N3' },
-        { catId: 'canto', sectionId: 'v-interpretacion-estilos', title: 'Gimnasio de Agilidad, Riffs y Melismas', badge: 'N2–N3' },
-        { catId: 'teoria', sectionId: 't-lectura', title: 'Escritura Práctica y Arreglo a 2–4 Voces', badge: 'N2–N3' },
-        { catId: 'arreglos', sectionId: 'a-integracion', title: 'Orquestación e Integración de Banda', badge: 'N3–N4' },
-      ],
-    },
-  ];
+  // In-drawer Mixed Active Review Session State
+  readonly mixedReviewQuestions = signal<AcademyQuizQuestion[]>([]);
+  readonly mixedReviewSelections = signal<Record<string, number>>({});
+  readonly mixedReviewEvaluated = signal<boolean>(false);
+  readonly mixedReviewScorePct = signal<number>(0);
 
-  readonly activeLearningPath = computed<LearningPathTrack>(() => {
+  readonly learningPaths: AcademyLearningPath[] = ACADEMY_LEARNING_PATHS;
+
+  readonly selectedAcademyStage = computed<AcademyStage>(() => {
+    return (
+      this.academyStages.find((s) => s.id === this.selectedStageId()) || this.academyStages[0]
+    );
+  });
+
+  readonly selectedStageProgress = computed<{ done: number; total: number; pct: number }>(() => {
+    return getStageProgress(this.selectedAcademyStage(), this.completedSections());
+  });
+
+  readonly activeSectionReviewRecord = computed<LessonReviewRecord | undefined>(() => {
+    return this.reviewRecords()[this.activeSectionId()];
+  });
+
+  readonly dueReviewItems = computed<DueReviewItem[]>(() => {
+    return getDueReviews(this.reviewRecords(), this.completedSections(), this.reviewClock());
+  });
+
+  readonly dueReviewsCount = computed<number>(() => {
+    return this.dueReviewItems().filter((item) => item.status === 'due' || item.status === 'untested').length;
+  });
+
+  readonly selectedStageRubricEntry = computed<StageRubricEntry>(() => {
+    const stage = this.selectedAcademyStage();
+    return normalizeStageRubricEntry(stage, this.graduationRubrics()[stage.id]);
+  });
+
+  readonly selectedStageGraduationSummary = computed<StageGraduationSummary>(() => {
+    return getStageGraduationSummary(this.selectedAcademyStage(), this.graduationRubrics());
+  });
+
+  readonly totalGraduationsSummary = computed<{ graduated: number; total: number }>(() => {
+    return getTotalGraduationsCount(this.academyStages, this.graduationRubrics());
+  });
+
+  readonly mixedReviewAnsweredCount = computed<number>(() => {
+    const sel = this.mixedReviewSelections();
+    return this.mixedReviewQuestions().filter((q) => typeof sel[q.id] === 'number').length;
+  });
+
+  readonly mixedReviewAllAnswered = computed<boolean>(() => {
+    const qs = this.mixedReviewQuestions();
+    return qs.length > 0 && this.mixedReviewAnsweredCount() === qs.length;
+  });
+
+  readonly totalAcademyProgress = computed<{ done: number; total: number; pct: number }>(() => {
+    const seen = new Set<string>();
+    const allIds: string[] = [];
+    for (const st of this.academyStages) {
+      for (const l of st.lessons) {
+        if (!seen.has(l.sectionId)) {
+          seen.add(l.sectionId);
+          allIds.push(l.sectionId);
+        }
+      }
+    }
+    const completed = new Set(this.completedSections());
+    const done = allIds.filter((id) => completed.has(id)).length;
+    const total = allIds.length;
+    return { done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 };
+  });
+
+  readonly activeLearningPath = computed<AcademyLearningPath>(() => {
     return (
       this.learningPaths.find((p) => p.id === this.selectedPathId()) || this.learningPaths[0]
     );
@@ -442,6 +528,20 @@ export class App implements OnInit, OnDestroy {
             this.completedSections.set(parsed.filter((x) => typeof x === 'string'));
           }
         }
+        const savedReviews = localStorage.getItem(REVIEW_RECORDS_STORAGE_KEY);
+        if (savedReviews) {
+          const parsedRev = JSON.parse(savedReviews);
+          if (parsedRev && typeof parsedRev === 'object' && !Array.isArray(parsedRev)) {
+            this.reviewRecords.set(parsedRev as Record<string, LessonReviewRecord>);
+          }
+        }
+        const savedRubrics = localStorage.getItem(GRADUATION_RUBRIC_STORAGE_KEY);
+        if (savedRubrics) {
+          const parsedRub = JSON.parse(savedRubrics);
+          if (parsedRub && typeof parsedRub === 'object' && !Array.isArray(parsedRub)) {
+            this.graduationRubrics.set(parsedRub as GraduationRubricState);
+          }
+        }
       } catch {
         // Ignore storage read errors in restricted iframes
       }
@@ -481,6 +581,10 @@ export class App implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.audio.stopAll();
+    if (this.sectionObserver) {
+      this.sectionObserver.disconnect();
+      this.sectionObserver = null;
+    }
     if (isPlatformBrowser(this.platformId)) {
       if (this.liveNotesListener) {
         window.removeEventListener('enciclopedia:live-notes', this.liveNotesListener);
@@ -500,6 +604,27 @@ export class App implements OnInit, OnDestroy {
       .replace(/[\u0300-\u036f]/g, '');
   }
 
+  private buildAssembledCategoryHtml(catId: string): string {
+    const getEnriched = (id: string): string => {
+      const baseHtml =
+        id === 'all'
+          ? Object.values(ENCYCLOPEDIA_CONTENT).join('\n')
+          : ENCYCLOPEDIA_CONTENT[id] || '<p>Módulo no encontrado.</p>';
+      const withTreatise = injectTreatiseEnrichmentIntoCategoryHtml(id, baseHtml);
+      const withGames = injectSectionGamesIntoCategoryHtml(id, withTreatise);
+      return replaceLegacyMarkers(withGames);
+    };
+
+    const enrichedMain = getEnriched(catId);
+    const enrichedTeoria = catId === 'armonia' ? getEnriched('teoria') : undefined;
+    return assembleAcademyCategoryHtml(
+      catId,
+      enrichedMain,
+      enrichedTeoria,
+      applyStage1LessonUpgrades
+    );
+  }
+
   private buildGlobalSearchIndex(): void {
     for (const meta of [...SECTION_GAMES_SEARCH_META, ...TREATISE_ENRICHMENT_SEARCH_META]) {
       this.globalIndex.push({
@@ -515,8 +640,7 @@ export class App implements OnInit, OnDestroy {
 
     for (const cat of this.categories) {
       if (cat.id === 'all') continue;
-      const rawHtml = ENCYCLOPEDIA_CONTENT[cat.id] || '';
-      const html = injectTreatiseEnrichmentIntoCategoryHtml(cat.id, rawHtml);
+      const html = this.buildAssembledCategoryHtml(cat.id);
       const secRegex =
         /<section\s+id="([^"]+)"[^>]*data-nivel="([^"]+)"[^>]*data-menu="([^"]+)"[^>]*>([\s\S]*?)<\/section>/g;
       let match: RegExpExecArray | null;
@@ -566,6 +690,21 @@ export class App implements OnInit, OnDestroy {
     this.glossaryFilter.set(input.value);
   }
 
+  closeAllOverlays(): void {
+    this.showPaths.set(false);
+    this.showGlossary.set(false);
+    this.mobileMenuOpen.set(false);
+    this.modalManager.close();
+  }
+
+  closePaths(): void {
+    this.showPaths.set(false);
+  }
+
+  closeGlossary(): void {
+    this.showGlossary.set(false);
+  }
+
   toggleChordDiagram(): void {
     this.showChordDiagram.update((v) => {
       const next = !v;
@@ -593,14 +732,252 @@ export class App implements OnInit, OnDestroy {
     });
   }
 
+  setAcademyDrawerTab(tab: 'stages' | 'paths' | 'reviews'): void {
+    this.academyDrawerTab.set(tab);
+    if (tab === 'reviews') {
+      this.reviewClock.set(Date.now());
+    }
+  }
+
+  selectAcademyStage(stageId: string): void {
+    this.selectedStageId.set(stageId);
+  }
+
   selectLearningPath(pathId: string): void {
     this.selectedPathId.set(pathId);
+  }
+
+  private persistReviewRecords(next: Record<string, LessonReviewRecord>): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      localStorage.setItem(REVIEW_RECORDS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // Ignore storage quota errors
+    }
+  }
+
+  private persistGraduationRubrics(next: GraduationRubricState): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      localStorage.setItem(GRADUATION_RUBRIC_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // Ignore storage quota errors
+    }
+  }
+
+  onLessonReviewSubmitted(ev: { sectionId: string; scorePct: number }): void {
+    const now = Date.now();
+    this.reviewRecords.update((prev) => {
+      const updatedRec = {
+        ...scheduleNextReview(prev[ev.sectionId], ev.scorePct, now),
+        sectionId: ev.sectionId,
+      };
+      const next = { ...prev, [ev.sectionId]: updatedRec };
+      this.persistReviewRecords(next);
+      return next;
+    });
+    this.reviewClock.set(now);
+  }
+
+  onPracticeNoteStatus(msg: string): void {
+    this.activeNoteLabel.set(msg);
+  }
+
+  openStageGraduationFromLesson(stageId: string): void {
+    this.selectedStageId.set(stageId);
+    this.academyDrawerTab.set('stages');
+    this.showGlossary.set(false);
+    this.showChordDiagram.set(false);
+    this.showPaths.set(true);
+  }
+
+  toggleDeliverableChecked(stageId: string, idx: number): void {
+    const stage = this.academyStages.find((s) => s.id === stageId);
+    if (!stage) return;
+    this.graduationRubrics.update((prev) => {
+      const current = normalizeStageRubricEntry(stage, prev[stageId]);
+      const nextChecked = [...current.checked];
+      nextChecked[idx] = !nextChecked[idx];
+      const nextRatings = [...current.ratings];
+      if (nextChecked[idx] && nextRatings[idx] === 0) {
+        nextRatings[idx] = 2;
+      } else if (!nextChecked[idx]) {
+        nextRatings[idx] = 0;
+      }
+      const next: GraduationRubricState = {
+        ...prev,
+        [stageId]: { ...current, checked: nextChecked, ratings: nextRatings },
+      };
+      this.persistGraduationRubrics(next);
+      return next;
+    });
+  }
+
+  setDeliverableRating(stageId: string, idx: number, rating: DeliverableMasteryRating): void {
+    const stage = this.academyStages.find((s) => s.id === stageId);
+    if (!stage) return;
+    this.graduationRubrics.update((prev) => {
+      const current = normalizeStageRubricEntry(stage, prev[stageId]);
+      const nextRatings = [...current.ratings];
+      nextRatings[idx] = rating;
+      const nextChecked = [...current.checked];
+      nextChecked[idx] = rating > 0;
+      const next: GraduationRubricState = {
+        ...prev,
+        [stageId]: { ...current, checked: nextChecked, ratings: nextRatings },
+      };
+      this.persistGraduationRubrics(next);
+      return next;
+    });
+  }
+
+  onRubricNoteInput(stageId: string, event: Event): void {
+    const stage = this.academyStages.find((s) => s.id === stageId);
+    if (!stage) return;
+    const value = (event.target as HTMLInputElement | null)?.value ?? '';
+    this.graduationRubrics.update((prev) => {
+      const current = normalizeStageRubricEntry(stage, prev[stageId]);
+      const next: GraduationRubricState = {
+        ...prev,
+        [stageId]: { ...current, note: value },
+      };
+      this.persistGraduationRubrics(next);
+      return next;
+    });
+  }
+
+  jumpToPhaseAnchor(phase: LessonFrameworkPhase): void {
+    if (!phase.available) return;
+    this.scrollToIntraAnchor(phase.anchorId || this.activeSectionId());
+  }
+
+  startMixedReviewSession(): void {
+    const now = Date.now();
+    this.reviewClock.set(now);
+    const queue = buildActiveReviewQueue(
+      this.reviewRecords(),
+      this.completedSections(),
+      this.activeSectionId(),
+      now,
+      5
+    );
+    this.mixedReviewQuestions.set(queue);
+    this.mixedReviewSelections.set({});
+    this.mixedReviewEvaluated.set(false);
+    this.mixedReviewScorePct.set(0);
+  }
+
+  selectMixedAnswer(questionId: string, optIdx: number): void {
+    if (this.mixedReviewEvaluated()) return;
+    this.mixedReviewSelections.update((prev) => ({ ...prev, [questionId]: optIdx }));
+  }
+
+  mixedOptionLetter(idx: number): string {
+    return ['A', 'B', 'C', 'D'][idx] || 'A';
+  }
+
+  submitMixedReviewSession(): void {
+    const qs = this.mixedReviewQuestions();
+    if (qs.length === 0 || !this.mixedReviewAllAnswered()) return;
+    const sel = this.mixedReviewSelections();
+    let totalHits = 0;
+    const perSection = new Map<string, { hits: number; total: number }>();
+
+    for (const q of qs) {
+      const correct = sel[q.id] === q.correctIndex;
+      if (correct) totalHits++;
+      const prev = perSection.get(q.sectionId) || { hits: 0, total: 0 };
+      prev.total += 1;
+      if (correct) prev.hits += 1;
+      perSection.set(q.sectionId, prev);
+    }
+
+    const overallPct = Math.round((totalHits / qs.length) * 100);
+    const now = Date.now();
+    this.reviewRecords.update((prev) => {
+      const next = { ...prev };
+      perSection.forEach((stats, secId) => {
+        const secPct = Math.round((stats.hits / stats.total) * 100);
+        next[secId] = {
+          ...scheduleNextReview(prev[secId], secPct, now),
+          sectionId: secId,
+        };
+      });
+      this.persistReviewRecords(next);
+      return next;
+    });
+
+    this.reviewClock.set(now);
+    this.mixedReviewScorePct.set(overallPct);
+    this.mixedReviewEvaluated.set(true);
+    this.activeNoteLabel.set(`Sesión mixta completada (${overallPct}%): intervalos actualizados`);
+  }
+
+  playMixedAudioPrompt(prompt: AcademyAudioPrompt): void {
+    playAcademyAudioPrompt(this.audio, prompt);
+    this.activeNoteLabel.set(`🔊 ${prompt.label}`);
+  }
+
+  jumpToDueReviewLesson(item: DueReviewItem): void {
+    this.showPaths.set(false);
+    this.mobileMenuOpen.set(false);
+    this.openLesson(item.catId, item.sectionId);
+  }
+
+  formatReviewCardBadge(item: DueReviewItem): string {
+    if (item.status === 'due') return 'Repaso hoy';
+    if (item.status === 'untested') return 'Pendiente de evaluar';
+    return item.daysUntilDue === 1 ? 'En 1 día' : `En ${item.daysUntilDue} días`;
+  }
+
+  setLessonViewMode(mode: 'focused' | 'full'): void {
+    if (this.lessonViewMode() === mode) return;
+    this.lessonViewMode.set(mode);
+    this.renderCurrentViewAndHydrate();
   }
 
   setLevelFilter(level: '1' | '2' | '4'): void {
     this.activeLevelFilter.set(level);
     if (isPlatformBrowser(this.platformId)) {
       setTimeout(() => this.applyLevelDomFilter(), 10);
+    }
+  }
+
+  onLevelFilterChange(event: Event): void {
+    const val = (event.target as HTMLSelectElement).value as '1' | '2' | '4';
+    if (val === '1' || val === '2' || val === '4') {
+      this.setLevelFilter(val);
+    }
+  }
+
+  onVisualFocusChange(event: Event): void {
+    const val = (event.target as HTMLSelectElement).value as VisualInstrumentFocus;
+    if (val === 'all' || val === 'guitar-only' || val === 'bass-only') {
+      this.setVisualFocus(val);
+    }
+  }
+
+  onInstrumentChange(event: Event): void {
+    const val = (event.target as HTMLSelectElement).value as 'guitar' | 'piano' | 'bass';
+    if (val === 'guitar' || val === 'piano' || val === 'bass') {
+      this.audio.stopAll();
+      this.currentInstrument.set(val);
+      const label =
+        val === 'guitar'
+          ? 'Guitarra Pulsada'
+          : val === 'bass'
+            ? 'Bajo Eléctrico (4 Cuerdas)'
+            : 'Piano Acústico';
+      this.activeNoteLabel.set(`Timbre global: ${label}`);
+    }
+  }
+
+  onPracticeSectionChange(event: Event): void {
+    const secId = (event.target as HTMLSelectElement).value;
+    if (secId) {
+      this.activeSectionId.set(secId);
+      const stage = findStageForSection(secId);
+      if (stage) this.selectedStageId.set(stage.id);
     }
   }
 
@@ -640,38 +1017,21 @@ export class App implements OnInit, OnDestroy {
     });
   }
 
-  jumpToPathStep(step: LearningPathStep): void {
+  jumpToPathStep(step: { catId: string; sectionId: string }): void {
     this.showPaths.set(false);
     this.mobileMenuOpen.set(false);
-    const targetCat = this.categories.find((c) => c.id === step.catId);
-    if (!targetCat) return;
-    this.activeSectionId.set(step.sectionId);
-    if (this.activeCat().id !== targetCat.id) {
-      this.loadCategory(targetCat);
-      setTimeout(() => this.scrollToSection(step.sectionId), 140);
-    } else {
-      this.scrollToSection(step.sectionId);
-    }
+    this.openLesson(step.catId, step.sectionId);
   }
 
   jumpToSearchResult(item: GlobalSearchIndexItem): void {
-    const targetCat = this.categories.find((c) => c.id === item.catId);
-    if (!targetCat) return;
     this.searchQuery.set('');
     this.mobileMenuOpen.set(false);
-    this.activeSectionId.set(item.sectionId);
-    if (this.activeCat().id !== targetCat.id) {
-      this.loadCategory(targetCat);
-      setTimeout(() => this.scrollToSection(item.sectionId), 120);
-    } else {
-      this.scrollToSection(item.sectionId);
-    }
+    this.openLesson(item.catId, item.sectionId);
   }
 
   jumpFromGlossary(entry: GlossaryEntry): void {
     this.showGlossary.set(false);
     this.mobileMenuOpen.set(false);
-    this.activeSectionId.set(entry.sectionId);
     this.jumpToCrossSection(entry.sectionId);
   }
 
@@ -679,7 +1039,22 @@ export class App implements OnInit, OnDestroy {
     this.runDemo(demoName);
   }
 
-  loadCategory(cat: CategoryPart): void {
+  openLesson(catId: string, sectionId: string): void {
+    const targetCat = this.categories.find((c) => c.id === catId);
+    if (!targetCat) return;
+    const stage = findStageForSection(sectionId);
+    if (stage) {
+      this.selectedStageId.set(stage.id);
+    }
+
+    if (this.activeCat().id !== targetCat.id) {
+      this.loadCategory(targetCat, sectionId);
+    } else {
+      this.scrollToSection(sectionId);
+    }
+  }
+
+  loadCategory(cat: CategoryPart, initialSectionId?: string): void {
     this.modalManager.close();
     this.audio.stopAll();
     this.activeCat.set(cat);
@@ -690,19 +1065,25 @@ export class App implements OnInit, OnDestroy {
       this.currentInstrument.set('guitar');
     }
 
-    const baseHtml =
-      cat.id === 'all'
-        ? Object.values(ENCYCLOPEDIA_CONTENT).join('\n')
-        : ENCYCLOPEDIA_CONTENT[cat.id] || '<p>Módulo no encontrado.</p>';
+    const assembledHtml = this.buildAssembledCategoryHtml(cat.id);
+    this.fullCategoryHtml.set(assembledHtml);
+    this.extractSections(assembledHtml, initialSectionId);
+    this.renderCurrentViewAndHydrate(initialSectionId);
+  }
 
-    const withTreatiseEnrichment = injectTreatiseEnrichmentIntoCategoryHtml(cat.id, baseHtml);
-    const withSectionGames = injectSectionGamesIntoCategoryHtml(cat.id, withTreatiseEnrichment);
-    const expandedHtml = replaceLegacyMarkers(withSectionGames);
-    this.extractSections(expandedHtml);
-    this.safeContent.set(this.sanitizer.bypassSecurityTrustHtml(expandedHtml));
+  private renderCurrentViewAndHydrate(targetSectionId?: string): void {
+    const fullHtml = this.fullCategoryHtml();
+    const isFocused = this.lessonViewMode() === 'focused' && this.activeCat().id !== 'all';
+    const viewHtml = isFocused
+      ? extractSingleSectionHtml(fullHtml, this.activeSectionId())
+      : fullHtml;
+
+    this.safeContent.set(this.sanitizer.bypassSecurityTrustHtml(viewHtml));
 
     if (isPlatformBrowser(this.platformId)) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (!targetSectionId) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       setTimeout(() => {
         const hostEl = this.contentHost()?.nativeElement;
         if (hostEl) {
@@ -713,9 +1094,93 @@ export class App implements OnInit, OnDestroy {
             this.modalManager
           );
           hydrateInteractiveArcade(hostEl, this.audio, (msg) => this.activeNoteLabel.set(msg));
+          this.ensureActiveSectionVisibleForLevelFilter();
           this.applyLevelDomFilter();
+          this.setupSectionScrollObserver(hostEl);
+          if (targetSectionId) {
+            const targetEl = document.getElementById(targetSectionId);
+            if (targetEl) {
+              this.isProgrammaticScroll = true;
+              targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              setTimeout(() => {
+                this.isProgrammaticScroll = false;
+              }, 700);
+            }
+          }
         }
-      }, 20);
+      }, 25);
+    }
+  }
+
+  private setupSectionScrollObserver(hostEl: HTMLElement): void {
+    if (this.sectionObserver) {
+      this.sectionObserver.disconnect();
+      this.sectionObserver = null;
+    }
+    if (!isPlatformBrowser(this.platformId) || typeof IntersectionObserver === 'undefined') return;
+    if (this.lessonViewMode() !== 'full') return;
+
+    const sectionEls = hostEl.querySelectorAll<HTMLElement>('section.module-section[id]');
+    if (sectionEls.length <= 1) return;
+
+    this.sectionObserver = new IntersectionObserver(
+      (entries) => {
+        if (this.isProgrammaticScroll) return;
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        const topEntry = visible[0];
+        const secId = topEntry?.target?.getAttribute('id');
+        if (secId && secId !== this.activeSectionId()) {
+          this.activeSectionId.set(secId);
+          const stage = findStageForSection(secId);
+          if (stage) this.selectedStageId.set(stage.id);
+        }
+      },
+      { rootMargin: '-18% 0px -68% 0px', threshold: 0 }
+    );
+
+    sectionEls.forEach((el) => this.sectionObserver?.observe(el));
+  }
+
+  private ensureActiveSectionVisibleForLevelFilter(): void {
+    const activeSec = this.sections().find((s) => s.id === this.activeSectionId());
+    if (!activeSec) return;
+    const minLvl = this.parseMinNivel(activeSec.nivel);
+    const currentFilter = parseInt(this.activeLevelFilter(), 10);
+    if (minLvl > currentFilter) {
+      this.activeLevelFilter.set(minLvl >= 3 ? '4' : '2');
+    }
+  }
+
+  goPrevLesson(): void {
+    const prev = this.prevLesson();
+    if (prev) {
+      this.scrollToSection(prev.id);
+      return;
+    }
+    const prevCat = this.prevCategory();
+    if (prevCat) {
+      const prevHtml = this.buildAssembledCategoryHtml(prevCat.id);
+      const regex = /<section\s+id="([^"]+)"/g;
+      let lastId = '';
+      let m: RegExpExecArray | null;
+      while ((m = regex.exec(prevHtml)) !== null) {
+        lastId = m[1];
+      }
+      this.loadCategory(prevCat, lastId || undefined);
+    }
+  }
+
+  goNextLesson(): void {
+    const next = this.nextLesson();
+    if (next) {
+      this.scrollToSection(next.id);
+      return;
+    }
+    const nextCat = this.nextCategory();
+    if (nextCat) {
+      this.loadCategory(nextCat);
     }
   }
 
@@ -753,7 +1218,7 @@ export class App implements OnInit, OnDestroy {
     let hiddenCount = 0;
 
     const candidates = hostEl.querySelectorAll<HTMLElement>(
-      'section.module-section[data-nivel], .callout-box[data-nivel], details[data-nivel], article[data-nivel]'
+      'section.module-section[data-nivel], .callout-box[data-nivel], .callout[data-nivel], details[data-nivel], article[data-nivel], div[data-nivel]'
     );
 
     candidates.forEach((el) => {
@@ -818,7 +1283,7 @@ export class App implements OnInit, OnDestroy {
     this.activeNoteLabel.set(`Timbre global cambiado a: ${label}`);
   }
 
-  private extractSections(html: string): void {
+  private extractSections(html: string, initialSectionId?: string): void {
     const list: SectionAnchor[] = [];
     const regex = /<section\s+id="([^"]+)"[^>]*data-nivel="([^"]+)"[^>]*data-menu="([^"]+)"/g;
     let match: RegExpExecArray | null;
@@ -831,18 +1296,51 @@ export class App implements OnInit, OnDestroy {
     }
     this.sections.set(list);
     if (list.length > 0) {
-      this.activeSectionId.set(list[0].id);
+      const preferred = initialSectionId && list.some((s) => s.id === initialSectionId)
+        ? initialSectionId
+        : list[0].id;
+      this.activeSectionId.set(preferred);
     }
   }
 
   scrollToSection(id: string): void {
     if (!isPlatformBrowser(this.platformId)) return;
     this.mobileMenuOpen.set(false);
+    const isSameSection = this.activeSectionId() === id;
     this.activeSectionId.set(id);
+    const stage = findStageForSection(id);
+    if (stage) {
+      this.selectedStageId.set(stage.id);
+    }
+
+    if (this.lessonViewMode() === 'focused' && this.activeCat().id !== 'all') {
+      if (!isSameSection || !document.getElementById(id)) {
+        this.renderCurrentViewAndHydrate();
+        return;
+      }
+    }
+
     const el = document.getElementById(id);
     if (el) {
       if (el.classList.contains('level-locked-hidden')) {
         el.setAttribute('data-user-unlocked', '1');
+        this.applyLevelDomFilter();
+      }
+      this.isProgrammaticScroll = true;
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => {
+        this.isProgrammaticScroll = false;
+      }, 700);
+    }
+  }
+
+  scrollToIntraAnchor(anchorId: string): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const el = document.getElementById(anchorId);
+    if (el) {
+      if (el.closest('.level-locked-hidden')) {
+        const lockedParent = el.closest('.level-locked-hidden') as HTMLElement | null;
+        lockedParent?.setAttribute('data-user-unlocked', '1');
         this.applyLevelDomFilter();
       }
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -971,32 +1469,10 @@ export class App implements OnInit, OnDestroy {
   }
 
   jumpToCrossSection(sectionId: string): void {
-    const prefixMap: Record<string, string> = {
-      'intro': 'teoria',
-      't-': 'teoria',
-      'h-': 'armonia',
-      'c-': 'composicion',
-      'ga-': 'guitarra-ac',
-      'ge-': 'guitarra-el',
-      'b-': 'bajo',
-      'd-': 'bateria',
-      'v-': 'canto',
-      'f-': 'folclore',
-      'a-': 'arreglos',
-      'p-': 'produccion',
-      'pr-': 'produccion',
-    };
-    let foundCatId = '';
-    for (const [prefix, catId] of Object.entries(prefixMap)) {
-      if (sectionId === prefix || sectionId.startsWith(prefix)) {
-        foundCatId = catId;
-        break;
-      }
-    }
-    const targetCat = this.categories.find((c) => c.id === foundCatId);
+    const resolved = resolveCategoryForSectionId(sectionId);
+    const targetCat = this.categories.find((c) => c.id === resolved);
     if (targetCat) {
-      this.loadCategory(targetCat);
-      setTimeout(() => this.scrollToSection(sectionId), 120);
+      this.openLesson(targetCat.id, sectionId);
     }
   }
 
@@ -1033,7 +1509,28 @@ export class App implements OnInit, OnDestroy {
     this.audio.stopAll();
     this.activeNoteLabel.set(`Reproduciendo ejercicio interactivo: ${name}`);
 
-    if (name === 'demoOctaves') {
+    if (name === 'demoPulseOnly') {
+      [0, 1, 2, 3].forEach((i) => {
+        this.audio.playDrumHit(i === 0 ? 'clap' : 'hihat', i * 0.55);
+      });
+      this.activeNoteLabel.set('Etapa 0 · Pulso constante (1 – 2 – 3 – 4)');
+    } else if (name === 'demoRhythmClap') {
+      const hits: { piece: 'kick' | 'clap' | 'snare' | 'hihat'; t: number }[] = [
+        { piece: 'kick', t: 0 },
+        { piece: 'hihat', t: 0.275 },
+        { piece: 'snare', t: 0.55 },
+        { piece: 'kick', t: 0.825 },
+        { piece: 'kick', t: 1.1 },
+        { piece: 'snare', t: 1.65 },
+        { piece: 'clap', t: 1.925 },
+      ];
+      hits.forEach((h) => this.audio.playDrumHit(h.piece, h.t));
+      this.activeNoteLabel.set('Etapa 0 · Ritmo (golpes largos, cortos y síncopas sobre el pulso)');
+    } else if (name === 'demoMelodyHook') {
+      const melody = [60, 64, 67, 64, 60, 62, 64, 60];
+      melody.forEach((m, i) => this.playMidiNote(m, 0.36, i * 0.28, false));
+      this.activeNoteLabel.set('Etapa 0 · Melodía (ritmo + alturas que suben y bajan)');
+    } else if (name === 'demoOctaves') {
       [36, 48, 60, 72, 84].forEach((m, i) => this.playMidiNote(m, 0.85, i * 0.42, false));
     } else if (name === 'demoRiffAudio') {
       const notes = [40, 43, 45, 46, 47, 45, 40];

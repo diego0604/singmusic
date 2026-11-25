@@ -54,6 +54,60 @@ import {
   pickRandomWritingPromptWords,
   evaluateWritingDraftWithWords,
 } from './music-games-logic';
+import {
+  ACADEMY_LEARNING_PATHS,
+  ACADEMY_STAGES,
+  MAJOR_SCALE_LADDER_PRESETS,
+  RHYTHM_STARTER_PATTERNS,
+  TEORIA_PEDAGOGICAL_ORDER,
+  assembleAcademyCategoryHtml,
+  extractSingleSectionHtml,
+  findStageForSection,
+  getStageProgress,
+  resolveCategoryForSectionId,
+  resolveKeySignatureFiveSecondRule,
+  splitHtmlSections,
+} from './academy-curriculum';
+import {
+  buildActiveReviewQueue,
+  detectLessonFrameworkPhases,
+  formatReviewStatusLabel,
+  getDueReviews,
+  getLessonPracticalMicroChallenge,
+  getLessonQuizQuestions,
+  getStageGraduationSummary,
+  getTotalGraduationsCount,
+  scheduleNextReview,
+} from './academy-practice';
+import {
+  analyzeCounterpointMotion,
+  COUNTERPOINT_PRESETS,
+  generateImprovisationPhrase,
+  IMPROVISATION_TRACKS,
+  INSTRUMENT_ANATOMY_DATA,
+} from './academy-stage3-logic';
+import { applyStage1LessonUpgrades } from './academy-lessons';
+import {
+  auditIntegratorBlueprint,
+  buildMidiRollEvents,
+  COMPLEX_WORK_SECTIONS,
+  computeAdsrEnvelopePoints,
+  computeEqCurveDb,
+  computeLowPassResponseCurve,
+  EQ_PRESETS,
+  evaluateMixAndMasterMetrics,
+  MIDI_GROOVE_PRESETS,
+  SYNTH_PATCH_PRESETS,
+} from './academy-stage4-logic';
+import { ENCYCLOPEDIA_CONTENT } from './encyclopedia-data';
+import { injectTreatiseEnrichmentIntoCategoryHtml } from './treatise-enrichment';
+import {
+  FUNDAMENTALS_GUIDED_LESSONS,
+  FUNDAMENTALS_PIANO_KEYS,
+  evaluateFundamentalsKeyTap,
+  pickNextEarDrillMidi,
+  renderTrebleStaffNoteSvg,
+} from './fundamentals-guided-logic';
 
 test('E2 to D5 vocal range is accurately classified as Extended Range / Baritenor (34 semitones)', () => {
   const diag = classifyVocalRangeDetailed(40, 74, 'mid'); // E2 = 40, D5 = 74
@@ -941,6 +995,464 @@ test('pickRandomWritingPromptWords picks 2..5 distinct words and evaluateWriting
   assert.equal(evalResult.totalLines, 1); // ignores bracket header lines
   assert.ok(evalResult.lines[0].metricSyllables > 0);
 });
+
+test('ACADEMY_STAGES covers 8 progressive stages (Etapa 0 to Etapa 7) with Graduation Projects and expanded routes', () => {
+  assert.equal(ACADEMY_STAGES.length, 8);
+  assert.deepEqual(
+    ACADEMY_STAGES.map((s) => s.number),
+    [0, 1, 2, 3, 4, 5, 6, 7]
+  );
+  for (const st of ACADEMY_STAGES) {
+    assert.ok(st.lessons.length >= 3, `Stage ${st.number} should have lessons`);
+    assert.ok(st.graduationProject.title.length > 5);
+    assert.equal(st.graduationProject.deliverables.length, 3);
+  }
+  assert.equal(findStageForSection('intro')?.number, 0);
+  assert.equal(findStageForSection('t-ritmo')?.number, 1);
+  assert.equal(findStageForSection('t-modos')?.number, 4);
+
+  const p = getStageProgress(ACADEMY_STAGES[0], ['intro', 't-sonido']);
+  assert.equal(p.done, 2);
+  assert.equal(p.total, 3);
+  assert.equal(p.pct, 67);
+
+  assert.ok(ACADEMY_LEARNING_PATHS.some((pTrack) => pTrack.id === 'ruta-guitarra-completa' && pTrack.steps.length === 8));
+  assert.ok(ACADEMY_LEARNING_PATHS.some((pTrack) => pTrack.id === 'ruta-maestria-teorica' && pTrack.steps.length === 8));
+});
+
+test('assembleAcademyCategoryHtml reorders Teoria pedagogically and relocates 3B & Modos to Armonia cleanly', () => {
+  const teoriaEnriched = injectTreatiseEnrichmentIntoCategoryHtml('teoria', ENCYCLOPEDIA_CONTENT['teoria']);
+  const armoniaEnriched = injectTreatiseEnrichmentIntoCategoryHtml('armonia', ENCYCLOPEDIA_CONTENT['armonia']);
+
+  const teoriaFinal = assembleAcademyCategoryHtml('teoria', teoriaEnriched, undefined, applyStage1LessonUpgrades);
+  const armoniaFinal = assembleAcademyCategoryHtml('armonia', armoniaEnriched, teoriaEnriched, applyStage1LessonUpgrades);
+
+  const teoriaSections = splitHtmlSections(teoriaFinal);
+  assert.deepEqual(
+    teoriaSections.map((s) => s.id),
+    TEORIA_PEDAGOGICAL_ORDER.map((x) => x.id)
+  );
+  assert.ok(!teoriaSections.some((s) => s.id === 't-visualizador-9nintervalos'));
+  assert.ok(!teoriaSections.some((s) => s.id === 't-modos'));
+
+  // Rhythm starter, scale staircase, and key signature labs are embedded inside Stage 1
+  assert.ok(teoriaFinal.includes('data-lab="rhythm-starter-lab"'));
+  assert.ok(teoriaFinal.includes('data-lab="major-scale-ladder-lab"'));
+  assert.ok(teoriaFinal.includes('data-lab="key-signature-lab"'));
+  assert.ok(teoriaFinal.includes('data-run="demoPulseOnly"'));
+
+  const armoniaSections = splitHtmlSections(armoniaFinal);
+  assert.ok(armoniaSections.some((s) => s.id === 't-visualizador-9nintervalos'));
+  assert.ok(armoniaSections.some((s) => s.id === 't-modos'));
+  assert.equal(resolveCategoryForSectionId('t-visualizador-9nintervalos'), 'armonia');
+  assert.equal(resolveCategoryForSectionId('t-modos'), 'armonia');
+
+  const focusedRitmo = extractSingleSectionHtml(teoriaFinal, 't-ritmo');
+  assert.equal(splitHtmlSections(focusedRitmo).length, 1);
+  assert.equal(splitHtmlSections(focusedRitmo)[0].id, 't-ritmo');
+});
+
+test('resolveKeySignatureFiveSecondRule and MAJOR_SCALE_LADDER_PRESETS compute exact accidentals and explanations', () => {
+  const cMaj = resolveKeySignatureFiveSecondRule('sharp', 0);
+  assert.equal(cMaj.majorKey, 'C Mayor');
+
+  const aMaj = resolveKeySignatureFiveSecondRule('sharp', 3); // F#, C#, G# -> last is G# -> A Mayor
+  assert.equal(aMaj.majorKey, 'A Mayor');
+  assert.equal(aMaj.relativeMinor, 'F# menor');
+  assert.deepEqual(aMaj.accidentals, ['F#', 'C#', 'G#']);
+
+  const fMaj = resolveKeySignatureFiveSecondRule('flat', 1); // 1 flat exception = F Mayor
+  assert.equal(fMaj.majorKey, 'F Mayor');
+
+  const ebMaj = resolveKeySignatureFiveSecondRule('flat', 3); // Bb, Eb, Ab -> penultimate Eb -> Eb Mayor
+  assert.equal(ebMaj.majorKey, 'E♭ Mayor');
+  assert.equal(ebMaj.relativeMinor, 'C menor');
+
+  const gPreset = MAJOR_SCALE_LADDER_PRESETS.find((p) => p.id === 'G');
+  assert.ok(gPreset);
+  assert.equal(gPreset.notes[6], 'F#');
+  assert.deepEqual(gPreset.alteredDegrees, [7]);
+
+  const fPreset = MAJOR_SCALE_LADDER_PRESETS.find((p) => p.id === 'F');
+  assert.ok(fPreset);
+  assert.equal(fPreset.notes[3], 'B♭');
+  assert.deepEqual(fPreset.alteredDegrees, [4]);
+
+  assert.equal(RHYTHM_STARTER_PATTERNS.length, 7);
+});
+
+test('scheduleNextReview and getDueReviews manage spaced-repetition intervals cleanly', () => {
+  const dayMs = 86_400_000;
+  const t0 = 1_700_000_000_000;
+
+  // Initial pass >=75% schedules first spaced review at 3 days; borderline 60% schedules 1 day
+  const freshPass = scheduleNextReview(undefined, 100, t0);
+  const borderlineFirst = scheduleNextReview(undefined, 60, t0);
+  assert.equal(freshPass.intervalDays, 3);
+  assert.equal(freshPass.streak, 1);
+  assert.equal(freshPass.nextReviewAt, t0 + 3 * dayMs);
+  assert.equal(borderlineFirst.intervalDays, 1);
+  assert.equal(borderlineFirst.streak, 0);
+
+  // Advancing again moves 3d -> 7d -> 14d -> 30d
+  const pass2 = scheduleNextReview({ ...freshPass, sectionId: 't-ritmo' }, 80, t0 + 3 * dayMs);
+  assert.equal(pass2.intervalDays, 7);
+  assert.equal(pass2.streak, 2);
+
+  // Failing (<50%) resets interval to 1 day and streak to 0
+  const failReset = scheduleNextReview(pass2, 25, t0 + 10 * dayMs);
+  assert.equal(failReset.intervalDays, 1);
+  assert.equal(failReset.streak, 0);
+
+  // Mid score (50..74%) holds interval
+  const midHold = scheduleNextReview(pass2, 60, t0 + 10 * dayMs);
+  assert.equal(midHold.intervalDays, 7);
+
+  // getDueReviews surfaces due first, then untested completed, then upcoming
+  const dueList = getDueReviews(
+    {
+      intro: { ...freshPass, sectionId: 'intro', nextReviewAt: t0 - 1000 },
+      't-escalas': { ...pass2, sectionId: 't-escalas', nextReviewAt: t0 + 5 * dayMs },
+    },
+    ['intro', 't-notas', 't-escalas'],
+    t0
+  );
+  assert.equal(dueList[0].sectionId, 'intro');
+  assert.equal(dueList[0].status, 'due');
+  assert.equal(dueList[1].sectionId, 't-notas');
+  assert.equal(dueList[1].status, 'untested');
+  assert.equal(dueList[2].sectionId, 't-escalas');
+  assert.equal(dueList[2].status, 'upcoming');
+  assert.ok(formatReviewStatusLabel(undefined, t0).includes('Pendiente'));
+  assert.ok(formatReviewStatusLabel(dueList[0].status === 'due' ? { ...freshPass, nextReviewAt: t0 - 1000 } : undefined, t0).includes('hoy'));
+});
+
+test('getStageGraduationSummary and getTotalGraduationsCount track 8-stage rubrics accurately', () => {
+  const stage0 = ACADEMY_STAGES[0];
+  const emptySummary = getStageGraduationSummary(stage0, {});
+  assert.equal(emptySummary.checkedCount, 0);
+  assert.equal(emptySummary.totalCount, 3);
+  assert.equal(emptySummary.isGraduated, false);
+
+  const partialRubric = {
+    [stage0.id]: {
+      checked: [true, true, false],
+      ratings: [2, 3, 1] as (0 | 1 | 2 | 3)[],
+      note: 'Estrellita tocada a 70 BPM',
+    },
+  };
+  const partialSummary = getStageGraduationSummary(stage0, partialRubric);
+  assert.equal(partialSummary.checkedCount, 2);
+  assert.equal(partialSummary.pct, 67);
+  assert.equal(partialSummary.isGraduated, false);
+
+  const fullRubric = {
+    [stage0.id]: {
+      checked: [true, true, true],
+      ratings: [3, 3, 3] as (0 | 1 | 2 | 3)[],
+      note: 'Completado',
+    },
+  };
+  const fullSummary = getStageGraduationSummary(stage0, fullRubric);
+  assert.equal(fullSummary.checkedCount, 3);
+  assert.equal(fullSummary.pct, 100);
+  assert.equal(fullSummary.isGraduated, true);
+  assert.equal(fullSummary.averageRatingLabel, 'Con fluidez');
+
+  const totals = getTotalGraduationsCount(ACADEMY_STAGES, fullRubric);
+  assert.equal(totals.graduated, 1);
+  assert.equal(totals.total, 8);
+});
+
+test('Every academy lesson has valid active-recall quiz questions, practical challenge, and 10-phase framework map', () => {
+  for (const stage of ACADEMY_STAGES) {
+    for (const lesson of stage.lessons) {
+      const qs = getLessonQuizQuestions(lesson.sectionId);
+      assert.ok(qs.length >= 1, `Missing quiz questions for ${lesson.sectionId}`);
+      for (const q of qs) {
+        assert.equal(q.options.length, 4);
+        assert.ok(q.correctIndex >= 0 && q.correctIndex <= 3);
+        assert.ok(q.explanation.length > 10);
+      }
+      const challenge = getLessonPracticalMicroChallenge(lesson.sectionId);
+      assert.ok(challenge.exerciseGoal.length > 10);
+      assert.ok(challenge.instrumentApplication.length > 10);
+    }
+  }
+
+  const phases = detectLessonFrameworkPhases(
+    '<section id="t-ritmo"><h3 id="h3-a">Sub</h3><button class="btn-audio" data-run="demoPulseOnly">Play</button><article id="lab-1" data-lab="rhythm-starter-lab"><svg></svg></article></section>'
+  );
+  assert.equal(phases.length, 10);
+  assert.equal(phases[0].name, 'Fundamento');
+  assert.equal(phases[4].name, 'Laboratorio');
+  assert.equal(phases[4].available, true);
+  assert.equal(phases[9].name, 'Repaso');
+
+  const queue = buildActiveReviewQueue({}, ['intro', 't-ritmo'], 't-escalas', Date.now(), 4);
+  assert.equal(queue.length, 4);
+  assert.equal(new Set(queue.map((q) => q.id)).size, 4);
+});
+
+test('Stage 3 Counterpoint analyzer flags forbidden parallel 5ths/8ths and validates clean contrary motion presets', () => {
+  assert.equal(COUNTERPOINT_PRESETS.length, 8);
+
+  const cleanSpecies1 = COUNTERPOINT_PRESETS.find((p) => p.id === 'especie-1-contrario')!;
+  const cleanResult = analyzeCounterpointMotion(cleanSpecies1.cantusMidis, cleanSpecies1.counterMidis);
+  assert.equal(cleanResult.forbiddenParallelsCount, 0);
+  assert.ok(cleanResult.contraryCount >= 4);
+  assert.ok(cleanResult.verdict.includes('0 quintas/octavas paralelas'));
+
+  const trapPreset = COUNTERPOINT_PRESETS.find((p) => p.id === 'trampa-paralelas')!;
+  const trapResult = analyzeCounterpointMotion(trapPreset.cantusMidis, trapPreset.counterMidis);
+  assert.ok(trapResult.forbiddenParallelsCount >= 5);
+  assert.ok(trapResult.steps.some((s) => s.isForbiddenParallel && s.warningText !== null));
+});
+
+test('Stage 3 Improvisation Gym generates 4-bar Question/Response phrases across all 6 genres and target roots', () => {
+  assert.equal(IMPROVISATION_TRACKS.length, 6);
+
+  for (const track of IMPROVISATION_TRACKS) {
+    const session = generateImprovisationPhrase(track.id, 60, 2);
+    assert.equal(session.chords.length, 4);
+    assert.equal(session.notes.length, 12);
+    assert.equal(session.notes[0].role, 'Pregunta (Motivo)');
+    assert.equal(session.notes[11].role, 'Respuesta (Resolución)');
+    assert.ok(session.notes.every((n) => n.fretHint.length > 5 && n.noteLabel.length >= 2));
+  }
+
+  // Jazz ii-V-I highlight guide tones on C root
+  const jazz = generateImprovisationPhrase('jazz', 60, 1);
+  assert.deepEqual(
+    jazz.chords.map((c) => c.label),
+    ['ii7', 'V7', 'Imaj7', 'Imaj7']
+  );
+  assert.ok(jazz.notes.some((n) => n.toneBadge === 'Nota Guía (3ª/7ª)'));
+});
+
+test('Stage 3 Anatomy kits and lesson assembly inject interactive counterpoint, improvisation, and anatomy labs cleanly', () => {
+  for (const inst of ['guitar', 'bass', 'drum', 'voice'] as const) {
+    const kit = INSTRUMENT_ANATOMY_DATA[inst];
+    assert.ok(kit.hotspots.length >= 4, `Expected >=4 hotspots for ${inst}`);
+    for (const h of kit.hotspots) {
+      assert.ok(h.functionText.length > 15);
+      assert.ok(h.techniqueTip.length > 15);
+      assert.ok(h.commonMistake.length > 15);
+      assert.ok(h.demoMidis.length >= 1);
+    }
+  }
+
+  const compHtml = assembleAcademyCategoryHtml(
+    'composicion',
+    injectTreatiseEnrichmentIntoCategoryHtml('composicion', ENCYCLOPEDIA_CONTENT['composicion']),
+    undefined,
+    applyStage1LessonUpgrades
+  );
+  assert.ok(compHtml.includes('data-lab="counterpoint-lab"'));
+  assert.ok(compHtml.includes('Fuga: Sujeto, Respuesta y Contrasujeto'));
+
+  const gtrElHtml = assembleAcademyCategoryHtml(
+    'guitarra-el',
+    injectTreatiseEnrichmentIntoCategoryHtml('guitarra-el', ENCYCLOPEDIA_CONTENT['guitarra-el']),
+    undefined,
+    applyStage1LessonUpgrades
+  );
+  assert.ok(gtrElHtml.includes('data-lab="improvisation-gym-lab"'));
+
+  for (const [catId, inst] of [
+    ['guitarra-ac', 'guitar'],
+    ['bajo', 'bass'],
+    ['bateria', 'drum'],
+    ['canto', 'voice'],
+  ] as const) {
+    const catHtml = assembleAcademyCategoryHtml(
+      catId,
+      injectTreatiseEnrichmentIntoCategoryHtml(catId, ENCYCLOPEDIA_CONTENT[catId]),
+      undefined,
+      applyStage1LessonUpgrades
+    );
+    assert.ok(catHtml.includes(`data-lab="anatomy-lab"`), `Missing anatomy lab in ${catId}`);
+    assert.ok(catHtml.includes(`data-instrument="${inst}"`), `Missing data-instrument="${inst}" in ${catId}`);
+  }
+
+  // Curated quizzes for Stage 3 lessons
+  for (const secId of ['c-contrapunto', 'ge-riffs-solos', 'ga-fundamentos', 'b-fundamentos', 'd-fundamentos', 'v-fundamentos']) {
+    const qs = getLessonQuizQuestions(secId);
+    assert.ok(qs.length >= 1);
+    const ch = getLessonPracticalMicroChallenge(secId);
+    assert.ok(ch.exerciseGoal.length > 20);
+  }
+});
+
+test('Stage 4 Synthesis ADSR, resonant LPF curve, and MIDI humanization compute deterministic bounded values', () => {
+  assert.ok(SYNTH_PATCH_PRESETS.length >= 4);
+  const env = computeAdsrEnvelopePoints({ attackMs: 25, decayMs: 200, sustain: 0.6, releaseMs: 300 });
+  assert.equal(env.nodes.length, 5);
+  assert.ok(env.pointsAttr.split(' ').length === 5);
+
+  const lpf = computeLowPassResponseCurve(800, 4.5);
+  const lowFreq = lpf.find((p) => p.freqHz === 80)!;
+  const highFreq = lpf.find((p) => p.freqHz === 16000)!;
+  assert.ok(lowFreq.db > highFreq.db, 'Low frequencies must pass louder than attenuated highs above cutoff');
+
+  const tightMidi = buildMidiRollEvents(MIDI_GROOVE_PRESETS[0].id, 0, 48);
+  const humanMidi = buildMidiRollEvents(MIDI_GROOVE_PRESETS[0].id, 80, 48);
+  assert.equal(tightMidi.length, humanMidi.length);
+  assert.ok(tightMidi.every((ev) => ev.timingOffsetMs === 0));
+  assert.ok(humanMidi.some((ev) => ev.timingOffsetMs !== 0));
+  assert.ok(humanMidi.every((ev) => ev.velocity >= 1 && ev.velocity <= 127 && ev.hexNoteOn.startsWith('0x90 ')));
+});
+
+test('Stage 4 EQ curve and Mastering auditor classify clean mix, 250 Hz mud, and over-limiting accurately', () => {
+  const cleanCurve = computeEqCurveDb({ hpfHz: 110, lowMidDb: -3.5, presenceDb: 2.5, airDb: 2.0 });
+  const pt30 = cleanCurve.find((p) => p.freqHz === 30)!;
+  const pt250 = cleanCurve.find((p) => p.freqHz === 250)!;
+  assert.ok(pt30.db < -10, 'HPF at 110 Hz must strongly roll off 30 Hz');
+  assert.ok(pt250.db < 0);
+
+  const nominal = evaluateMixAndMasterMetrics({
+    stemId: 'lead-vocal',
+    targetLufs: -14,
+    ...EQ_PRESETS[0].settings,
+  });
+  assert.equal(nominal.mudRisk, 'nominal');
+
+  const muddy = evaluateMixAndMasterMetrics({
+    stemId: 'rhythm-guitar',
+    targetLufs: -14,
+    ...EQ_PRESETS[1].settings,
+  });
+  assert.equal(muddy.mudRisk, 'warning');
+
+  const squashed = evaluateMixAndMasterMetrics({
+    stemId: 'full-band',
+    targetLufs: -9,
+    ...EQ_PRESETS[2].settings,
+  });
+  assert.equal(squashed.mudRisk, 'critical');
+});
+
+test('Stage 4 Complex Work inspector, Integrator auditor, and Stage 6-7 lesson upgrades assemble cleanly', () => {
+  assert.equal(COMPLEX_WORK_SECTIONS.length, 5);
+  for (const sec of COMPLEX_WORK_SECTIONS) {
+    assert.equal(sec.bassMidis.length, sec.chordSymbols.length);
+    assert.equal(sec.melodyMidis.length, sec.chordSymbols.length);
+  }
+
+  const cleanProject = auditIntegratorBlueprint({
+    projectStyleId: 'andino',
+    keyLabel: 'E',
+    rootMidi: 4,
+    bpm: 100,
+    bassOctave: 1,
+    harmonyRegister: 'mid',
+    harmonicDevice: 'dim-bridge',
+  });
+  assert.equal(cleanProject.hasCollision, false);
+  assert.equal(cleanProject.quarterMs, 600);
+  assert.equal(cleanProject.dottedEighthDelayMs, 450);
+
+  const collidingProject = auditIntegratorBlueprint({
+    projectStyleId: 'funk',
+    keyLabel: 'C',
+    rootMidi: 0,
+    bpm: 96,
+    bassOctave: 3,
+    harmonyRegister: 'low',
+    harmonicDevice: 'tritone-sub',
+  });
+  assert.equal(collidingProject.hasCollision, true);
+
+  const prodHtml = assembleAcademyCategoryHtml(
+    'produccion',
+    injectTreatiseEnrichmentIntoCategoryHtml('produccion', ENCYCLOPEDIA_CONTENT['produccion']),
+    undefined,
+    applyStage1LessonUpgrades
+  );
+  assert.ok(prodHtml.includes('data-lab="synth-midi-lab"'));
+  assert.ok(prodHtml.includes('data-lab="mix-master-lab"'));
+  assert.ok(prodHtml.includes('data-lab="master-project-lab"'));
+
+  const compHtml = assembleAcademyCategoryHtml(
+    'composicion',
+    injectTreatiseEnrichmentIntoCategoryHtml('composicion', ENCYCLOPEDIA_CONTENT['composicion']),
+    undefined,
+    applyStage1LessonUpgrades
+  );
+  assert.ok(compHtml.includes('data-lab="work-analysis-lab"'));
+
+  for (const secId of ['p-fundamentos', 'p-mezcla', 'c-ejemplo', 'pr-proyectos']) {
+    const qs = getLessonQuizQuestions(secId);
+    assert.ok(qs.length >= 1, `Missing quiz for ${secId}`);
+    const ch = getLessonPracticalMicroChallenge(secId);
+    assert.ok(ch.exerciseGoal.length > 20, `Missing challenge for ${secId}`);
+  }
+});
+
+test('Guided Fundamentals series covers 8 Teoria chapters with playable C4-C5 piano keys and deterministic evaluation', () => {
+  assert.equal(FUNDAMENTALS_PIANO_KEYS.length, 13);
+  assert.equal(FUNDAMENTALS_GUIDED_LESSONS.length, 8);
+
+  const expectedSections = ['intro', 't-sonido', 't-notas', 't-escalas', 't-intervalos', 't-tonalidades', 't-lectura', 't-oido'];
+  assert.deepEqual(
+    FUNDAMENTALS_GUIDED_LESSONS.map((l) => l.sectionId),
+    expectedSections
+  );
+
+  for (const lesson of FUNDAMENTALS_GUIDED_LESSONS) {
+    assert.ok(lesson.briefExplanation.length > 60, `Expected clear explanation for ${lesson.id}`);
+    assert.ok(lesson.steps.length >= 3, `Expected at least 3 interactive steps for ${lesson.id}`);
+    for (const step of lesson.steps) {
+      assert.ok(step.targetMidis.every((m) => m >= 60 && m <= 72));
+      assert.ok(step.demoMidis.every((m) => m >= 60 && m <= 72));
+    }
+  }
+
+  // Sequence evaluation step-by-step
+  const seqStep = FUNDAMENTALS_GUIDED_LESSONS[2].steps[0]; // E4 -> F4 -> B4 -> C5
+  const hit1 = evaluateFundamentalsKeyTap(seqStep, 64, 0);
+  assert.equal(hit1.matchedStep, true);
+  assert.equal(hit1.advancedProgress, 1);
+  assert.equal(hit1.completedStep, false);
+
+  const wrong = evaluateFundamentalsKeyTap(seqStep, 67, 1);
+  assert.equal(wrong.matchedStep, false);
+  assert.equal(wrong.advancedProgress, 1);
+
+  const hit2 = evaluateFundamentalsKeyTap(seqStep, 65, 1);
+  const hit3 = evaluateFundamentalsKeyTap(seqStep, 71, 2);
+  const hit4 = evaluateFundamentalsKeyTap(seqStep, 72, 3);
+  assert.equal(hit2.advancedProgress, 2);
+  assert.equal(hit3.advancedProgress, 3);
+  assert.equal(hit4.completedStep, true);
+  assert.equal(hit4.tone, 'ok');
+
+  // Staff SVG rendering and ear drill selection
+  const staffSvg = renderTrebleStaffNoteSvg(60); // C4 ledger line
+  assert.ok(staffSvg.includes('<svg') && staffSvg.includes('y1="88"'));
+  const nextEar = pickNextEarDrillMidi([62, 64, 67], 64);
+  assert.notEqual(nextEar, 64);
+
+  // Full Teoria assembly includes all 8 guided fundamentals labs cleanly
+  const teoriaFinal = assembleAcademyCategoryHtml(
+    'teoria',
+    injectTreatiseEnrichmentIntoCategoryHtml('teoria', ENCYCLOPEDIA_CONTENT['teoria']),
+    undefined,
+    applyStage1LessonUpgrades
+  );
+  for (const lesson of FUNDAMENTALS_GUIDED_LESSONS) {
+    assert.ok(
+      teoriaFinal.includes(`data-lesson="${lesson.id}"`),
+      `Missing guided fundamentals lab ${lesson.id} in Teoria`
+    );
+  }
+  assert.ok(teoriaFinal.includes('¿Por qué existen 3 Escalas Menores'));
+  assert.ok(teoriaFinal.includes('Cómo leer Tablatura (TAB) sin invertir las cuerdas'));
+  assert.ok(teoriaFinal.includes('Relativa vs. Paralela'));
+});
+
+
+
 
 
 

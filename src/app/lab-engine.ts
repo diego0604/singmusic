@@ -51,6 +51,7 @@ import {
   buildGuitarDexterityLab,
   buildStudioDataLabStage,
 } from './studio-labs';
+import { buildAcademyDataLabStage } from './academy-labs';
 import type { DiagramModalManager } from './diagram-modal';
 
 export interface ScaleDefinition {
@@ -6496,6 +6497,10 @@ function buildDataLabStage(
     !!article.closest('section[data-cat="bajo"]');
 
   if (buildStudioDataLabStage(stage, labType, article, audio, onStatus)) {
+    return;
+  }
+
+  if (buildAcademyDataLabStage(stage, labType, audio, onStatus, article)) {
     return;
   }
 

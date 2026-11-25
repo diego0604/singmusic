@@ -10,8 +10,8 @@ export interface TreatiseSearchMeta {
 
 export const TREATISE_ENRICHMENT_SEARCH_META: TreatiseSearchMeta[] = [
   {
-    catId: 'teoria',
-    catLabel: '1. Teoría y Acústica',
+    catId: 'armonia',
+    catLabel: '2. Armonía Práctica',
     sectionId: 't-modos',
     sectionTitle: '🗺️ Cartografía Modal de 14 Modos, Técnica por Descarte e Ingredientes Emocionales',
     nivel: '3-4',
@@ -145,8 +145,8 @@ export const TREATISE_ENRICHMENT_SEARCH_META: TreatiseSearchMeta[] = [
     snippet: 'La receta de los 2 pisos de terceras para entender y escuchar por qué un acorde es Mayor, Menor, Disminuido o Aumentado.',
   },
   {
-    catId: 'teoria',
-    catLabel: '1. Teoría y Acústica',
+    catId: 'armonia',
+    catLabel: '2. Armonía Práctica',
     sectionId: 't-visualizador-9nintervalos',
     sectionTitle: '📐 Visualizador de Intervalos y 9nas (Simples y Compuestos: 1ª a 9ª, 11ª y 13ª) en Mástil y Teclado',
     nivel: '1-3',
