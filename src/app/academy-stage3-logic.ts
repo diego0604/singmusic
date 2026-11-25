@@ -721,7 +721,7 @@ export const INSTRUMENT_ANATOMY_DATA: Record<AnatomyInstrumentId, InstrumentAnat
     id: 'voice',
     title: 'Anatomía Interactiva del Instrumento Vocal',
     subtitle: 'Comprende los 3 subsistemas de tu voz (Motor Respiratorio, Vibrador Laríngeo y Resonadores) antes de cantar.',
-    svgViewBox: '0 0 680 245',
+    svgViewBox: '0 0 680 340',
     hotspots: [
       {
         id: 'diafragma',
@@ -732,8 +732,8 @@ export const INSTRUMENT_ANATOMY_DATA: Record<AnatomyInstrumentId, InstrumentAnat
         commonMistake: 'Levantar los hombros y llenar solo la parte alta del pecho causando tensión inmediata en el cuello.',
         demoType: 'vocal',
         demoMidis: [60],
-        svgX: 250,
-        svgY: 185,
+        svgX: 306,
+        svgY: 294,
       },
       {
         id: 'laringe',
@@ -744,8 +744,8 @@ export const INSTRUMENT_ANATOMY_DATA: Record<AnatomyInstrumentId, InstrumentAnat
         commonMistake: 'Empujar volumen con la garganta ("apretar") al subir a notas agudas en lugar de modificar la vocal.',
         demoType: 'vocal',
         demoMidis: [64, 67, 64, 60],
-        svgX: 340,
-        svgY: 122,
+        svgX: 326,
+        svgY: 186,
       },
       {
         id: 'faringe',
@@ -756,8 +756,8 @@ export const INSTRUMENT_ANATOMY_DATA: Record<AnatomyInstrumentId, InstrumentAnat
         commonMistake: 'Bajar la raíz de la lengua hacia atrás intentando sonar "grande", lo que oscurece y bloquea el paso.',
         demoType: 'vocal',
         demoMidis: [62, 65, 69],
-        svgX: 432,
-        svgY: 82,
+        svgX: 328,
+        svgY: 126,
       },
       {
         id: 'mascara',
@@ -768,8 +768,8 @@ export const INSTRUMENT_ANATOMY_DATA: Record<AnatomyInstrumentId, InstrumentAnat
         commonMistake: 'Abrir la boca en exceso horizontalmente en agudos en vez de redondear suavemente hacia vocales estables.',
         demoType: 'vocal',
         demoMidis: [67, 71, 72],
-        svgX: 525,
-        svgY: 56,
+        svgX: 398,
+        svgY: 88,
       },
     ],
   },

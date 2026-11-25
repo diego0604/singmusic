@@ -17,44 +17,44 @@ import { getVisualInstrumentFocus } from './music-games-logic';
     <section
       id="academy-lesson-practice"
       aria-label="Práctica guiada, evaluación y repaso espaciado de la lección"
-      class="mt-6 rounded-2xl bg-[#121722] border border-white/10 p-4 sm:p-6 space-y-5">
+      class="mt-6 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-4 sm:p-6 space-y-5 shadow-[var(--shadow-section)]">
       <!-- Phases 6, 7 & 9: Guided Exercise, Instrument Application & Graduation Project Bridge -->
-      <div class="space-y-3 pb-5 border-b border-white/10">
+      <div class="space-y-3 pb-5 border-b border-[var(--border-subtle)]">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div class="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               Práctica Guiada · Aplicación y Proyecto
             </div>
-            <h3 class="text-base sm:text-lg font-extrabold text-slate-100 m-0 mt-0.5">
+            <h3 class="text-base sm:text-lg font-extrabold text-[var(--text-primary)] m-0 mt-0.5">
               Reto Práctico de la Lección
             </h3>
           </div>
           <button
             type="button"
             (click)="openStageGraduation.emit(stageId())"
-            class="min-h-[38px] px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#171e2c] text-[#f3c874] border border-[#e5a93c]/35 hover:border-[#e5a93c] transition-colors cursor-pointer whitespace-nowrap shrink-0">
+            class="min-h-[38px] px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--bg-elevated)] text-[var(--accent-text)] border border-[var(--accent-border)] hover:bg-[var(--accent-soft)] transition-colors cursor-pointer whitespace-nowrap shrink-0">
             🏆 Rúbrica Etapa {{ stageNumber() }} →
           </button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div class="p-3.5 rounded-xl bg-[#0b0e14] border border-white/8 space-y-1.5">
-            <div class="text-xs font-bold text-[#8ab4f8]">Ejercicio en 3–5 minutos</div>
-            <p class="text-xs sm:text-sm text-slate-200 leading-relaxed m-0">
+          <div class="p-3.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] space-y-1.5">
+            <div class="text-xs font-bold text-[var(--accent-text)]">Ejercicio en 3–5 minutos</div>
+            <p class="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed m-0">
               {{ microChallenge().exerciseGoal }}
             </p>
           </div>
-          <div class="p-3.5 rounded-xl bg-[#0b0e14] border border-white/8 space-y-1.5">
-            <div class="text-xs font-bold text-[#6ee7b7]">Aplicación en tu instrumento u obra</div>
-            <p class="text-xs sm:text-sm text-slate-200 leading-relaxed m-0">
+          <div class="p-3.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] space-y-1.5">
+            <div class="text-xs font-bold text-[var(--success)]">Aplicación en tu instrumento u obra</div>
+            <p class="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed m-0">
               {{ microChallenge().instrumentApplication }}
             </p>
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300 pt-1">
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-secondary)] pt-1">
           <span>
-            <strong class="text-[#f3c874]">Meta de {{ stageTitle() }}:</strong>
+            <strong class="text-[var(--text-primary)]">Meta de {{ stageTitle() }}:</strong>
             {{ graduationTitle() }} — {{ microChallenge().checkStep }}
           </span>
         </div>
@@ -64,27 +64,27 @@ import { getVisualInstrumentFocus } from './music-games-logic';
       <div id="academy-lesson-evaluation" class="space-y-4 scroll-mt-24">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div class="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               Evaluación Activa y Repaso Espaciado
             </div>
-            <h3 class="text-base sm:text-lg font-extrabold text-slate-100 m-0 mt-0.5">
+            <h3 class="text-base sm:text-lg font-extrabold text-[var(--text-primary)] m-0 mt-0.5">
               Comprueba lo Aprendido ({{ questions().length }} preguntas)
             </h3>
           </div>
-          <span class="text-xs font-mono tabular-nums text-slate-400">
+          <span class="text-xs font-mono tabular-nums text-[var(--text-muted)]">
             {{ reviewStatusLabel() }}
           </span>
         </div>
 
         <div class="space-y-3.5">
           @for (q of questions(); track q.id; let qIdx = $index) {
-            <div class="p-3.5 sm:p-4 rounded-xl bg-[#0b0e14] border border-white/8 space-y-3">
+            <div class="p-3.5 sm:p-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] space-y-3">
               <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2.5">
                 <div class="space-y-1 min-w-0 sm:flex-1">
-                  <div class="text-[11px] font-semibold text-[#8ab4f8]">
+                  <div class="text-[11px] font-semibold text-[var(--accent-text)]">
                     Pregunta {{ qIdx + 1 }} · {{ q.topicTag }}
                   </div>
-                  <div class="text-sm font-bold text-slate-100 leading-snug">
+                  <div class="text-sm font-bold text-[var(--text-primary)] leading-snug">
                     {{ q.question }}
                   </div>
                 </div>
@@ -92,7 +92,7 @@ import { getVisualInstrumentFocus } from './music-games-logic';
                   <button
                     type="button"
                     (click)="playAudioPrompt(prompt)"
-                    class="self-start min-h-[38px] px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#171e2c] text-[#f3c874] border border-white/15 hover:border-[#e5a93c]/60 transition-colors cursor-pointer whitespace-nowrap shrink-0 max-w-full truncate">
+                    class="self-start min-h-[38px] px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--bg-surface)] text-[var(--accent-text)] border border-[var(--border-strong)] hover:border-[var(--accent-border)] hover:bg-[var(--accent-soft)] transition-colors cursor-pointer whitespace-nowrap shrink-0 max-w-full truncate">
                     🔊 {{ prompt.label }}
                   </button>
                 }
@@ -111,9 +111,9 @@ import { getVisualInstrumentFocus } from './music-games-logic';
                     <span class="flex-1 text-left">{{ opt }}</span>
                     @if (isEvaluated()) {
                       @if (optIdx === q.correctIndex) {
-                        <span class="text-[11px] font-bold text-[#6ee7b7] shrink-0 whitespace-nowrap">✓ Correcta</span>
+                        <span class="text-[11px] font-bold text-[var(--success)] shrink-0 whitespace-nowrap">✓ Correcta</span>
                       } @else if (selectedChoice(q.id) === optIdx) {
-                        <span class="text-[11px] font-bold text-[#e2959f] shrink-0 whitespace-nowrap">✕ Tu respuesta</span>
+                        <span class="text-[11px] font-bold text-[var(--danger)] shrink-0 whitespace-nowrap">✕ Tu respuesta</span>
                       }
                     }
                   </button>
@@ -121,8 +121,8 @@ import { getVisualInstrumentFocus } from './music-games-logic';
               </div>
 
               @if (isEvaluated()) {
-                <div class="p-2.5 rounded-lg bg-[#121722] border border-white/8 text-xs text-slate-200 leading-relaxed">
-                  <strong [class]="selectedChoice(q.id) === q.correctIndex ? 'text-[#6ee7b7]' : 'text-[#e5a93c]'">
+                <div class="p-2.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] leading-relaxed">
+                  <strong [class]="selectedChoice(q.id) === q.correctIndex ? 'text-[var(--success)]' : 'text-[var(--warning-text)]'">
                     {{ selectedChoice(q.id) === q.correctIndex ? 'Explicación:' : 'Para recordar:' }}
                   </strong>
                   {{ q.explanation }}
@@ -139,30 +139,30 @@ import { getVisualInstrumentFocus } from './music-games-logic';
               [disabled]="!allAnswered()"
               (click)="submitQuiz()"
               [class]="allAnswered()
-                ? 'min-h-[42px] px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-[#e5a93c] text-[#0b0e14] hover:bg-[#f0bc5e] transition-colors cursor-pointer whitespace-nowrap'
-                : 'min-h-[42px] px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-[#171e2c] text-slate-400 border border-white/10 cursor-not-allowed whitespace-nowrap'">
+                ? 'min-h-[42px] px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-[var(--accent)] text-[var(--accent-fg)] hover:bg-[var(--accent-hover)] transition-colors cursor-pointer whitespace-nowrap'
+                : 'min-h-[42px] px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-[var(--bg-elevated)] text-[var(--text-muted)] border border-[var(--border-subtle)] cursor-not-allowed whitespace-nowrap'">
               ✓ Comprobar y Programar Repaso ({{ answeredCount() }}/{{ questions().length }})
             </button>
           } @else {
             <div class="flex flex-wrap items-center gap-2.5">
               <span
                 [class]="lastSubmittedScore() >= 75
-                  ? 'text-xs sm:text-sm font-bold text-[#6ee7b7] tabular-nums'
-                  : 'text-xs sm:text-sm font-bold text-[#f3c874] tabular-nums'">
+                  ? 'text-xs sm:text-sm font-bold text-[var(--success)] tabular-nums'
+                  : 'text-xs sm:text-sm font-bold text-[var(--warning-text)] tabular-nums'">
                 Resultado: {{ lastSubmittedScore() }}% · {{ lastSubmittedScore() >= 75 ? 'Dominio verificado y repaso programado' : 'Repaso programado para mañana (1 día)' }}
               </span>
               @if (lastSubmittedScore() >= 75 && !isCompleted()) {
                 <button
                   type="button"
                   (click)="markLessonDominated.emit(sectionId())"
-                  class="min-h-[38px] px-3 py-1.5 rounded-lg text-xs font-bold bg-[#4ea87b] text-[#0b0e14] hover:opacity-90 cursor-pointer whitespace-nowrap">
+                  class="min-h-[38px] px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--success)] text-[var(--success-fg)] hover:opacity-90 cursor-pointer whitespace-nowrap">
                   ✓ Marcar Lección Dominada
                 </button>
               }
               <button
                 type="button"
                 (click)="resetQuiz()"
-                class="min-h-[38px] px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#171e2c] text-slate-200 border border-white/12 hover:border-white/25 cursor-pointer whitespace-nowrap">
+                class="min-h-[38px] px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-strong)] hover:bg-[var(--bg-hover)] cursor-pointer whitespace-nowrap">
                 ↻ Repetir comprobación
               </button>
             </div>
@@ -236,17 +236,17 @@ export class LessonPracticeDeck {
 
     if (!evaluated) {
       return sel === optIdx
-        ? `${base} bg-[#8ab4f8]/18 border-[#8ab4f8] text-white font-semibold`
-        : `${base} bg-[#121722] border-white/8 text-slate-200 hover:border-white/25`;
+        ? `${base} bg-[var(--accent-soft)] border-[var(--accent)] text-[var(--text-primary)] font-semibold`
+        : `${base} bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]`;
     }
 
     if (optIdx === q.correctIndex) {
-      return `${base} bg-[#4ea87b]/15 border-[#4ea87b] text-slate-100 font-semibold`;
+      return `${base} bg-[var(--success-soft)] border-[var(--success)] text-[var(--text-primary)] font-semibold`;
     }
     if (sel === optIdx) {
-      return `${base} bg-[#d96b78]/15 border-[#d96b78] text-rose-200`;
+      return `${base} bg-[var(--danger-soft)] border-[var(--danger)] text-[var(--danger)]`;
     }
-    return `${base} bg-[#121722]/60 border-white/6 text-slate-400`;
+    return `${base} bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-muted)] opacity-75`;
   }
 
   submitQuiz(): void {

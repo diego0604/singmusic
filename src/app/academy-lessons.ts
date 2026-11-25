@@ -136,8 +136,8 @@ function buildEtapa0SectionHtml(): string {
 
   ${buildGuidedFundamentalsWidgetHtml(
     'f1-orientacion',
-    '🎹 Práctica Guiada 1/8 · Encuentra Do, Fa y tu Primera Octava en Pantalla',
-    'Aplica de inmediato el mapa de 2 y 3 teclas negras tocando directamente sobre el teclado.'
+    '🎛️ Práctica Guiada 1/8 · Encuentra tu Tónica, Fa y tu Primera Octava en Pantalla',
+    'Selecciona Piano, Guitarra o Bajo arriba y toca directamente sobre las teclas o los trastes.'
   )}
 
   <h3 id="intro-habitos-practica">4. Plan de práctica realista (20 minutos efectivos) y errores a evitar</h3>
@@ -204,15 +204,15 @@ function buildBeginnerSoundBridgeHtml(): string {
       Las otras dos cualidades son la <strong>Duración</strong> (cuánto tiempo vibra el sonido antes de apagarse, base del ritmo) y la <strong>Intensidad o Dinámica</strong> (amplitud de la onda: tocar suave <em>piano</em> vs. tocar fuerte <em>forte</em>, clave para la expresividad).
     </p>
 
-    <h4 class="mt-2">1.0b ¿Cómo respira una nota? (Ataque, Cuerpo y Cola) y Consonancia vs. Disonancia</h4>
+    <h4 class="mt-2">1.0b ¿Cómo respira una nota? (Ataque, Cuerpo y Cola) y Consonancia vs. Tensión</h4>
     <p class="text-xs mb-2">
-      Cada nota viva pasa por tres fases en el tiempo: un <strong>Ataque</strong> inicial (el golpe del martillo del piano o la púa en la cuerda), un <strong>Cuerpo o Sostenimiento</strong> (un violín o una voz pueden mantener el volumen largo rato; una guitarra se va apagando poco a poco) y una <strong>Cola</strong> al soltar la tecla o apagar la cuerda. Y cuando juntas dos notas al mismo tiempo: si sus vibraciones encajan en proporciones limpias (como la Octava o la 5ª), suenan <strong>consonantes y estables</strong>; si están pegadas a un semitono o un tritono, sus ondas chocan y producen <strong>disonancia</strong> (energía que pide avanzar hacia una nota estable).
+      Cada nota viva pasa por tres fases en el tiempo: un <strong>Ataque</strong> inicial (el golpe del martillo del piano o la púa en la cuerda), un <strong>Cuerpo o Sostenimiento</strong> (un violín o una voz pueden mantener el volumen largo rato; una guitarra se va apagando poco a poco) y una <strong>Cola</strong> al soltar la tecla o apagar la cuerda. Y cuando juntas dos notas al mismo tiempo: si sus vibraciones encajan en proporciones limpias (como la Octava o un intervalo abierto de 5 pasos), suenan <strong>consonantes y estables</strong>; si están pegadas a 1 solo semitono, sus ondas chocan y producen <strong>tensión</strong> (energía que pide avanzar hacia una nota estable).
     </p>
   </div>
   ${buildGuidedFundamentalsWidgetHtml(
     'f2-consonancia',
-    '🎹 Práctica Guiada 2/8 · Consonancia Abierta vs. Fricción de Semitono',
-    'Compara al instante el sonido hueco y estable de una 5ª Justa frente al roce tenso de dos notas vecinas.'
+    '🎛️ Práctica Guiada 2/8 · Consonancia Abierta vs. Fricción de Semitono',
+    'Elige tu instrumento y tu tónica arriba para comparar el sonido estable frente al roce tenso de dos notas vecinas.'
   )}`;
 }
 
@@ -232,8 +232,8 @@ function buildBeginnerNotesBridgeHtml(): string {
   </div>
   ${buildGuidedFundamentalsWidgetHtml(
     'f3-semitonos',
-    '🎹 Práctica Guiada 3/8 · Toca los Semitonos Naturales, un Tono Completo y un Sostenido',
-    'Verifica directamente en pantalla dónde no hay tecla negra y cómo cambia el sonido al alterar Fa en F#.'
+    '🎛️ Práctica Guiada 3/8 · Toca los Semitonos Naturales, un Tono Completo y un Sostenido',
+    'Verifica directamente en Piano, Guitarra o Bajo dónde hay solo 1 traste/tecla de distancia y altera una nota.'
   )}`;
 }
 
@@ -241,31 +241,18 @@ function buildBeginnerRhythmFoundationHtml(): string {
   return `
   <div class="mb-5" data-nivel="1" id="t-ritmo-desde-cero">
     <div class="callout why mb-4">
-      <div class="callout-title">3.0 Qué significan los dos números del compás (4/4, 3/4, 6/8)</div>
+      <div class="callout-title">3.0 Primero lo Básico · Pulso, Figuras Rítmicas (Negra, Corchea...) y Silencios Gemelos</div>
       <p class="text-sm mb-2">
-        Un <strong>compás</strong> es simplemente una caja de tiempo que agrupa pulsos para que no te pierdas contando hasta el infinito. Al inicio de la partitura ves una fracción como <code>4/4</code> o <code>3/4</code>. No es una división matemática: cada número responde una pregunta diferente:
+        Antes de leer fracciones como <code>4/4</code> o <code>6/8</code>, necesitas conocer las piezas de duración con las que se construye cualquier ritmo. Piensa en el <strong>pulso</strong> como el latido constante de tu pie (<code>1 · 2 · 3 · 4</code>). A partir de un latido, cada figura musical indica cuánto tiempo dura sonando:
       </p>
-      <div class="grid-3 mb-2">
-        <div class="card">
-          <h4>Numerador (arriba): ¿Cuántos pulsos caben?</h4>
-          <p class="text-xs">Indica cuántos tiempos hay dentro de cada caja antes de dibujar una barra vertical. En <code>4/4</code> cuentas <code>1 – 2 – 3 – 4</code>; en <code>3/4</code> (vals) cuentas <code>1 – 2 – 3</code>.</p>
-        </div>
-        <div class="card">
-          <h4>Denominador (abajo): ¿Qué figura vale 1 pulso?</h4>
-          <p class="text-xs">El número de abajo identifica la figura unidad respecto a la redonda: un <code>4</code> abajo significa <strong>la Negra</strong> (1/4 de redonda) vale 1 pulso. Un <code>8</code> abajo significa que contamos en <strong>Corcheas</strong> (1/8 de redonda).</p>
-        </div>
-        <div class="card">
-          <h4>¿Por qué 6/8 no es igual que 3/4?</h4>
-          <p class="text-xs">Aunque matemáticamente sumen igual, <code>3/4</code> se siente en <strong>3 pulsos de 2 corcheas</strong> (<em>UN-y dos-y tres-y</em>, vals), mientras <code>6/8</code> se siente en <strong>2 pulsos grandes de 3 corcheas</strong> (<em><strong>UN</strong>-dos-tres <strong>CUATRO</strong>-cinco-seis</em>, balada/folclore).</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="callout why mb-4">
-      <div class="callout-title">3.1 Figuras Rítmicas, Silencios Gemelos y Cómo Contar en Voz Alta</div>
-      <p class="text-sm mb-3">
-        Toda lectura rítmica funciona bajo una regla simétrica: <strong>cada figura sonora tiene un silencio gemelo</strong> que ocupa exactamente el mismo espacio temporal. Además, para no adivinar la subdivisión dentro de un pulso, los músicos usan sílabas fijas: <strong>Negras</strong> (<code>1  2  3  4</code>), <strong>Corcheas</strong> (<code>1 y  2 y  3 y  4 y</code>) y <strong>Semicorcheas</strong> (<code>1 e y a  2 e y a</code>).
-      </p>
+      <ul class="text-xs space-y-1 mb-3">
+        <li><strong>Negra = 1 pulso exacto:</strong> es la figura referencia. Cada vez que tu pie toca el suelo suena una negra (<code>1 · 2 · 3 · 4</code>).</li>
+        <li><strong>Blanca = 2 pulsos:</strong> dejas sonar una sola nota mientras tu pie golpea dos veces (<code>1–2 · 3–4</code>).</li>
+        <li><strong>Redonda = 4 pulsos:</strong> una nota larga que llena cuatro latidos seguidos sin volver a atacarse.</li>
+        <li><strong>Corchea = 1/2 pulso (partir 1 latido en 2 golpes iguales):</strong> caben <strong>dos corcheas dentro de cada pulso</strong>. Se cuentan diciendo la palabra <code>"y"</code> exactamente entre golpe y golpe del pie: <code>1 y · 2 y · 3 y · 4 y</code>.</li>
+        <li><strong>Semicorchea = 1/4 de pulso:</strong> caben <strong>cuatro golpes rápidos</strong> en cada latido del pie (<code>1 e y a · 2 e y a</code>).</li>
+        <li><strong>Regla de oro de los silencios:</strong> cada figura tiene un <strong>silencio gemelo</strong> con exactamente la misma duración. El silencio no es "un descanso sin cuenta": se cuenta por dentro igual que una nota.</li>
+      </ul>
       <div class="w-full overflow-x-auto rounded-xl bg-[#0b0e14] border border-white/10 p-3 mb-3">
         <svg viewBox="0 0 760 220" class="w-full min-w-[600px] h-auto block" role="img" aria-label="Tabla visual de figuras rítmicas y sus silencios equivalentes en 4/4">
           <rect x="0" y="0" width="760" height="220" fill="#0b0e14" rx="10" />
@@ -337,8 +324,33 @@ function buildBeginnerRhythmFoundationHtml(): string {
         </svg>
       </div>
       <p class="text-xs m-0">
-        <strong>Ejemplo resuelto de suma en 4/4:</strong> Imagina un compás con <code>Blanca + Silencio de Negra + Dos Corcheas</code>. La Blanca ocupa los pulsos <strong>1 y 2</strong> (dejas sonar la nota); en el pulso <strong>3</strong> apagas el sonido por el silencio de negra; y en el pulso <strong>4</strong> tocas dos notas rápidas iguales (<strong>4 y</strong>). Total: <code>2 + 1 + (0.5 + 0.5) = 4 pulsos exactos</code>.
+        <strong>Ejemplo resuelto de suma en 4 tiempos:</strong> Imagina una caja con <code>Blanca + Silencio de Negra + Dos Corcheas</code>. La Blanca ocupa los pulsos <strong>1 y 2</strong> (dejas sonar la nota); en el pulso <strong>3</strong> apagas el sonido por el silencio de negra; y en el pulso <strong>4</strong> tocas dos corcheas seguidas (<strong>4 y</strong>). Total: <code>2 + 1 + (0.5 + 0.5) = 4 pulsos exactos</code>.
       </p>
+    </div>
+
+    <div class="callout why mb-4">
+      <div class="callout-title">3.1 Ahora sí · Qué significan los números del compás (4/4, 3/4, 6/8) y qué es un "pulso grande"</div>
+      <p class="text-sm mb-2">
+        Ahora que ya sabes qué es una <strong>Negra</strong> y qué es una <strong>Corchea</strong>, puedes leer al instante la fracción al inicio de cualquier canción. Un <strong>compás</strong> es la caja donde agrupamos esos tiempos para no contar hasta el infinito:
+      </p>
+      <div class="grid-3 mb-2">
+        <div class="card">
+          <h4>Numerador (arriba): ¿Cuántas figuras caben?</h4>
+          <p class="text-xs">Indica cuántas unidades caben en cada caja antes de dibujar la barra vertical. En <code>4/4</code> caben 4; en <code>3/4</code> caben 3; en <code>6/8</code> caben 6.</p>
+        </div>
+        <div class="card">
+          <h4>Denominador (abajo): ¿Qué figura contamos?</h4>
+          <p class="text-xs">Un <code>4</code> abajo significa que la unidad que contamos es la <strong>Negra</strong> (1/4 de redonda). Un <code>8</code> abajo significa que contamos en <strong>Corcheas</strong> (1/8 de redonda).</p>
+        </div>
+        <div class="card">
+          <h4>¿Qué es un "pulso grande" y por qué 6/8 ≠ 3/4?</h4>
+          <p class="text-xs mb-2">En <code>3/4</code> tu pie marca <strong>3 pulsos normales</strong> (3 negras partidas de 2 en 2 corcheas: <em><strong>UN</strong>-y <strong>dos</strong>-y <strong>tres</strong>-y</em>, balanceo de vals). En <code>6/8</code> hay 6 corcheas rápidas, pero en vez de mover el pie 6 veces agotadoras, tu cuerpo las agrupa de 3 en 3 creando solo <strong>2 "pulsos grandes"</strong> (donde marcas 1 pie fuerte en el <code>1</code> y otro en el <code>4</code>: <em><strong>UN</strong>-dos-tres · <strong>CUATRO</strong>-cinco-seis</em>, balanceo de balada o chacarera).</p>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" class="btn-audio" data-run="demoTimeSig34">🔊 Oír 3/4 (3 pulsos de vals)</button>
+            <button type="button" class="btn-audio" data-run="demoTimeSig68">🔊 Oír 6/8 (2 pulsos grandes)</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <h3 id="t-ritmo-modificadores">3.2 Los 5 recursos que dan movimiento y groove al ritmo</h3>
@@ -389,7 +401,7 @@ function buildBeginnerMajorScaleLadderHtml(): string {
   return `
   <div class="mb-5" data-nivel="1" id="t-escalas-escalera-intuitiva">
     <div class="callout pro mb-4">
-      <div class="callout-title">4.0 Antes de hablar de "tetracordos": ¿Cómo nace una Escala Mayor?</div>
+      <div class="callout-title">5.0 Antes de hablar de "tetracordos": ¿Cómo nace una Escala Mayor?</div>
       <p class="text-sm mb-2">
         Una escala es simplemente una selección ordenada de notas que suben desde una nota de partida (llamada <strong>Tónica</strong> o grado <code>1</code>) hasta su octava (grado <code>8</code>). Para que cualquier grupo de 7 notas suene con esa sensación luminosa, abierta y familiar de la <strong>Escala Mayor</strong>, sus escalones deben respetar siempre la misma huella de distancias:
       </p>
@@ -450,7 +462,7 @@ function buildBeginnerMajorScaleLadderHtml(): string {
         </table>
       </div>
 
-      <h4 id="t-escalas-origen-menor" class="mt-3">4.0b ¿Por qué existen 3 Escalas Menores (Natural, Armónica y Melódica)?</h4>
+      <h4 id="t-escalas-origen-menor" class="mt-3">5.0b ¿Por qué existen 3 Escalas Menores (Natural, Armónica y Melódica)?</h4>
       <p class="text-xs mb-2">
         Si tocas exactamente las mismas 7 teclas blancas de Do Mayor, pero empiezas y terminas tu melodía en la <strong>6ª nota (La / A)</strong> (<code>A – B – C – D – E – F – G – A</code>), los dos semitonos naturales (<code>B–C</code> y <code>E–F</code>) se mueven de lugar y quedan entre los grados <strong>2→3</strong> y <strong>5→6</strong>. Eso produce la <strong>Escala Menor Natural</strong> (<code>1 - 2 - ♭3 - 4 - 5 - ♭6 - ♭7</code>), cuya tercera rebajada (<code>♭3</code>) crea ese color íntimo y melancólico.
       </p>
@@ -458,16 +470,16 @@ function buildBeginnerMajorScaleLadderHtml(): string {
         <li><strong>¿Por qué inventaron la Menor Armónica?</strong> En la menor natural, el 7º grado (<code>G</code>) está a un tono entero debajo de la tónica (<code>A</code>) y le falta fuerza para cerrar un acorde dominante fuerte (<code>E7 → Am</code>). Por eso subieron medio tono el 7º grado (<code>G → G#</code>), creando una escala con fuerza armónica y un salto exótico de 3 semitonos entre <code>F</code> y <code>G#</code> (sello del flamenco, música árabe y metal neoclásico).</li>
         <li><strong>¿Por qué nació la Menor Melódica?</strong> Para suavizar al cantar ese salto brusco de 3 semitonos (<code>F → G#</code>), subieron también medio tono el 6º grado al subir (<code>F# → G# → A</code>), creando una escala híbrida: parte grave menor (<code>♭3</code>) y parte aguda brillante como la mayor.</li>
       </ul>
-      <h4 id="t-escalas-pentatonica-segura" class="mt-2">4.0c ¿Por qué la Escala Pentatónica "nunca suena mal" al improvisar?</h4>
+      <h4 id="t-escalas-pentatonica-segura" class="mt-2">5.0c ¿Por qué la Escala Pentatónica "nunca suena mal" al improvisar?</h4>
       <p class="text-xs m-0">
         Una escala Mayor tiene 7 notas, pero dos de ellas (el <strong>4º</strong> y el <strong>7º grado</strong>, como <code>F</code> y <code>B</code> en Do Mayor) forman entre sí un <strong>tritono tenso</strong> que puede chocar si te quedas apoyado en ellas sobre el acorde incorrecto. La <strong>Pentatónica</strong> simplemente quita esas dos notas conflictivas y conserva las <strong>5 notas más estables</strong> (Mayor: <code>1–2–3–5–6</code>; Menor: <code>1–♭3–4–5–♭7</code>), convirtiéndose en una red de seguridad sonora en rock, blues, pop y música tradicional mundial.
       </p>
     </div>
 
     ${buildGuidedFundamentalsWidgetHtml(
-      'f4-mayor-menor',
-      '🎹 Práctica Guiada 4/8 · Escucha y Toca Mayor vs. Menor y Menor Armónica',
-      'Cambia con tus propios dedos la 3ª nota y descubre en directo cómo cambia la emoción de toda la frase.'
+      'f5-mayor-menor',
+      '🎛️ Práctica Guiada 5/8 · Escucha y Toca Mayor vs. Menor y Menor Armónica',
+      'Cambia de instrumento o tónica y modifica con tus propios dedos la 3ª nota para sentir cómo cambia toda la emoción.'
     )}
 
     <article class="interactive-widget mb-4" id="lab-escala-escalera" data-lab="major-scale-ladder-lab" data-nivel="1">
@@ -486,7 +498,7 @@ function buildBeginnerMajorScaleLadderHtml(): string {
 function buildBeginnerIntervalsBridgeHtml(): string {
   return `
   <div class="callout why mb-4" data-nivel="1" id="t-intervalos-mapa-emocional">
-    <div class="callout-title">5.0 Antes de memorizar números · ¿Qué siente el oído con cada intervalo?</div>
+    <div class="callout-title">4.0 Antes de memorizar números · ¿Qué siente el oído con cada intervalo?</div>
     <p class="text-sm mb-2">
       Un intervalo no es solo una resta de trastes o teclas: es un <strong>gesto expresivo</strong>. Si relacionas los intervalos principales con su papel en canciones reales, los recordarás para siempre:
     </p>
@@ -506,9 +518,9 @@ function buildBeginnerIntervalsBridgeHtml(): string {
     </div>
   </div>
   ${buildGuidedFundamentalsWidgetHtml(
-    'f5-intervalos-emocion',
-    '🎹 Práctica Guiada 5/8 · Construye y Reconoce Intervalos Tocando en Pantalla',
-    'Arma una 4ª Justa y un Tritono desde Do, y supera el reto auditivo distinguiendo la 3ª Mayor.'
+    'f4-intervalos-emocion',
+    '🎛️ Práctica Guiada 4/8 · Construye y Reconoce Intervalos Tocando en Pantalla',
+    'Arma una 4ª Justa y un Tritono desde cualquier tónica en Piano, Guitarra o Bajo, y supera el reto auditivo.'
   )}`;
 }
 
@@ -652,8 +664,8 @@ function buildBeginnerReadingSymbolsHtml(): string {
   </div>
   ${buildGuidedFundamentalsWidgetHtml(
     'f7-lectura-anclas',
-    '🎼 Práctica Guiada 7/8 · Lee el Pentagrama en Vivo Tocando la Tecla Correcta',
-    'Observa en qué línea o espacio del pentagrama cae cada nota ancla y tócala directamente en el teclado.'
+    '🎼 Práctica Guiada 7/8 · Lee el Pentagrama en Vivo Tocando tu Instrumento',
+    'Observa en qué línea o espacio cae cada nota ancla (Clave de Sol o Clave de Fa para Bajo) y tócala directamente.'
   )}`;
 }
 
@@ -966,15 +978,19 @@ export function applyStage1LessonUpgrades(sectionId: string, sectionHtml: string
   }
 
   if (sectionId === 't-escalas') {
-    const firstH3 = sectionHtml.indexOf('<h3 id="t-escalas-mayor"');
+    const cleanHtml = sectionHtml.replace(
+      /\(\s*ver\s+<a[^>]*>modos griegos[^<]*<\/a>\s+y aplicación en guitarra eléctrica\s*\)/gi,
+      '(que estudiarás a fondo en la etapa de Armonía Modal)'
+    );
+    const firstH3 = cleanHtml.indexOf('<h3 id="t-escalas-mayor"');
     if (firstH3 !== -1) {
       return (
-        sectionHtml.slice(0, firstH3) +
+        cleanHtml.slice(0, firstH3) +
         buildBeginnerMajorScaleLadderHtml() +
-        sectionHtml.slice(firstH3)
+        cleanHtml.slice(firstH3)
       );
     }
-    return insertAfterModuleHeader(sectionHtml, buildBeginnerMajorScaleLadderHtml());
+    return insertAfterModuleHeader(cleanHtml, buildBeginnerMajorScaleLadderHtml());
   }
 
   if (sectionId === 't-intervalos') {

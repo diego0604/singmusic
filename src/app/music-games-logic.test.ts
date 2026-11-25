@@ -1,6 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  APP_THEME_PRESETS,
+  DEFAULT_APP_THEME,
+  getNextThemeId,
+  getThemePreset,
+  resolveThemeId,
+} from './theme-presets';
+import {
+  ARRANGEMENT_GENRE_MIXES,
+  BASS_MOTOR_DRILLS,
+  ELECTRIC_TECHNIQUE_DEMOS,
+  FINGERSTYLE_CHORD_PROGRESSIONS,
+  FINGERSTYLE_PATTERNS,
+  HARMONY_GUIDED_CHALLENGES,
+  ORCHESTRAL_SECTION_RANGES,
+  REAL_SONG_DISSECTIONS,
+  buildDeliberateChunkingLadder,
+  buildSongDissectionStepEvents,
+  computeSignalChainAnalysis,
+  evaluateHarmonyChallengeAttempt,
+  resolveFingerstyleStepNotes,
+} from './expansion-pack-logic';
+import {
   analyzePedalInterval,
   analyzeSpanishLyricLine,
   applyEnharmonicGoldenRule,
@@ -14,6 +36,7 @@ import {
   computeChordNeckState,
   computeEffectiveExplorerInstrument,
   computeGuitarNeckWindow,
+  computeIntervalFretboardShape,
   computeVerticalChordBoxData,
   computeVocalPatternStepState,
   convertProgressionToNashville,
@@ -57,6 +80,7 @@ import {
 import {
   ACADEMY_LEARNING_PATHS,
   ACADEMY_STAGES,
+  CANTO_PEDAGOGICAL_ORDER,
   MAJOR_SCALE_LADDER_PRESETS,
   RHYTHM_STARTER_PATTERNS,
   TEORIA_PEDAGOGICAL_ORDER,
@@ -104,9 +128,14 @@ import { injectTreatiseEnrichmentIntoCategoryHtml } from './treatise-enrichment'
 import {
   FUNDAMENTALS_GUIDED_LESSONS,
   FUNDAMENTALS_PIANO_KEYS,
+  FUNDAMENTALS_PIANO_KEYS_EXTENDED,
+  GUIDED_ROOT_OPTIONS,
+  buildInstrumentFretboardGrid,
   evaluateFundamentalsKeyTap,
   pickNextEarDrillMidi,
+  renderStaffNoteSvg,
   renderTrebleStaffNoteSvg,
+  resolveGuidedLessonForContext,
 } from './fundamentals-guided-logic';
 
 test('E2 to D5 vocal range is accurately classified as Extended Range / Baritenor (34 semitones)', () => {
@@ -562,7 +591,7 @@ test('buildStructuredVocalTrainingSeries is deterministic by level, puts breathi
 });
 
 test('Guitar, Bass, and Drum training block datasets have valid fingerings, frets, and limb assignments', () => {
-  assert.equal(GUITAR_TRAINING_BLOCKS.length, 8);
+  assert.equal(GUITAR_TRAINING_BLOCKS.length, 10);
   const ratioSum = GUITAR_TRAINING_BLOCKS.reduce((acc, b) => acc + b.ratio, 0);
   assert.ok(Math.abs(ratioSum - 1) < 0.01);
   for (const blk of GUITAR_TRAINING_BLOCKS) {
@@ -578,7 +607,9 @@ test('Guitar, Bass, and Drum training block datasets have valid fingerings, fret
     }
   }
 
-  assert.equal(BASS_TRAINING_BLOCKS.length, 4);
+  assert.equal(BASS_TRAINING_BLOCKS.length, 8);
+  const bassRatioSum = BASS_TRAINING_BLOCKS.reduce((acc, b) => acc + b.ratio, 0);
+  assert.ok(Math.abs(bassRatioSum - 1.0) < 0.01, `Expected Bass ratios to sum to 1.0, got ${bassRatioSum}`);
   for (const blk of BASS_TRAINING_BLOCKS) {
     assert.ok(blk.steps.length >= 4);
     for (const st of blk.steps) {
@@ -587,7 +618,9 @@ test('Guitar, Bass, and Drum training block datasets have valid fingerings, fret
     }
   }
 
-  assert.equal(DRUM_TRAINING_BLOCKS.length, 4);
+  assert.equal(DRUM_TRAINING_BLOCKS.length, 6);
+  const drumRatioSum = DRUM_TRAINING_BLOCKS.reduce((acc, b) => acc + b.ratio, 0);
+  assert.ok(Math.abs(drumRatioSum - 1) < 0.01);
   for (const blk of DRUM_TRAINING_BLOCKS) {
     assert.ok(blk.steps.length === 8);
     for (const st of blk.steps) {
@@ -1389,26 +1422,32 @@ test('Stage 4 Complex Work inspector, Integrator auditor, and Stage 6-7 lesson u
   }
 });
 
-test('Guided Fundamentals series covers 8 Teoria chapters with playable C4-C5 piano keys and deterministic evaluation', () => {
+test('Guided Fundamentals series covers 8 Teoria chapters with multi-instrument surfaces, root transposition & zero spoilers', () => {
   assert.equal(FUNDAMENTALS_PIANO_KEYS.length, 13);
+  assert.equal(FUNDAMENTALS_PIANO_KEYS_EXTENDED.length, 22);
+  assert.equal(GUIDED_ROOT_OPTIONS.length, 6);
   assert.equal(FUNDAMENTALS_GUIDED_LESSONS.length, 8);
 
-  const expectedSections = ['intro', 't-sonido', 't-notas', 't-escalas', 't-intervalos', 't-tonalidades', 't-lectura', 't-oido'];
+  const expectedSections = ['intro', 't-sonido', 't-notas', 't-intervalos', 't-escalas', 't-tonalidades', 't-lectura', 't-oido'];
   assert.deepEqual(
     FUNDAMENTALS_GUIDED_LESSONS.map((l) => l.sectionId),
     expectedSections
   );
 
+  // Verify TEORIA_PEDAGOGICAL_ORDER keeps Intervalos before Escalas
+  const teoriaOrderIds = TEORIA_PEDAGOGICAL_ORDER.map((x) => x.id);
+  assert.ok(teoriaOrderIds.indexOf('t-intervalos') < teoriaOrderIds.indexOf('t-escalas'));
+
   for (const lesson of FUNDAMENTALS_GUIDED_LESSONS) {
     assert.ok(lesson.briefExplanation.length > 60, `Expected clear explanation for ${lesson.id}`);
     assert.ok(lesson.steps.length >= 3, `Expected at least 3 interactive steps for ${lesson.id}`);
     for (const step of lesson.steps) {
-      assert.ok(step.targetMidis.every((m) => m >= 60 && m <= 72));
-      assert.ok(step.demoMidis.every((m) => m >= 60 && m <= 72));
+      assert.ok(step.targetMidis.every((m) => m >= 28 && m <= 81));
+      assert.ok(step.demoMidis.every((m) => m >= 28 && m <= 81));
     }
   }
 
-  // Sequence evaluation step-by-step
+  // Sequence evaluation step-by-step on Piano (C4..C5)
   const seqStep = FUNDAMENTALS_GUIDED_LESSONS[2].steps[0]; // E4 -> F4 -> B4 -> C5
   const hit1 = evaluateFundamentalsKeyTap(seqStep, 64, 0);
   assert.equal(hit1.matchedStep, true);
@@ -1427,13 +1466,36 @@ test('Guided Fundamentals series covers 8 Teoria chapters with playable C4-C5 pi
   assert.equal(hit4.completedStep, true);
   assert.equal(hit4.tone, 'ok');
 
+  // Multi-instrument Guitar (6 strings) & Bass (4 strings) + Root Transposition (G = pc 7)
+  const guitarRows = buildInstrumentFretboardGrid('guitar', 7, 9);
+  assert.equal(guitarRows.length, 6);
+  assert.equal(guitarRows[0].cells.length, 10); // frets 0..9
+  const bassRows = buildInstrumentFretboardGrid('bass', 7, 9);
+  assert.equal(bassRows.length, 4);
+
+  const gGuitarLesson = resolveGuidedLessonForContext('f4-intervalos-emocion', 'guitar', 7);
+  assert.ok(gGuitarLesson.title.includes('Sol (G)'));
+  assert.equal(gGuitarLesson.steps[0].matchByPitchClass, true);
+  assert.deepEqual(gGuitarLesson.steps[0].targetMidis, [43, 48]); // G2 + C3 (4a Justa en guitarra)
+  // Pitch-class match accepts G3 (55) and C4 (60) anywhere on guitar neck
+  const neckHit1 = evaluateFundamentalsKeyTap(gGuitarLesson.steps[0], 55, 0);
+  assert.equal(neckHit1.matchedStep, true);
+  const neckHit2 = evaluateFundamentalsKeyTap(gGuitarLesson.steps[0], 60, 1);
+  assert.equal(neckHit2.completedStep, true);
+
+  // Bass Clave de Fa in f7-lectura-anclas
+  const bassReadLesson = resolveGuidedLessonForContext('f7-lectura-anclas', 'bass', 0);
+  assert.equal(bassReadLesson.steps[0].staffClef, 'bass');
+  const bassStaffSvg = renderStaffNoteSvg(53, 'bass', true); // F3 4th line (y=40)
+  assert.ok(bassStaffSvg.includes('𝄢') && bassStaffSvg.includes('4ª línea = Fa3') && bassStaffSvg.includes('cy="40"'));
+
   // Staff SVG rendering and ear drill selection
   const staffSvg = renderTrebleStaffNoteSvg(60); // C4 ledger line
   assert.ok(staffSvg.includes('<svg') && staffSvg.includes('y1="88"'));
   const nextEar = pickNextEarDrillMidi([62, 64, 67], 64);
   assert.notEqual(nextEar, 64);
 
-  // Full Teoria assembly includes all 8 guided fundamentals labs cleanly
+  // Full Teoria assembly includes all 8 guided fundamentals labs cleanly + enforces zero-spoiler pedagogy
   const teoriaFinal = assembleAcademyCategoryHtml(
     'teoria',
     injectTreatiseEnrichmentIntoCategoryHtml('teoria', ENCYCLOPEDIA_CONTENT['teoria']),
@@ -1449,17 +1511,234 @@ test('Guided Fundamentals series covers 8 Teoria chapters with playable C4-C5 pi
   assert.ok(teoriaFinal.includes('¿Por qué existen 3 Escalas Menores'));
   assert.ok(teoriaFinal.includes('Cómo leer Tablatura (TAB) sin invertir las cuerdas'));
   assert.ok(teoriaFinal.includes('Relativa vs. Paralela'));
+
+  // Rhythm 3.0 (Figuras: Negra, Corchea) MUST precede 3.1 (6/8 vs 3/4 y pulso grande)
+  const idx30 = teoriaFinal.indexOf('3.0 Primero lo Básico');
+  const idx31 = teoriaFinal.indexOf('3.1 Ahora sí');
+  assert.ok(idx30 > 0 && idx31 > idx30, 'Expected 3.0 rhythmic figures before 3.1 time signatures');
+  assert.ok(teoriaFinal.includes('data-run="demoTimeSig34"') && teoriaFinal.includes('data-run="demoTimeSig68"'));
+
+  // Early chapters must not leak advanced spoiler terms before their time
+  const introSection = extractSingleSectionHtml(teoriaFinal, 'intro').toLowerCase();
+  const soundBridgeIdx = teoriaFinal.indexOf('id="t-sonido-intuitivo"');
+  const soundBridgeSnippet = teoriaFinal.slice(soundBridgeIdx, soundBridgeIdx + 1800).toLowerCase();
+  assert.ok(!introSection.includes('tritono') && !introSection.includes('cuarta justa'));
+  assert.ok(!soundBridgeSnippet.includes('tritono'));
 });
 
+test('computeIntervalFretboardShape computes exact-octave simple and compound interval shapes for all 12 roots on guitar and bass', () => {
+  const guitarOpen = [64, 59, 55, 50, 45, 40];
+  const bassOpen = [43, 38, 33, 28];
+  const testSemis = [1, 2, 4, 7, 12, 13, 14, 15, 17, 18, 20, 21];
 
+  for (const mode of ['guitar', 'bass'] as const) {
+    const open = mode === 'guitar' ? guitarOpen : bassOpen;
+    for (let rootPc = 0; rootPc < 12; rootPc++) {
+      for (const semi of testSemis) {
+        const shape = computeIntervalFretboardShape(rootPc, semi, mode);
+        assert.equal(
+          shape.targetMidi - shape.rootMidi,
+          semi,
+          `Exact semitone span mismatch for ${mode} rootPc=${rootPc} semi=${semi}`
+        );
+        assert.equal(shape.rootPos.midi, shape.rootMidi);
+        assert.equal(shape.targetPos.midi, shape.targetMidi);
+        assert.equal(open[shape.rootPos.sIdx] + shape.rootPos.fret, shape.rootMidi);
+        assert.equal(open[shape.targetPos.sIdx] + shape.targetPos.fret, shape.targetMidi);
+        assert.ok(shape.rootPos.fret >= 0 && shape.rootPos.fret <= 18);
+        assert.ok(shape.targetPos.fret >= 0 && shape.targetPos.fret <= 18);
+      }
+    }
+  }
+});
 
+test('Canto pedagogical reordering puts breathing & tessitura detector first, strips duplicate canto-legacy lab, and uses upgraded voice anatomy SVG bounds', () => {
+  const cantoEnriched = injectTreatiseEnrichmentIntoCategoryHtml('canto', ENCYCLOPEDIA_CONTENT['canto']);
+  const cantoFinal = assembleAcademyCategoryHtml('canto', cantoEnriched, undefined, applyStage1LessonUpgrades);
+  const cantoIds = splitHtmlSections(cantoFinal).map((s) => s.id);
 
+  assert.deepEqual(
+    cantoIds,
+    CANTO_PEDAGOGICAL_ORDER.map((x) => x.id)
+  );
+  assert.equal(cantoIds[0], 'v-fundamentos');
+  assert.equal(cantoIds[1], 'v-detector-tesitura');
+  assert.equal(cantoIds[2], 'v-calentamiento');
 
+  // No duplicate legacy harmony/choir block in canto or all
+  assert.ok(!cantoFinal.includes('data-usar="canto-legacy"'));
+  assert.ok(!cantoFinal.includes('<!--USAR:canto-legacy-->'));
 
+  // Vocal agility lab relocated from v-calentamiento to v-interpretacion-estilos
+  const calentHtml = extractSingleSectionHtml(cantoFinal, 'v-calentamiento');
+  const interpHtml = extractSingleSectionHtml(cantoFinal, 'v-interpretacion-estilos');
+  assert.ok(!calentHtml.includes('data-lab="vocal-agility-lab"'));
+  assert.ok(interpHtml.includes('data-lab="vocal-agility-lab"'));
 
+  // Also verify 'all' mode applies Canto ordering and strips canto-legacy
+  const allFinal = assembleAcademyCategoryHtml('all', cantoEnriched, undefined, applyStage1LessonUpgrades);
+  assert.ok(!allFinal.includes('data-usar="canto-legacy"'));
+  const allIds = splitHtmlSections(allFinal).map((s) => s.id);
+  assert.ok(allIds.indexOf('v-fundamentos') < allIds.indexOf('v-detector-tesitura'));
+  assert.ok(allIds.indexOf('v-detector-tesitura') < allIds.indexOf('v-calentamiento'));
 
+  // Voice anatomy SVG upgraded viewBox and hotspot bounds
+  assert.equal(INSTRUMENT_ANATOMY_DATA.voice.svgViewBox, '0 0 680 340');
+  assert.equal(INSTRUMENT_ANATOMY_DATA.voice.hotspots.length, 4);
+  for (const hs of INSTRUMENT_ANATOMY_DATA.voice.hotspots) {
+    assert.ok(hs.svgX > 0 && hs.svgX < 680);
+    assert.ok(hs.svgY > 0 && hs.svgY < 340);
+  }
+});
 
+test('Expansion Pack Logic: Real Songs, Fingerstyle PIMA, Electric FX Chain, Bass Motor, Arrangement Mixer, Orchestral Timbres, Harmony Challenges & Deliberate Chunking', () => {
+  // 1. Real Song Dissections + Mute/Solo event filtering
+  assert.equal(REAL_SONG_DISSECTIONS.length, 6);
+  const fullEvents = buildSongDissectionStepEvents('pop-axis-let-it-be', {
+    drums: true,
+    bass: true,
+    harmony: true,
+    melody: true,
+  });
+  assert.equal(fullEvents.length, 32); // 4 bars x 8 eighth notes
+  assert.ok(fullEvents.some((e) => e.drums.length > 0 && e.bassMidi !== null && e.chordMidis.length > 0));
+  const bassSoloEvents = buildSongDissectionStepEvents('pop-axis-let-it-be', {
+    drums: false,
+    bass: true,
+    harmony: false,
+    melody: false,
+  });
+  assert.ok(bassSoloEvents.every((e) => e.drums.length === 0 && e.chordMidis.length === 0 && e.melodyMidi === null));
+  assert.ok(bassSoloEvents.some((e) => e.bassMidi !== null));
+  const song68Events = buildSongDissectionStepEvents('ballad-68-compound', {
+    drums: true,
+    bass: true,
+    harmony: true,
+    melody: true,
+  });
+  assert.equal(song68Events.length, 24); // 4 bars x 6 eighth notes
 
+  // 2. Fingerstyle / PIMA / Travis Picking
+  assert.equal(FINGERSTYLE_PATTERNS.length, 6);
+  const travis = FINGERSTYLE_PATTERNS.find((p) => p.id === 'travis-picking')!;
+  const cChord = FINGERSTYLE_CHORD_PROGRESSIONS[0].chords[0];
+  const step0 = resolveFingerstyleStepNotes(travis, cChord, 0);
+  assert.equal(step0.finger, 'P+a');
+  assert.equal(step0.midis.length, 2);
+  assert.equal(step0.isPercussion, false);
+  const percPattern = FINGERSTYLE_PATTERNS.find((p) => p.id === 'percussive-slap')!;
+  const slapStep = resolveFingerstyleStepNotes(percPattern, cChord, 2);
+  assert.equal(slapStep.isPercussion, true);
 
+  // 3. Electric Guitar Signal Chain Analysis
+  assert.equal(ELECTRIC_TECHNIQUE_DEMOS.length, 5);
+  const standardChain = computeSignalChainAnalysis({
+    pickup: 'bridge',
+    activePedals: ['drive', 'delay'],
+    driveBeforeTimeFx: true,
+    palmMute: false,
+  });
+  assert.equal(standardChain.orderVerdict, 'standard');
+  assert.ok(standardChain.brightnessHz > 4000);
+  const expChain = computeSignalChainAnalysis({
+    pickup: 'neck',
+    activePedals: ['drive', 'delay', 'reverb'],
+    driveBeforeTimeFx: false,
+    palmMute: true,
+  });
+  assert.equal(expChain.orderVerdict, 'experimental');
+  assert.ok(expChain.brightnessHz <= 1150);
 
+  // 4. Bass Motor Drills
+  assert.equal(BASS_MOTOR_DRILLS.length, 4);
+  for (const d of BASS_MOTOR_DRILLS) {
+    assert.equal(d.steps.length, 8);
+    assert.ok(d.steps.every((s) => s.sIdx >= 0 && s.sIdx <= 3));
+  }
 
+  // 5. Arrangement Mixer & Orchestral Timbres
+  assert.equal(ARRANGEMENT_GENRE_MIXES.length, 5);
+  assert.equal(ORCHESTRAL_SECTION_RANGES.length, 4);
+  const brass = ORCHESTRAL_SECTION_RANGES.find((f) => f.id === 'brass')!;
+  assert.equal(brass.concertToWrittenSemis, 2);
+
+  // 6. Harmony Guided Challenges evaluator
+  assert.equal(HARMONY_GUIDED_CHALLENGES.length, 7);
+  const triadOk = evaluateHarmonyChallengeAttempt('hg-triad-major-to-minor', { midi: 63 }); // Eb
+  assert.equal(triadOk.correct, true);
+  assert.deepEqual(triadOk.playMidis, [60, 63, 67]);
+  const triadMiss = evaluateHarmonyChallengeAttempt('hg-triad-major-to-minor', { midi: 64 }); // E
+  assert.equal(triadMiss.correct, false);
+  const cadenceOk = evaluateHarmonyChallengeAttempt('hg-cadence-authentic', { optionId: 'opt-am' });
+  assert.equal(cadenceOk.correct, true);
+
+  // 7. Deliberate Practice Chunking Ladder
+  const ladder = buildDeliberateChunkingLadder(120);
+  assert.equal(ladder.length, 4);
+  assert.deepEqual(
+    ladder.map((x) => x.bpm),
+    [66, 86, 106, 120]
+  );
+});
+
+test('Widget deduplication and independent Entrenamiento category integrity', () => {
+  // Guitarra Acústica has Fingerstyle lab, NO duplicate ga-triadas-mastil, NO embedded entreno-diario
+  const gaHtml = injectTreatiseEnrichmentIntoCategoryHtml('guitarra-ac', ENCYCLOPEDIA_CONTENT['guitarra-ac']);
+  assert.ok(gaHtml.includes('data-lab="fingerstyle-pima-lab"'));
+  assert.ok(!gaHtml.includes('id="ga-triadas-mastil"'));
+  assert.ok(gaHtml.includes('data-target="h-triadas-mastil"'));
+  assert.ok(!gaHtml.includes('id="entreno-diario"'));
+
+  // Zero duplicate daily-training-session-lab embedded inside ge/bajo/bateria/canto (replaced with 1-click jump buttons)
+  for (const catId of ['guitarra-el', 'bajo', 'bateria', 'canto'] as const) {
+    const html = injectTreatiseEnrichmentIntoCategoryHtml(catId, ENCYCLOPEDIA_CONTENT[catId]);
+    assert.ok(!html.includes('data-lab="daily-training-session-lab"'), `Unexpected duplicate daily-training-session-lab in ${catId}`);
+    assert.ok(html.includes('js-jump-guided-session'), `Expected 1-click guided session jump button in ${catId}`);
+  }
+
+  // Independent Entrenamiento category holds entreno-diario, e-salud-practica, e-tocar-en-banda
+  const entrHtml = injectTreatiseEnrichmentIntoCategoryHtml('entrenamiento', '');
+  assert.ok(entrHtml.includes('id="entreno-diario"'));
+  assert.ok(entrHtml.includes('data-lab="daily-training-session-lab"'));
+  assert.ok(entrHtml.includes('id="e-salud-practica"'));
+  assert.ok(entrHtml.includes('id="e-tocar-en-banda"'));
+  assert.ok(entrHtml.includes('data-lab="practice-deliberate-lab"'));
+  assert.equal(resolveCategoryForSectionId('entreno-diario'), 'entrenamiento');
+  assert.equal(resolveCategoryForSectionId('e-salud-practica'), 'entrenamiento');
+  assert.equal(resolveCategoryForSectionId('e-tocar-en-banda'), 'entrenamiento');
+
+  // New interactive labs present in Composición, Guitarra Eléctrica, Bajo, Arreglos y Armonía
+  const compHtml = injectTreatiseEnrichmentIntoCategoryHtml('composicion', ENCYCLOPEDIA_CONTENT['composicion']);
+  assert.ok(compHtml.includes('id="c-canciones-reales"') && compHtml.includes('data-lab="real-songs-lab"'));
+
+  const geHtml = injectTreatiseEnrichmentIntoCategoryHtml('guitarra-el', ENCYCLOPEDIA_CONTENT['guitarra-el']);
+  assert.ok(geHtml.includes('id="lab-electric-fx-fundamentos"') && geHtml.includes('id="lab-electric-fx-expresion"'));
+
+  const bajoHtml = injectTreatiseEnrichmentIntoCategoryHtml('bajo', ENCYCLOPEDIA_CONTENT['bajo']);
+  assert.ok(bajoHtml.includes('data-lab="bass-motor-lab"'));
+
+  const arrHtml = injectTreatiseEnrichmentIntoCategoryHtml('arreglos', ENCYCLOPEDIA_CONTENT['arreglos']);
+  assert.ok(arrHtml.includes('data-lab="orchestral-timbre-lab"') && arrHtml.includes('data-lab="arrangement-layer-mixer-lab"'));
+
+  const armHtml = injectTreatiseEnrichmentIntoCategoryHtml('armonia', ENCYCLOPEDIA_CONTENT['armonia']);
+  assert.ok(armHtml.includes('id="lab-harmony-guided-h-triadas"'));
+  assert.ok(armHtml.includes('id="lab-harmony-guided-h-septimas"'));
+  assert.ok(armHtml.includes('id="lab-harmony-guided-h-cadencias"'));
+  assert.ok(armHtml.includes('id="lab-harmony-guided-h-diatonica"'));
+});
+
+test('Theme Switcher Presets cover 2 Light and 2 Dark themes with safe fallback and cycling', () => {
+  assert.equal(APP_THEME_PRESETS.length, 4);
+  assert.equal(DEFAULT_APP_THEME, 'paper');
+  assert.equal(APP_THEME_PRESETS.filter((t) => !t.isDark).length, 2);
+  assert.equal(APP_THEME_PRESETS.filter((t) => t.isDark).length, 2);
+  assert.equal(resolveThemeId('warm'), 'warm');
+  assert.equal(resolveThemeId('graphite'), 'graphite');
+  assert.equal(resolveThemeId('slate'), 'slate');
+  assert.equal(resolveThemeId('invalid-theme'), DEFAULT_APP_THEME);
+  assert.equal(resolveThemeId(null), DEFAULT_APP_THEME);
+  assert.equal(getThemePreset('paper').isDark, false);
+  assert.equal(getThemePreset('graphite').isDark, true);
+  assert.equal(getNextThemeId('paper'), 'warm');
+  assert.equal(getNextThemeId('slate'), 'paper');
+});

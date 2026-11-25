@@ -8,13 +8,16 @@ import {
 import { getVisualInstrumentFocus } from './music-games-logic';
 import {
   FUNDAMENTALS_GUIDED_LESSONS,
-  FUNDAMENTALS_PIANO_KEYS,
+  FUNDAMENTALS_PIANO_KEYS_EXTENDED,
+  GUIDED_ROOT_OPTIONS,
+  buildInstrumentFretboardGrid,
   evaluateFundamentalsKeyTap,
-  getPianoKeySpec,
+  formatMidiNoteName,
   pickNextEarDrillMidi,
-  renderTrebleStaffNoteSvg,
-  type GuidedFundamentalsLesson,
+  renderStaffNoteSvg,
+  resolveGuidedLessonForContext,
   type GuidedFundamentalsStep,
+  type GuidedInstrument,
 } from './fundamentals-guided-logic';
 import { buildStage3DataLabStage } from './academy-labs-stage3';
 import { buildStage4DataLabStage } from './academy-labs-stage4';
@@ -49,6 +52,25 @@ function playReferenceNote(audio: AcademyLabAudio, midi: number, duration = 0.55
     audio.playElectricBass(bassMidi, duration, delay, 0.36, 'finger', false);
   } else {
     audio.playAcousticPiano(midi, duration, delay, 0.26, false);
+  }
+}
+
+function playGuidedInstrumentNote(
+  audio: AcademyLabAudio,
+  instrument: GuidedInstrument | 'drums',
+  midi: number,
+  duration = 0.65,
+  delay = 0
+): void {
+  if (instrument === 'guitar') {
+    audio.playPluckedGuitar(midi, duration, delay, 0.3, false);
+  } else if (instrument === 'bass') {
+    const safeBass = midi > 58 ? midi - 12 : midi;
+    audio.playElectricBass(safeBass, duration, delay, 0.4, 'finger', false);
+  } else if (instrument === 'drums') {
+    audio.playDrumHit(midi >= 64 ? 'snare' : 'kick', delay);
+  } else {
+    audio.playAcousticPiano(midi, duration, delay, 0.28, false);
   }
 }
 
@@ -90,54 +112,72 @@ function hydrateRhythmStarterLab(
   onStatus: (msg: string) => void
 ): void {
   let activePatternId = RHYTHM_STARTER_PATTERNS[0].id;
+  let activeInst: 'drums' | 'piano' | 'guitar' | 'bass' = 'drums';
   let bpm = 76;
   let isPlaying = false;
   let barInterval: ReturnType<typeof setInterval> | null = null;
 
   stage.innerHTML = `
-    <div class="space-y-3">
-      <div class="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-[#070b14] border border-slate-800">
-        <div class="flex flex-wrap gap-1.5 js-rs-patterns">
-          ${RHYTHM_STARTER_PATTERNS.map(
-            (p) => `
-            <button type="button" data-pat="${p.id}"
-              class="btn js-rs-pat-btn text-xs ${p.id === activePatternId ? 'btn-primary' : ''}">
-              ${p.label}
-            </button>`
-          ).join('')}
+    <div class="space-y-4">
+      <!-- Studio Controls Row (Flat, zero nested borders) -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/10">
+        <div class="guitar-seg-group js-rs-inst-group" role="tablist" aria-label="Instrumento del laboratorio rítmico">
+          <button type="button" data-rs-inst="piano" class="guitar-seg-btn">🎹 Piano</button>
+          <button type="button" data-rs-inst="guitar" class="guitar-seg-btn">🎸 Guitarra</button>
+          <button type="button" data-rs-inst="bass" class="guitar-seg-btn">🎸 Bajo</button>
+          <button type="button" data-rs-inst="drums" class="guitar-seg-btn active">🥁 Batería</button>
         </div>
-        <div class="flex flex-wrap items-center gap-2 shrink-0">
-          <label class="text-xs text-slate-300 font-semibold flex items-center gap-1.5">
-            <span>Tempo:</span>
-            <input type="range" min="55" max="120" value="${bpm}" class="js-rs-bpm w-24 accent-amber-400" />
-            <span class="font-mono text-amber-300 js-rs-bpm-val">${bpm} BPM</span>
+
+        <div class="flex flex-wrap items-center gap-3 shrink-0">
+          <label class="text-xs text-slate-300 font-semibold flex items-center gap-2">
+            <span>Tempo</span>
+            <input type="range" min="55" max="120" value="${bpm}" class="js-rs-bpm w-24 accent-[#e5a93c]" />
+            <span class="font-mono tabular-nums text-[#e5a93c] js-rs-bpm-val">${bpm} BPM</span>
           </label>
           <button type="button" class="btn btn-primary js-rs-play">▶ Escuchar Patrón</button>
         </div>
       </div>
 
-      <div class="p-3 rounded-xl bg-[#070b14] border border-slate-800 space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2">
+      <!-- Pattern Selector -->
+      <div class="flex flex-wrap gap-1.5 js-rs-patterns">
+        ${RHYTHM_STARTER_PATTERNS.map(
+          (p) => `
+          <button type="button" data-pat="${p.id}"
+            class="btn js-rs-pat-btn text-xs ${p.id === activePatternId ? 'btn-primary' : ''}">
+            ${p.label}
+          </button>`
+        ).join('')}
+      </div>
+
+      <!-- Active Concept & Timeline -->
+      <div class="space-y-3 pt-1">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
           <div>
-            <div class="text-sm font-bold text-amber-300 js-rs-title"></div>
+            <div class="text-sm font-bold text-[#e5a93c] js-rs-title"></div>
             <p class="text-xs text-slate-300 js-rs-desc mb-0"></p>
           </div>
-          <div class="px-2.5 py-1 rounded-md bg-slate-900 border border-slate-700 font-mono text-xs text-sky-300 js-rs-count"></div>
+          <span class="font-mono tabular-nums text-xs text-[#8ab4f8] js-rs-count"></span>
         </div>
 
         <div class="grid grid-cols-4 gap-2 js-rs-beats">
           ${[1, 2, 3, 4]
             .map(
               (b) => `
-            <div data-beat="${b}" class="js-rs-beat-box rounded-lg p-2 text-center border border-slate-800 bg-slate-900/70 transition-all">
-              <div class="text-xs font-extrabold text-slate-200">Pulso ${b}</div>
-              <div class="text-[10px] text-slate-400">${b === 1 ? 'Fuerte' : b === 3 ? 'Semifuerte' : 'Débil'}</div>
+            <div data-beat="${b}" class="js-rs-beat-box rounded-lg py-2 px-1 text-center bg-[#141a26] transition-colors">
+              <div class="text-xs font-extrabold text-slate-100">Pulso ${b}</div>
+              <div class="text-[11px] text-slate-400">${b === 1 ? 'Fuerte' : b === 3 ? 'Semifuerte' : 'Débil'}</div>
             </div>`
             )
             .join('')}
         </div>
 
         <div class="js-rs-timeline w-full overflow-x-auto"></div>
+
+        <!-- Tactile Instrument Pads -->
+        <div class="pt-2 border-t border-white/8">
+          <div class="text-[11px] font-semibold text-slate-400 mb-2 js-rs-pads-caption"></div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 js-rs-pads"></div>
+        </div>
       </div>
     </div>
   `;
@@ -146,6 +186,8 @@ function hydrateRhythmStarterLab(
   const descEl = stage.querySelector<HTMLElement>('.js-rs-desc')!;
   const countEl = stage.querySelector<HTMLElement>('.js-rs-count')!;
   const timelineEl = stage.querySelector<HTMLElement>('.js-rs-timeline')!;
+  const padsCaptionEl = stage.querySelector<HTMLElement>('.js-rs-pads-caption')!;
+  const padsEl = stage.querySelector<HTMLElement>('.js-rs-pads')!;
   const playBtn = stage.querySelector<HTMLButtonElement>('.js-rs-play')!;
   const bpmInput = stage.querySelector<HTMLInputElement>('.js-rs-bpm')!;
   const bpmValEl = stage.querySelector<HTMLElement>('.js-rs-bpm-val')!;
@@ -157,13 +199,68 @@ function hydrateRhythmStarterLab(
   const highlightBeat = (beatIdx: number) => {
     beatBoxes.forEach((box, idx) => {
       if (idx === beatIdx) {
-        box.style.borderColor = '#fbbf24';
-        box.style.background = 'rgba(245, 158, 11, 0.22)';
+        box.style.background = 'rgba(229, 169, 60, 0.24)';
+        box.style.outline = '1.5px solid #e5a93c';
       } else {
-        box.style.borderColor = '#1e293b';
-        box.style.background = 'rgba(15, 23, 42, 0.7)';
+        box.style.background = '#141a26';
+        box.style.outline = 'none';
       }
     });
+  };
+
+  const renderPads = () => {
+    if (activeInst === 'drums') {
+      padsCaptionEl.textContent = '🥁 Toca los pads de Batería para practicar el pulso y los contratiempos con tus dedos:';
+      const drumPads: { id: 'kick' | 'snare' | 'hihat' | 'clap'; label: string; sub: string }[] = [
+        { id: 'kick', label: '🥁 Bombo', sub: 'Pulso 1 (Tierra)' },
+        { id: 'snare', label: '💥 Caja', sub: 'Pulsos 2 y 4' },
+        { id: 'hihat', label: '✨ Hi-Hat', sub: 'Corcheas (1 y 2 y)' },
+        { id: 'clap', label: '⚡ Acento', sub: 'Síncopa / Corte' },
+      ];
+      padsEl.innerHTML = drumPads
+        .map(
+          (p) => `
+          <button type="button" data-rs-drum="${p.id}"
+            class="studio-pad-btn text-left">
+            <span class="block text-xs font-bold text-slate-100">${p.label}</span>
+            <span class="block text-[11px] text-slate-400">${p.sub}</span>
+          </button>`
+        )
+        .join('');
+      padsEl.querySelectorAll<HTMLButtonElement>('[data-rs-drum]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const piece = (btn.dataset['rsDrum'] || 'kick') as 'kick' | 'snare' | 'hihat' | 'clap';
+          audio.playDrumHit(piece, 0);
+          onStatus(`Golpe de batería: ${piece.toUpperCase()}`);
+        });
+      });
+    } else {
+      const baseMidis =
+        activeInst === 'bass'
+          ? [36, 40, 43, 48]
+          : activeInst === 'guitar'
+            ? [48, 52, 55, 60]
+            : [60, 64, 67, 72];
+      const labels = ['Tónica (Do)', '3ª (Mi)', '5ª (Sol)', 'Octava (Do)'];
+      const icon = activeInst === 'piano' ? '🎹' : '🎸';
+      padsCaptionEl.textContent = `${icon} Toca estas notas de ${activeInst === 'piano' ? 'Piano' : activeInst === 'guitar' ? 'Guitarra' : 'Bajo'} encima del metrónomo:`;
+      padsEl.innerHTML = baseMidis
+        .map(
+          (m, idx) => `
+          <button type="button" data-rs-note="${m}" class="studio-pad-btn text-left">
+            <span class="block text-xs font-bold text-slate-100">${icon} ${labels[idx]}</span>
+            <span class="block text-[11px] font-mono text-[#e5a93c]">${formatMidiNoteName(m).american}</span>
+          </button>`
+        )
+        .join('');
+      padsEl.querySelectorAll<HTMLButtonElement>('[data-rs-note]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const midi = parseInt(btn.dataset['rsNote'] || '60', 10);
+          playGuidedInstrumentNote(audio, activeInst, midi, 0.45, 0);
+          onStatus(`Pad ${activeInst}: ${formatMidiNoteName(midi).latin}`);
+        });
+      });
+    }
   };
 
   const renderPatternView = () => {
@@ -172,6 +269,9 @@ function hydrateRhythmStarterLab(
     descEl.textContent = pat.explanation;
     countEl.textContent = `Cuenta: ${pat.countingGuide}`;
 
+    stage.querySelectorAll<HTMLButtonElement>('[data-rs-inst]').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset['rsInst'] === activeInst);
+    });
     stage.querySelectorAll<HTMLButtonElement>('.js-rs-pat-btn').forEach((btn) => {
       btn.classList.toggle('btn-primary', btn.dataset['pat'] === pat.id);
     });
@@ -184,7 +284,7 @@ function hydrateRhythmStarterLab(
       .map((b) => {
         const x = padL + (b / 4) * usableW;
         return `
-          <line x1="${x}" y1="14" x2="${x}" y2="96" stroke="${b === 0 ? '#fbbf24' : '#334155'}" stroke-width="${b === 0 ? 2 : 1}" stroke-dasharray="${b === 0 ? 'none' : '3,3'}" />
+          <line x1="${x}" y1="14" x2="${x}" y2="96" stroke="${b === 0 ? '#e5a93c' : '#334155'}" stroke-width="${b === 0 ? 2 : 1}" stroke-dasharray="${b === 0 ? 'none' : '3,3'}" />
           <text x="${x + 4}" y="20" fill="#94a3b8" font-size="10" font-weight="700">${b + 1}</text>
           <line x1="${x + usableW / 8}" y1="26" x2="${x + usableW / 8}" y2="92" stroke="#1e293b" stroke-width="1" />
         `;
@@ -210,9 +310,9 @@ function hydrateRhythmStarterLab(
         const midX = (x1 + x2) / 2;
         return `
           <path d="M ${x1.toFixed(1)} 40 Q ${midX.toFixed(1)} 23 ${x2.toFixed(1)} 40"
-                fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" />
-          <circle cx="${x1.toFixed(1)}" cy="40" r="2.2" fill="#38bdf8" />
-          <circle cx="${x2.toFixed(1)}" cy="40" r="2.2" fill="#38bdf8" />
+                fill="none" stroke="#8ab4f8" stroke-width="2.2" stroke-linecap="round" />
+          <circle cx="${x1.toFixed(1)}" cy="40" r="2.2" fill="#8ab4f8" />
+          <circle cx="${x2.toFixed(1)}" cy="40" r="2.2" fill="#8ab4f8" />
         `;
       })
       .join('');
@@ -220,19 +320,19 @@ function hydrateRhythmStarterLab(
     const stepShapes = stepRects
       .map(({ step, x, w }) => {
         const fill = step.isRest
-          ? 'rgba(148,163,184,0.12)'
+          ? 'rgba(148,163,184,0.1)'
           : step.isTieCarry
-            ? 'rgba(56,189,248,0.14)'
+            ? 'rgba(138,180,248,0.14)'
             : step.isAccent
-              ? 'rgba(245,158,11,0.28)'
-              : 'rgba(16,185,129,0.24)';
+              ? 'rgba(229,169,60,0.26)'
+              : 'rgba(78,168,123,0.24)';
         const stroke = step.isRest
           ? '#64748b'
           : step.isTieCarry
-            ? '#38bdf8'
+            ? '#8ab4f8'
             : step.isAccent
-              ? '#fbbf24'
-              : '#34d399';
+              ? '#e5a93c'
+              : '#4ea87b';
         const dash = step.isRest || step.isTieCarry ? 'stroke-dasharray="4,3"' : '';
         return `
           <g class="js-rs-step-node" data-step="${step.id}">
@@ -246,13 +346,14 @@ function hydrateRhythmStarterLab(
 
     timelineEl.innerHTML = `
       <svg viewBox="0 0 ${W} ${H}" class="w-full min-w-[520px] h-auto block" role="img" aria-label="Línea de tiempo rítmica 4/4">
-        <rect x="0" y="0" width="${W}" height="${H}" rx="8" fill="#0b111e" />
+        <rect x="0" y="0" width="${W}" height="${H}" rx="8" fill="#0b0e14" />
         ${beatCols}
         <line x1="${padL + usableW}" y1="14" x2="${padL + usableW}" y2="96" stroke="#475569" stroke-width="2" />
         ${tieArcs}
         ${stepShapes}
       </svg>
     `;
+    renderPads();
   };
 
   const stopPlayback = () => {
@@ -278,7 +379,6 @@ function hydrateRhythmStarterLab(
     const pat = getActivePattern();
     const beatMs = (60 / bpm) * 1000;
 
-    // Schedule metronome pulse on beats 1..4
     for (let b = 0; b < 4; b++) {
       audio.schedule(() => {
         if (!isPlaying) return;
@@ -287,16 +387,37 @@ function hydrateRhythmStarterLab(
       }, Math.round(b * beatMs));
     }
 
-    // Schedule pattern attacks
     pat.steps.forEach((step) => {
       if (!step.playNote) return;
       audio.schedule(() => {
         if (!isPlaying) return;
-        audio.playDrumHit(step.isAccent ? 'snare' : 'clap', 0);
-        playReferenceNote(audio, step.isAccent ? 60 : 64, Math.max(0.18, (step.durationSecFactor * beatMs) / 1000), 0);
+        const dur = Math.max(0.18, (step.durationSecFactor * beatMs) / 1000);
+        if (activeInst === 'drums') {
+          audio.playDrumHit(step.isAccent ? 'kick' : 'snare', 0);
+          audio.playDrumHit(step.isAccent ? 'clap' : 'ghost', 0.01);
+        } else {
+          const midi =
+            activeInst === 'bass'
+              ? step.isAccent ? 36 : 43
+              : activeInst === 'guitar'
+                ? step.isAccent ? 48 : 55
+                : step.isAccent ? 60 : 64;
+          playGuidedInstrumentNote(audio, activeInst, midi, dur, 0);
+        }
       }, Math.round(step.offsetFrac * beatMs));
     });
   };
+
+  stage.querySelectorAll<HTMLButtonElement>('[data-rs-inst]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const next = btn.dataset['rsInst'];
+      if (next === 'piano' || next === 'guitar' || next === 'bass' || next === 'drums') {
+        activeInst = next;
+        renderPatternView();
+        onStatus(`Instrumento rítmico activo: ${btn.textContent?.trim() || next}`);
+      }
+    });
+  });
 
   stage.querySelectorAll<HTMLButtonElement>('.js-rs-pat-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -328,7 +449,7 @@ function hydrateRhythmStarterLab(
     scheduleOneBar();
     const barMs = (60 / bpm) * 4 * 1000;
     barInterval = setInterval(scheduleOneBar, barMs);
-    onStatus(`Reproduciendo "${getActivePattern().label}" a ${bpm} BPM`);
+    onStatus(`Reproduciendo "${getActivePattern().label}" en ${activeInst} a ${bpm} BPM`);
   });
 
   renderPatternView();
@@ -638,7 +759,7 @@ function hydrateKeySignatureLab(
 }
 
 // ============================================================================
-// 4. GUIDED FUNDAMENTALS SERIES (Explicación breve + Ejercicio auditivo táctil)
+// 4. GUIDED FUNDAMENTALS SERIES (Multi-Instrument + Transposable Root + Tactile)
 // ============================================================================
 function hydrateFundamentalsGuidedLab(
   stage: HTMLElement,
@@ -647,36 +768,185 @@ function hydrateFundamentalsGuidedLab(
   article?: HTMLElement
 ): void {
   const lessonId = article?.dataset['lesson'] || FUNDAMENTALS_GUIDED_LESSONS[0].id;
-  const lesson: GuidedFundamentalsLesson =
-    FUNDAMENTALS_GUIDED_LESSONS.find((l) => l.id === lessonId) || FUNDAMENTALS_GUIDED_LESSONS[0];
 
+  const initialFocus = getVisualInstrumentFocus();
+  let activeInstrument: GuidedInstrument =
+    initialFocus === 'guitar-only' ? 'guitar' : initialFocus === 'bass-only' ? 'bass' : 'piano';
+  let activeRootPc = 0; // C / Do default
   let stepIdx = 0;
   let matchedCount = 0;
   const completedStepIds = new Set<string>();
   let mode: 'guided' | 'free' = 'guided';
   let showHint = false;
   let lastTappedMidi: number | null = null;
-  let feedbackText = 'Pulsa cualquier tecla del teclado inferior o escucha el ejemplo para comenzar.';
+  let feedbackText = 'Pulsa directamente el instrumento inferior o escucha el ejemplo para comenzar.';
   let feedbackTone: 'ok' | 'info' | 'hint' = 'info';
   let customEarStep: GuidedFundamentalsStep | null = null;
   let drillCounter = 0;
 
+  const getLesson = () => resolveGuidedLessonForContext(lessonId, activeInstrument, activeRootPc);
+
   const getCurrentStep = (): GuidedFundamentalsStep => {
     if (customEarStep) return customEarStep;
+    const lesson = getLesson();
     return lesson.steps[stepIdx] ?? lesson.steps[0];
   };
 
-  const playDemo = (step: GuidedFundamentalsStep) => {
+  const playDemo = (step: GuidedFundamentalsStep, lessonTitle: string) => {
     audio.stopAll();
     if (step.demoMode === 'harmonic') {
-      step.demoMidis.forEach((m) => playReferenceNote(audio, m, 0.9, 0));
+      step.demoMidis.forEach((m) => playGuidedInstrumentNote(audio, activeInstrument, m, 0.9, 0));
     } else {
-      step.demoMidis.forEach((m, idx) => playReferenceNote(audio, m, 0.55, idx * 0.45));
+      step.demoMidis.forEach((m, idx) => playGuidedInstrumentNote(audio, activeInstrument, m, 0.58, idx * 0.44));
     }
-    onStatus(`Reproduciendo ejercicio: ${lesson.title}`);
+    onStatus(`Reproduciendo en ${activeInstrument}: ${lessonTitle}`);
+  };
+
+  const renderInstrumentSurface = (
+    step: GuidedFundamentalsStep,
+    nextExpectedMidi: number,
+    shouldRevealVisualHint: boolean,
+    showRootHighlight: boolean
+  ): string => {
+    const isMatchedNote = (midi: number): boolean => {
+      if (mode !== 'guided' || step.kind !== 'sequence') return false;
+      const doneSlice = step.targetMidis.slice(0, matchedCount);
+      if (step.matchByPitchClass) {
+        return doneSlice.some((m) => ((m % 12) + 12) % 12 === ((midi % 12) + 12) % 12);
+      }
+      return doneSlice.includes(midi);
+    };
+
+    const isHintNote = (midi: number): boolean => {
+      if (!shouldRevealVisualHint) return false;
+      if (step.kind === 'ear-match' && !showHint) return false;
+      if (step.matchByPitchClass) {
+        return ((nextExpectedMidi % 12) + 12) % 12 === ((midi % 12) + 12) % 12;
+      }
+      return nextExpectedMidi === midi;
+    };
+
+    if (activeInstrument === 'piano') {
+      const whiteKeys = FUNDAMENTALS_PIANO_KEYS_EXTENDED.filter((k) => !k.isBlack);
+      const blackKeys = FUNDAMENTALS_PIANO_KEYS_EXTENDED.filter((k) => k.isBlack);
+      const whitePct = 100 / whiteKeys.length; // 13 white keys -> 7.6923%
+      const rootKeyPct = activeRootPc;
+
+      return `
+        <div class="studio-piano-bezel overflow-x-auto no-scrollbar">
+          <div class="relative select-none w-full min-w-[590px] h-[142px] sm:h-[162px]">
+            <div class="grid h-full gap-1" style="grid-template-columns: repeat(${whiteKeys.length}, minmax(0, 1fr));">
+              ${whiteKeys
+                .map((k) => {
+                  const isLast = lastTappedMidi === k.midi;
+                  const isMatched = isMatchedNote(k.midi);
+                  const isHint = isHintNote(k.midi);
+                  const isRootKey = showRootHighlight && ((k.midi % 12) + 12) % 12 === rootKeyPct;
+                  let cls = 'studio-piano-white';
+                  if (isMatched) cls += ' is-matched';
+                  else if (isLast) cls += ' is-last';
+                  else if (isHint) cls += ' is-hint';
+                  else if (isRootKey) cls += ' is-root-hint';
+                  return `
+                    <button type="button"
+                      data-fg-midi="${k.midi}"
+                      aria-label="Tecla ${k.latinName} ${k.americanName}"
+                      class="${cls}">
+                      <span class="text-[9.5px] sm:text-[10.5px] font-extrabold leading-tight text-center">${k.shortLabel}</span>
+                    </button>`;
+                })
+                .join('')}
+            </div>
+
+            ${blackKeys
+              .map((k) => {
+                const leftPct = (k.whiteIndex + 1) * whitePct;
+                const isLast = lastTappedMidi === k.midi;
+                const isMatched = isMatchedNote(k.midi);
+                const isHint = isHintNote(k.midi);
+                const isRootKey = showRootHighlight && ((k.midi % 12) + 12) % 12 === rootKeyPct;
+                let cls = 'studio-piano-black';
+                if (isMatched) cls += ' is-matched';
+                else if (isLast) cls += ' is-last';
+                else if (isHint) cls += ' is-hint';
+                else if (isRootKey) cls += ' is-root-hint';
+                return `
+                  <button type="button"
+                    data-fg-midi="${k.midi}"
+                    aria-label="Tecla ${k.latinName} ${k.americanName}"
+                    style="left: ${leftPct.toFixed(3)}%; width: ${(whitePct * 0.68).toFixed(2)}%; transform: translateX(-50%);"
+                    class="${cls}">
+                    <span class="text-[8.5px] sm:text-[9.5px] font-bold leading-none">${k.shortLabel}</span>
+                    <span class="text-[7.5px] opacity-75 leading-none mt-0.5">${k.altLabel || ''}</span>
+                  </button>`;
+              })
+              .join('')}
+          </div>
+        </div>`;
+    }
+
+    // Guitarra (6 cuerdas) o Bajo (4 cuerdas)
+    const rows = buildInstrumentFretboardGrid(activeInstrument, activeRootPc, 9);
+    const fretDots = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    return `
+      <div class="studio-fretboard-bezel overflow-x-auto">
+        <div class="min-w-[600px]">
+          <div class="flex items-center pb-1.5 mb-1 border-b border-white/10">
+            <div class="w-[56px] shrink-0 text-[10px] font-mono uppercase text-slate-400 text-center">Cuerda</div>
+            ${fretDots
+              .map(
+                (f) => `
+              <div class="flex-1 text-center text-[10px] font-mono ${[3, 5, 7, 9].includes(f) ? 'text-[#e5a93c] font-bold' : 'text-slate-400'}">
+                ${f === 0 ? 'Aire' : `T${f}`}
+              </div>`
+              )
+              .join('')}
+          </div>
+
+          ${rows
+            .map((row) => {
+              const wirePx =
+                activeInstrument === 'bass'
+                  ? (1.8 + row.stringNumber * 0.6).toFixed(1)
+                  : (1.2 + row.stringNumber * 0.36).toFixed(1);
+              return `
+              <div class="relative flex items-center h-[42px]">
+                <div class="w-[56px] shrink-0 text-[11px] font-mono font-bold text-[#e5a93c] text-center pr-1">${row.openLabel}</div>
+                <div class="flex-1 flex items-center h-full relative">
+                  <div class="absolute left-0 right-0 pointer-events-none bg-gradient-to-b from-slate-300/75 to-slate-500/45" style="height: ${wirePx}px;"></div>
+                  ${row.cells
+                    .map((cell) => {
+                      const isLast = lastTappedMidi === cell.midi;
+                      const isMatched = isMatchedNote(cell.midi);
+                      const isHint = isHintNote(cell.midi);
+                      let dotCls = 'studio-fret-dot';
+                      if (isMatched) dotCls += ' is-matched';
+                      else if (isLast) dotCls += ' is-last';
+                      else if (isHint) dotCls += ' is-hint';
+                      else if (showRootHighlight && cell.isRoot) dotCls += ' is-root';
+                      return `
+                        <div class="flex-1 h-full flex items-center justify-center relative z-10 ${
+                          cell.fret === 0 ? 'border-r-[3px] border-stone-200/80 bg-black/25' : 'border-r border-stone-600/70'
+                        }">
+                          <button type="button"
+                            data-fg-midi="${cell.midi}"
+                            aria-label="Cuerda ${row.openLabel} Traste ${cell.fret} ${cell.latin} ${cell.american}"
+                            class="${dotCls}">
+                            ${cell.american}
+                          </button>
+                        </div>`;
+                    })
+                    .join('')}
+                </div>
+              </div>`;
+            })
+            .join('')}
+        </div>
+      </div>`;
   };
 
   const render = () => {
+    const lesson = getLesson();
     const step = getCurrentStep();
     const allCompleted = completedStepIds.size >= lesson.steps.length;
     const nextExpectedMidi =
@@ -687,47 +957,60 @@ function hydrateFundamentalsGuidedLab(
       mode === 'guided' &&
       (showHint || (step.kind === 'sequence' && matchedCount < step.targetMidis.length));
 
-    const whiteKeys = FUNDAMENTALS_PIANO_KEYS.filter((k) => !k.isBlack);
-    const blackKeys = FUNDAMENTALS_PIANO_KEYS.filter((k) => k.isBlack);
-
     const feedbackColorClass =
       feedbackTone === 'ok'
-        ? 'bg-[#4ea87b]/15 border-[#4ea87b]/40 text-emerald-200'
+        ? 'bg-[#4ea87b]/14 text-emerald-200 border-[#4ea87b]/35'
         : feedbackTone === 'hint'
-          ? 'bg-[#e5a93c]/12 border-[#e5a93c]/35 text-amber-100'
-          : 'bg-[#171e2c] border-white/10 text-slate-200';
+          ? 'bg-[#e5a93c]/12 text-amber-100 border-[#e5a93c]/35'
+          : 'bg-[#141a26] text-slate-200 border-white/10';
 
-    const lastKey = lastTappedMidi !== null ? getPianoKeySpec(lastTappedMidi) : undefined;
+    const lastInfo = lastTappedMidi !== null ? formatMidiNoteName(lastTappedMidi) : undefined;
+    const instLabel =
+      activeInstrument === 'piano' ? '🎹 Piano' : activeInstrument === 'guitar' ? '🎸 Guitarra' : '🎸 Bajo';
 
     stage.innerHTML = `
-      <div class="space-y-3">
-        <!-- Brief Explanation Block -->
-        <div class="p-3 rounded-xl bg-[#0b0e14] border border-white/10 space-y-1.5">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-[#e5a93c]">${lesson.badge}</span>
-            <div class="flex items-center gap-1.5">
-              <button type="button" data-fg-mode="guided"
-                class="px-2.5 py-1 rounded-md text-xs font-semibold border transition cursor-pointer ${
-                  mode === 'guided'
-                    ? 'bg-[#e5a93c] text-[#0b0e14] border-[#e5a93c]'
-                    : 'bg-[#171e2c] text-slate-300 border-white/10 hover:text-white'
-                }">🎯 Ejercicio Guiado</button>
-              <button type="button" data-fg-mode="free"
-                class="px-2.5 py-1 rounded-md text-xs font-semibold border transition cursor-pointer ${
-                  mode === 'free'
-                    ? 'bg-[#8ab4f8] text-[#0b0e14] border-[#8ab4f8]'
-                    : 'bg-[#171e2c] text-slate-300 border-white/10 hover:text-white'
-                }">🎹 Explorar Libre</button>
+      <div class="space-y-4">
+        <!-- Unified Top Studio Toolbar (Instrument + Root + Mode) -->
+        <div class="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-white/10">
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="guitar-seg-group" role="tablist" aria-label="Selector de instrumento">
+              <button type="button" data-fg-inst="piano" class="guitar-seg-btn ${activeInstrument === 'piano' ? 'active' : ''}">🎹 Piano</button>
+              <button type="button" data-fg-inst="guitar" class="guitar-seg-btn ${activeInstrument === 'guitar' ? 'active' : ''}">🎸 Guitarra</button>
+              <button type="button" data-fg-inst="bass" class="guitar-seg-btn ${activeInstrument === 'bass' ? 'active' : ''}">🎸 Bajo</button>
             </div>
+
+            ${
+              lesson.supportsRootTransposition
+                ? `
+              <div class="guitar-seg-group" role="group" aria-label="Nota Tónica">
+                <span class="px-1.5 text-[10.5px] font-bold uppercase tracking-wide text-slate-400">Tónica</span>
+                ${GUIDED_ROOT_OPTIONS.map(
+                  (r) => `
+                  <button type="button" data-fg-root="${r.pc}" class="guitar-seg-btn ${activeRootPc === r.pc ? 'active' : ''}">
+                    ${r.latin} (${r.american})
+                  </button>`
+                ).join('')}
+              </div>`
+                : `<span class="text-xs font-semibold text-slate-400">${activeInstrument === 'bass' ? 'Lectura en Clave de Fa (𝄢)' : 'Lectura en Clave de Sol (𝄞)'}</span>`
+            }
           </div>
+
+          <div class="guitar-seg-group">
+            <button type="button" data-fg-mode="guided" class="guitar-seg-btn ${mode === 'guided' ? 'active' : ''}">🎯 Guiado</button>
+            <button type="button" data-fg-mode="free" class="guitar-seg-btn ${mode === 'free' ? 'active' : ''}">✨ Explorar Libre</button>
+          </div>
+        </div>
+
+        <!-- Concise Brief Concept (Flat editorial block, no nested card box) -->
+        <div class="space-y-1">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-[#e5a93c]">${lesson.badge}</div>
           <p class="text-xs sm:text-sm text-slate-200 m-0 leading-relaxed">${lesson.briefExplanation}</p>
         </div>
 
         ${
           mode === 'guided'
             ? `
-          <!-- Step Navigator + Prompt -->
-          <div class="p-3 rounded-xl bg-[#121722] border border-white/10 space-y-2.5">
+          <div class="pt-3 border-t border-white/10 space-y-2.5">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-1.5">
                 ${lesson.steps
@@ -749,7 +1032,7 @@ function hydrateFundamentalsGuidedLab(
                   .join('')}
                 ${
                   customEarStep
-                    ? `<span class="px-2.5 py-1 rounded-md text-xs font-bold bg-[#8ab4f8]/20 border border-[#8ab4f8]/40 text-[#8ab4f8]">🎲 Reto Libre #${drillCounter}</span>`
+                    ? `<span class="text-xs font-bold text-[#8ab4f8] px-2">🎲 Reto Libre #${drillCounter}</span>`
                     : ''
                 }
               </div>
@@ -760,7 +1043,7 @@ function hydrateFundamentalsGuidedLab(
 
             ${
               step.kind === 'staff-read' && step.staffMidi
-                ? `<div class="py-1">${renderTrebleStaffNoteSvg(step.staffMidi, showHint)}</div>`
+                ? `<div class="py-1">${renderStaffNoteSvg(step.staffMidi, step.staffClef || (activeInstrument === 'bass' ? 'bass' : 'treble'), showHint)}</div>`
                 : ''
             }
 
@@ -785,7 +1068,7 @@ function hydrateFundamentalsGuidedLab(
 
             ${
               showHint
-                ? `<div class="p-2 rounded-lg bg-[#171e2c] border border-[#8ab4f8]/30 text-xs text-slate-200">
+                ? `<div class="py-2 px-3 rounded-lg bg-[#141a26] border border-[#8ab4f8]/30 text-xs text-slate-200">
                     <strong>Pista:</strong> ${step.hint}${step.staffHint ? ` · <em>${step.staffHint}</em>` : ''}
                   </div>`
                 : ''
@@ -793,98 +1076,31 @@ function hydrateFundamentalsGuidedLab(
           </div>
         `
             : `
-          <div class="p-3 rounded-xl bg-[#121722] border border-white/10 text-xs text-slate-300">
-            <strong>Modo Exploración Libre:</strong> Toca cualquier secuencia de teclas para comparar alturas, semitonos y acordes sin restricciones. Cuando quieras volver al ejercicio, pulsa <em>🎯 Ejercicio Guiado</em>.
+          <div class="pt-3 border-t border-white/10 text-xs text-slate-300">
+            <strong>Modo Exploración Libre (${instLabel}):</strong> Toca cualquier nota o traste para comparar sonoridades sin restricciones.
           </div>
         `
         }
 
-        <!-- Interactive Playable On-Screen Piano (C4 to C5) -->
-        <div class="p-2.5 sm:p-3 rounded-xl bg-[#0b0e14] border border-white/10">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-2 text-[11px] text-slate-400">
-            <span>🎹 Toca directamente las teclas para oír y responder:</span>
+        <!-- Playable Instrument Surface -->
+        <div class="space-y-1.5">
+          <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+            <span>${instLabel} · Toca directamente sobre ${activeInstrument === 'piano' ? 'las teclas' : 'los trastes'}:</span>
             <span class="font-mono text-slate-200">
-              ${lastKey ? `Última nota: <strong class="text-[#e5a93c]">${lastKey.latinName} (${lastKey.americanName})</strong>` : 'Sin pulsar aún'}
+              ${lastInfo ? `Última nota: <strong class="text-[#e5a93c]">${lastInfo.latin} (${lastInfo.american})</strong>` : 'Sin pulsar aún'}
             </span>
           </div>
-
-          <div class="relative select-none w-full max-w-[660px] mx-auto h-[138px] sm:h-[156px]">
-            <!-- White Keys Row -->
-            <div class="grid grid-cols-8 gap-1 h-full">
-              ${whiteKeys
-                .map((k) => {
-                  const isLast = lastTappedMidi === k.midi;
-                  const isMatchedInSeq =
-                    mode === 'guided' &&
-                    step.kind === 'sequence' &&
-                    step.targetMidis.slice(0, matchedCount).includes(k.midi);
-                  const isHintTarget =
-                    shouldRevealVisualHint &&
-                    nextExpectedMidi === k.midi &&
-                    (step.kind !== 'ear-match' || showHint);
-                  let cls =
-                    'bg-slate-100 hover:bg-white text-slate-900 border-slate-300';
-                  if (isMatchedInSeq) {
-                    cls = 'bg-[#4ea87b] text-white border-emerald-300';
-                  } else if (isLast) {
-                    cls = 'bg-[#e5a93c] text-[#0b0e14] border-amber-200';
-                  } else if (isHintTarget) {
-                    cls = 'bg-sky-100 text-slate-900 border-[#8ab4f8] ring-2 ring-[#8ab4f8]/60';
-                  }
-                  return `
-                  <button type="button"
-                    data-fg-midi="${k.midi}"
-                    aria-label="Tecla ${k.latinName} ${k.americanName}"
-                    class="relative h-full rounded-b-lg border flex flex-col justify-end items-center pb-2 px-0.5 cursor-pointer transition-colors ${cls}">
-                    <span class="text-[10px] sm:text-xs font-extrabold leading-tight text-center">${k.shortLabel}</span>
-                  </button>`;
-                })
-                .join('')}
-            </div>
-
-            <!-- Black Keys Overlay -->
-            ${blackKeys
-              .map((k) => {
-                const leftPct = (k.whiteIndex + 1) * 12.5;
-                const isLast = lastTappedMidi === k.midi;
-                const isMatchedInSeq =
-                  mode === 'guided' &&
-                  step.kind === 'sequence' &&
-                  step.targetMidis.slice(0, matchedCount).includes(k.midi);
-                const isHintTarget =
-                  shouldRevealVisualHint &&
-                  nextExpectedMidi === k.midi &&
-                  (step.kind !== 'ear-match' || showHint);
-                let cls = 'bg-[#171e2c] hover:bg-[#232c3d] text-slate-200 border-slate-600';
-                if (isMatchedInSeq) {
-                  cls = 'bg-[#4ea87b] text-white border-emerald-300';
-                } else if (isLast) {
-                  cls = 'bg-[#e5a93c] text-[#0b0e14] border-amber-200';
-                } else if (isHintTarget) {
-                  cls = 'bg-[#1e293b] text-[#8ab4f8] border-[#8ab4f8] ring-2 ring-[#8ab4f8]/60';
-                }
-                return `
-                <button type="button"
-                  data-fg-midi="${k.midi}"
-                  aria-label="Tecla ${k.latinName} ${k.americanName}"
-                  style="left: ${leftPct}%; width: 8.6%; transform: translateX(-50%);"
-                  class="absolute top-0 z-10 h-[60%] rounded-b-md border shadow-md flex flex-col justify-end items-center pb-1.5 cursor-pointer transition-colors ${cls}">
-                  <span class="text-[9px] sm:text-[10px] font-bold leading-none">${k.shortLabel}</span>
-                  <span class="text-[8px] opacity-75 leading-none mt-0.5">${k.altLabel || ''}</span>
-                </button>`;
-              })
-              .join('')}
-          </div>
+          ${renderInstrumentSurface(step, nextExpectedMidi, shouldRevealVisualHint, lesson.supportsRootTransposition)}
         </div>
 
         <!-- Feedback & Takeaway -->
-        <div class="p-2.5 rounded-xl border text-xs leading-relaxed ${feedbackColorClass}">
+        <div class="p-2.5 rounded-lg border text-xs leading-relaxed ${feedbackColorClass}">
           ${feedbackText}
         </div>
 
         ${
           allCompleted
-            ? `<div class="p-2.5 rounded-xl bg-[#4ea87b]/12 border border-[#4ea87b]/35 text-xs text-emerald-200">
+            ? `<div class="p-2.5 rounded-lg bg-[#4ea87b]/12 border border-[#4ea87b]/35 text-xs text-emerald-200">
                 <strong>✓ Lección completada:</strong> ${lesson.takeaway}
               </div>`
             : ''
@@ -892,27 +1108,68 @@ function hydrateFundamentalsGuidedLab(
       </div>
     `;
 
-    // Wire events cleanly after render
+    // Wire instrument tabs
+    stage.querySelectorAll<HTMLButtonElement>('[data-fg-inst]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const nextInst = btn.dataset['fgInst'];
+        if (nextInst === 'piano' || nextInst === 'guitar' || nextInst === 'bass') {
+          activeInstrument = nextInst;
+          stepIdx = 0;
+          matchedCount = 0;
+          customEarStep = null;
+          lastTappedMidi = null;
+          showHint = false;
+          const nextLesson = getLesson();
+          feedbackText = mode === 'guided' ? nextLesson.steps[0].prompt : 'Explora libremente el nuevo instrumento.';
+          feedbackTone = 'info';
+          render();
+          onStatus(`Instrumento de práctica cambiado a ${nextInst}`);
+        }
+      });
+    });
+
+    // Wire root buttons
+    stage.querySelectorAll<HTMLButtonElement>('[data-fg-root]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const nextPc = parseInt(btn.dataset['fgRoot'] || '0', 10);
+        if (!Number.isNaN(nextPc)) {
+          activeRootPc = nextPc;
+          matchedCount = 0;
+          customEarStep = null;
+          lastTappedMidi = null;
+          showHint = false;
+          const nextLesson = getLesson();
+          feedbackText = mode === 'guided' ? nextLesson.steps[stepIdx]?.prompt || nextLesson.steps[0].prompt : 'Explora la nueva tónica.';
+          feedbackTone = 'info';
+          render();
+          onStatus(`Tónica cambiada a ${btn.textContent?.trim() || ''}`);
+        }
+      });
+    });
+
+    // Wire mode toggle
     stage.querySelectorAll<HTMLButtonElement>('[data-fg-mode]').forEach((btn) => {
       btn.addEventListener('click', () => {
         mode = btn.dataset['fgMode'] === 'free' ? 'free' : 'guided';
         feedbackText =
           mode === 'free'
-            ? 'Explora libremente tocando cualquier tecla.'
+            ? 'Explora libremente tocando cualquier nota o traste.'
             : getCurrentStep().prompt;
         feedbackTone = 'info';
         render();
       });
     });
 
+    // Wire step tabs
     stage.querySelectorAll<HTMLButtonElement>('[data-fg-step]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const nextIdx = parseInt(btn.dataset['fgStep'] || '0', 10);
-        if (!Number.isNaN(nextIdx) && lesson.steps[nextIdx]) {
+        const curLesson = getLesson();
+        if (!Number.isNaN(nextIdx) && curLesson.steps[nextIdx]) {
           customEarStep = null;
           stepIdx = nextIdx;
           matchedCount = 0;
-          feedbackText = lesson.steps[nextIdx].prompt;
+          feedbackText = curLesson.steps[nextIdx].prompt;
           feedbackTone = 'info';
           render();
         }
@@ -920,7 +1177,7 @@ function hydrateFundamentalsGuidedLab(
     });
 
     stage.querySelector<HTMLButtonElement>('.js-fg-listen')?.addEventListener('click', () => {
-      playDemo(getCurrentStep());
+      playDemo(getCurrentStep(), getLesson().title);
     });
 
     stage.querySelector<HTMLButtonElement>('.js-fg-toggle-hint')?.addEventListener('click', () => {
@@ -929,47 +1186,52 @@ function hydrateFundamentalsGuidedLab(
     });
 
     stage.querySelector<HTMLButtonElement>('.js-fg-next')?.addEventListener('click', () => {
-      if (stepIdx < lesson.steps.length - 1) {
+      const curLesson = getLesson();
+      if (stepIdx < curLesson.steps.length - 1) {
         stepIdx += 1;
         matchedCount = 0;
         showHint = false;
-        feedbackText = lesson.steps[stepIdx].prompt;
+        feedbackText = curLesson.steps[stepIdx].prompt;
         feedbackTone = 'info';
         render();
       }
     });
 
     stage.querySelector<HTMLButtonElement>('.js-fg-new-drill')?.addEventListener('click', () => {
-      const pool = lesson.earDrillPoolMidis || [62, 64, 65, 67, 69, 71, 72];
+      const curLesson = getLesson();
+      const pool = curLesson.earDrillPoolMidis || [62, 64, 65, 67, 69, 71, 72];
       const nextTarget = pickNextEarDrillMidi(pool, customEarStep?.targetMidis[0]);
-      const targetSpec = getPianoKeySpec(nextTarget);
+      const baseMidi = curLesson.steps[0]?.demoMidis[0] ?? 60;
+      const targetInfo = formatMidiNoteName(nextTarget);
+      const rootInfo = formatMidiNoteName(baseMidi);
       drillCounter += 1;
       customEarStep = {
         id: `ear-drill-${drillCounter}`,
         kind: 'ear-match',
-        prompt: `Reto Aleatorio #${drillCounter}: Escucha Do (C4) seguido de la nota incógnita y tócala en el teclado:`,
-        hint: `Es una tecla blanca de la escala de Do Mayor (${targetSpec?.latinName ?? ''}). Escúchala de nuevo y compara si está cerca de C4 o de C5.`,
+        prompt: `Reto Aleatorio #${drillCounter}: Escucha ${rootInfo.latin} (${rootInfo.american}) seguido de la nota incógnita y tócala:`,
+        hint: `Es una nota de la escala mayor actual (${targetInfo.latin} / ${targetInfo.american}). Escúchala de nuevo y compárala con la tónica.`,
         targetMidis: [nextTarget],
-        demoMidis: [60, nextTarget],
+        matchByPitchClass: activeInstrument !== 'piano',
+        demoMidis: [baseMidi, nextTarget],
         demoMode: 'melodic',
-        successFeedback: `¡Exacto! Acertaste ${targetSpec?.latinName ?? ''} (${targetSpec?.americanName ?? ''}). Pulsa "🎲 Nuevo Reto de Oído" para seguir entrenando.`,
+        successFeedback: `¡Exacto! Acertaste ${targetInfo.latin} (${targetInfo.american}). Pulsa "🎲 Nuevo Reto de Oído" para otro dictado.`,
       };
       matchedCount = 0;
       showHint = false;
-      feedbackText = 'Escucha la referencia Do (C4) + la segunda nota y búscala en el teclado.';
+      feedbackText = `Escucha la referencia ${rootInfo.latin} + la segunda nota y encuéntrala en pantalla.`;
       feedbackTone = 'info';
       render();
-      playDemo(customEarStep);
+      playDemo(customEarStep, curLesson.title);
     });
 
-    stage.querySelectorAll<HTMLButtonElement>('[data-fg-midi]').forEach((keyBtn) => {
-      keyBtn.addEventListener('click', () => {
-        const midi = parseInt(keyBtn.dataset['fgMidi'] || '60', 10);
+    stage.querySelectorAll<HTMLButtonElement>('[data-fg-midi]').forEach((noteBtn) => {
+      noteBtn.addEventListener('click', () => {
+        const midi = parseInt(noteBtn.dataset['fgMidi'] || '60', 10);
         lastTappedMidi = midi;
-        playReferenceNote(audio, midi, 0.72, 0);
-        const tappedSpec = getPianoKeySpec(midi);
-        const label = tappedSpec ? `${tappedSpec.latinName} (${tappedSpec.americanName})` : `MIDI ${midi}`;
-        onStatus(`Nota tocada: ${label}`);
+        playGuidedInstrumentNote(audio, activeInstrument, midi, 0.72, 0);
+        const tappedInfo = formatMidiNoteName(midi);
+        const label = `${tappedInfo.latin} (${tappedInfo.american})`;
+        onStatus(`Nota tocada (${activeInstrument}): ${label}`);
 
         if (mode === 'free') {
           feedbackText = `Sonando ${label}. Prueba combinarla con otra nota para escuchar su intervalo.`;

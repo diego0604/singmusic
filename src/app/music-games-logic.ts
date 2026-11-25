@@ -2241,7 +2241,7 @@ export const DRUM_TRAINING_BLOCKS: DrumTrainingBlock[] = [
     id: 'drum_stick_control',
     title: '1. Control de Baquetas: Singles y Paradiddle (R L R R · L R L L)',
     defaultBpm: 78,
-    ratio: 0.25,
+    ratio: 0.17,
     subdivisionPerBeat: 2,
     drill: 'Alterna acentos en Caja y Hi-Hat manteniendo rebote fluido sin apretar los dedos.',
     cue: 'Mano Derecha (dorado) en Hi-Hat/Tom; Mano Izquierda (rosa) en Caja. Deja caer la baqueta por gravedad.',
@@ -2257,10 +2257,29 @@ export const DRUM_TRAINING_BLOCKS: DrumTrainingBlock[] = [
     ],
   },
   {
+    id: 'drum_double_stroke',
+    title: '2. Calentamiento de Rebote: Double Stroke Roll (R R L L)',
+    defaultBpm: 80,
+    ratio: 0.17,
+    subdivisionPerBeat: 2,
+    drill: 'Acompaña el primer golpe con la muñeca y recoge el segundo rebote cerrando suavemente los dedos traseros.',
+    cue: 'El segundo golpe de cada mano (R2 y L2) debe sonar igual de claro que el primero, sin precipitarse.',
+    steps: [
+      { countLabel: '1', actionSummary: 'R1 Caja + PD Bombo', hits: [{ piece: 'SD', limb: 'R', accent: true }, { piece: 'BD', limb: 'RF' }] },
+      { countLabel: '&', actionSummary: 'R2 Rebote Caja', hits: [{ piece: 'SD', limb: 'R' }] },
+      { countLabel: '2', actionSummary: 'L1 Caja + PI Pedal', hits: [{ piece: 'SD', limb: 'L', accent: true }, { piece: 'HHP', limb: 'LF' }] },
+      { countLabel: '&', actionSummary: 'L2 Rebote Caja', hits: [{ piece: 'SD', limb: 'L' }] },
+      { countLabel: '3', actionSummary: 'R1 Tom 1 + PD Bombo', hits: [{ piece: 'T1', limb: 'R', accent: true }, { piece: 'BD', limb: 'RF' }] },
+      { countLabel: '&', actionSummary: 'R2 Rebote Tom 1', hits: [{ piece: 'T1', limb: 'R' }] },
+      { countLabel: '4', actionSummary: 'L1 Caja + PI Pedal', hits: [{ piece: 'SD', limb: 'L', accent: true }, { piece: 'HHP', limb: 'LF' }] },
+      { countLabel: '&', actionSummary: 'L2 Rebote Caja', hits: [{ piece: 'SD', limb: 'L' }] },
+    ],
+  },
+  {
     id: 'drum_rock_groove',
-    title: '2. Groove Rock Base (Manos Cruzadas + Bombo en 1 y 3)',
+    title: '3. Groove Rock Base (Manos Cruzadas + Bombo en 1 y 3)',
     defaultBpm: 86,
-    ratio: 0.25,
+    ratio: 0.17,
     subdivisionPerBeat: 2,
     drill: 'Corcheas firmes con Mano Derecha en Hi-Hat, Mano Izquierda firme en Caja (2 y 4) y Bombo con Pie Derecho.',
     cue: 'Amarra el golpe del Hi-Hat (R) exactamente con el Bombo (PD) en 1 y 3, y con la Caja (L) en 2 y 4.',
@@ -2277,9 +2296,9 @@ export const DRUM_TRAINING_BLOCKS: DrumTrainingBlock[] = [
   },
   {
     id: 'drum_independence',
-    title: '3. Independencia 4 Extremidades (Ride + Pedal HH en 2 y 4)',
+    title: '4. Independencia 4 Extremidades (Ride + Pedal HH en 2 y 4)',
     defaultBpm: 90,
-    ratio: 0.25,
+    ratio: 0.17,
     subdivisionPerBeat: 2,
     drill: 'Mano Derecha lleva el Ride, Pie Izquierdo pisa Pedal HH en 2 y 4, Pie Derecho sincopa el Bombo y Mano Izquierda responde en Caja.',
     cue: 'Observa las 4 tarjetas de extremidades para verificar qué pie o mano se activa simultáneamente.',
@@ -2295,10 +2314,29 @@ export const DRUM_TRAINING_BLOCKS: DrumTrainingBlock[] = [
     ],
   },
   {
+    id: 'drum_linear_funk',
+    title: '5. Coordinación Lineal Funk (PD – R – L sin Superponer Golpes)',
+    defaultBpm: 88,
+    ratio: 0.16,
+    subdivisionPerBeat: 2,
+    drill: 'Ninguna extremidad golpea al mismo tiempo: alterna Bombo (PD), Hi-Hat (R) y Caja/Ghost (L) como un engranaje limpio.',
+    cue: 'Asegúrate de dejar aire entre cada golpe: la limpieza del groove lineal depende de no encimar manos y pie.',
+    steps: [
+      { countLabel: '1', actionSummary: 'PD Bombo solo', hits: [{ piece: 'BD', limb: 'RF', accent: true }] },
+      { countLabel: '&', actionSummary: 'R Hi-Hat solo', hits: [{ piece: 'HH', limb: 'R' }] },
+      { countLabel: '2', actionSummary: 'L Caja★ solo', hits: [{ piece: 'SD', limb: 'L', accent: true }] },
+      { countLabel: '&', actionSummary: 'R Hi-Hat solo', hits: [{ piece: 'HH', limb: 'R' }] },
+      { countLabel: '3', actionSummary: 'PD Bombo solo', hits: [{ piece: 'BD', limb: 'RF', accent: true }] },
+      { countLabel: '&', actionSummary: 'L Ghost suave', hits: [{ piece: 'SD', limb: 'L' }] },
+      { countLabel: '4', actionSummary: 'R Hi-Hat solo', hits: [{ piece: 'HH', limb: 'R' }] },
+      { countLabel: '&', actionSummary: 'L Caja★ cierre', hits: [{ piece: 'SD', limb: 'L', accent: true }] },
+    ],
+  },
+  {
     id: 'drum_tom_fill',
-    title: '4. Fill Descendente por Toms y Cierre con Crash + Bombo',
+    title: '6. Fill Descendente por Toms y Cierre con Crash + Bombo',
     defaultBpm: 94,
-    ratio: 0.25,
+    ratio: 0.16,
     subdivisionPerBeat: 2,
     drill: 'Recorre Caja → Tom 1 → Tom 2 → Floor Tom en sentido horario y resuelve al tiempo 1 con Crash (R) + Bombo (PD).',
     cue: 'Evita acelerar durante el recorrido por los toms; apunta al centro de cada parche.',
@@ -2349,7 +2387,7 @@ export const GUITAR_TRAINING_BLOCKS: GuitarTrainingBlock[] = [
     focusTag: 'Púa alternada 1-2-3-4',
     title: '1. Calentamiento Motor (Araña 1-2-3-4 en Trastes 5–8)',
     defaultBpm: 72,
-    ratio: 0.125,
+    ratio: 0.1,
     subdivisionPerBeat: 2,
     drill: 'Sube y baja por las cuerdas tocando exactamente 1 dedo por traste con púa alternada (↓ ↑).',
     cue: 'Deja el pulgar detrás del mástil y levanta los dedos apenas unos milímetros.',
@@ -2369,8 +2407,8 @@ export const GUITAR_TRAINING_BLOCKS: GuitarTrainingBlock[] = [
     phaseLabel: 'Fase 1 · Motricidad y Calentamiento',
     focusTag: 'Disociación 1-3-2-4',
     title: '2. Velocidad y Permutación Disociada (1-3-2-4 · Am)',
-    defaultBpm: 88,
-    ratio: 0.125,
+    defaultBpm: 84,
+    ratio: 0.1,
     subdivisionPerBeat: 2,
     drill: 'Alterna dedos 1-3-2-4 entre las cuerdas 4ª, 3ª y 2ª para soltar el anular y meñique sin tensión.',
     cue: 'Si pierdes limpieza rítmica, baja 5 BPM con el control antes de subir velocidad.',
@@ -2386,12 +2424,54 @@ export const GUITAR_TRAINING_BLOCKS: GuitarTrainingBlock[] = [
     ],
   },
   {
+    id: 'gtr_diagonal_warmup',
+    phaseLabel: 'Fase 1 · Motricidad y Calentamiento',
+    focusTag: 'Cromático diagonal',
+    title: '3. Calentamiento Cromático en Diagonal (Cuerdas 6ª → 3ª)',
+    defaultBpm: 76,
+    ratio: 0.1,
+    subdivisionPerBeat: 2,
+    drill: 'Avanza 1 traste por cada dedo y sube 1 cuerda al mismo tiempo formando una escalera diagonal limpia.',
+    cue: 'Relaja el hombro y desplaza el antebrazo en bloque sin girar la muñeca.',
+    steps: [
+      { label: '6ª tr.5 (Dedo 1)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 5, fret: 5, finger: 1 }] },
+      { label: '5ª tr.6 (Dedo 2)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 4, fret: 6, finger: 2 }] },
+      { label: '4ª tr.7 (Dedo 3)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 3, fret: 7, finger: 3 }] },
+      { label: '3ª tr.8 (Dedo 4)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 2, fret: 8, finger: 4 }] },
+      { label: '3ª tr.5 (Dedo 1)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 2, fret: 5, finger: 1 }] },
+      { label: '4ª tr.6 (Dedo 2)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 3, fret: 6, finger: 2 }] },
+      { label: '5ª tr.7 (Dedo 3)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 4, fret: 7, finger: 3 }] },
+      { label: '6ª tr.8 (Dedo 4)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 5, fret: 8, finger: 4 }] },
+    ],
+  },
+  {
+    id: 'gtr_ring_pinky_stretch',
+    phaseLabel: 'Fase 1 · Motricidad y Calentamiento',
+    focusTag: 'Fuerza 3–4 y extensión',
+    title: '4. Independencia Anular–Meñique (3–4) y Extensión 1–2–4',
+    defaultBpm: 74,
+    ratio: 0.1,
+    subdivisionPerBeat: 2,
+    drill: 'Combina trino controlado entre dedos 3 y 4 con una apertura elástica 1–2–4 (+1 traste) en cuerdas centrales.',
+    cue: 'Apunta la yema del meñique perpendicular a la cuerda y baja el pulgar al centro trasero del mástil.',
+    steps: [
+      { label: '4ª tr.7 (Dedo 3)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 3, fret: 7, finger: 3 }] },
+      { label: '4ª tr.8 (Dedo 4)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 3, fret: 8, finger: 4 }] },
+      { label: '4ª tr.7 (Dedo 3)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 3, fret: 7, finger: 3 }] },
+      { label: '4ª tr.8 (Dedo 4)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 3, fret: 8, finger: 4 }] },
+      { label: '3ª tr.5 (Dedo 1)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 2, fret: 5, finger: 1 }] },
+      { label: '3ª tr.7 (Dedo 2)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 2, fret: 7, finger: 2 }] },
+      { label: '3ª tr.9 (Dedo 4)', rightHandCue: 'Púa ↓', positions: [{ sIdx: 2, fret: 9, finger: 4 }] },
+      { label: '3ª tr.7 (Dedo 2)', rightHandCue: 'Púa ↑', positions: [{ sIdx: 2, fret: 7, finger: 2 }] },
+    ],
+  },
+  {
     id: 'gtr_chords',
     phaseLabel: 'Fase 2 · Acordes y Cejillas',
     focusTag: 'Acordes abiertos',
-    title: '3. Cambio Limpio de Acordes (C – G – Am – Fmaj7)',
+    title: '5. Cambio Limpio de Acordes (C – G – Am – Fmaj7)',
     defaultBpm: 76,
-    ratio: 0.125,
+    ratio: 0.1,
     subdivisionPerBeat: 1,
     drill: 'Toca cada acorde limpio dejando sonar todas las cuerdas correctas; anticipa mentalmente el siguiente molde.',
     cue: 'Coloca primero el dedo guía del bajo y mantén el péndulo constante en la mano derecha.',
@@ -2454,9 +2534,9 @@ export const GUITAR_TRAINING_BLOCKS: GuitarTrainingBlock[] = [
     id: 'gtr_groove_arpegio',
     phaseLabel: 'Fase 2 · Acordes y Cejillas',
     focusTag: 'Cadencia ii–V–I',
-    title: '4. Acordes de Color ii–V–I (Em7 – A7 – Dmaj7 – D)',
+    title: '6. Acordes de Color ii–V–I (Em7 – A7 – Dmaj7 – D)',
     defaultBpm: 84,
-    ratio: 0.125,
+    ratio: 0.1,
     subdivisionPerBeat: 1,
     drill: 'Combina el rasgueo de tríadas y séptimas con pulgar e índice siguiendo la progresión ii–V–I en Re.',
     cue: 'Escucha cómo resuelve el Sol (♭7 de A7) bajando medio tono hacia Fa♯ (3ª de Dmaj7).',
@@ -2518,9 +2598,9 @@ export const GUITAR_TRAINING_BLOCKS: GuitarTrainingBlock[] = [
     id: 'gtr_barre_shapes',
     phaseLabel: 'Fase 2 · Acordes y Cejillas',
     focusTag: 'Cejillas móviles',
-    title: '5. Cejillas Móviles en 6ª y 5ª Cuerda (F – Bm7 – C♯m7 – G7)',
+    title: '7. Cejillas Móviles en 6ª y 5ª Cuerda (F – Bm7 – C♯m7 – G7)',
     defaultBpm: 70,
-    ratio: 0.125,
+    ratio: 0.1,
     subdivisionPerBeat: 1,
     drill: 'Apoya el canto lateral del dedo 1 (índice) cerca del traste metálico y suelta la pinza entre cambios.',
     cue: 'No aprietes con el pulgar hacia adentro: usa el peso del brazo izquierdo hacia atrás suavemente.',
@@ -2585,9 +2665,9 @@ export const GUITAR_TRAINING_BLOCKS: GuitarTrainingBlock[] = [
     id: 'gtr_fingerpicking_pima',
     phaseLabel: 'Fase 3 · Fingerpicking, Ligados y Groove',
     focusTag: 'Arpegio P-i-m-a',
-    title: '6. Arpegio Fingerpicking P–i–m–a (Em → Cmaj7)',
+    title: '8. Arpegio Fingerpicking P–i–m–a (Em → Cmaj7)',
     defaultBpm: 80,
-    ratio: 0.125,
+    ratio: 0.1,
     subdivisionPerBeat: 2,
     drill: 'Deja caer el Pulgar (P) en los bajos 6ª/5ª y asigna Índice (3ª), Medio (2ª) y Anular (1ª) con pulso parejo.',
     cue: 'Mantén los dedos de mano izquierda pisando todo el compás para que las cuerdas resuenen superpuestas.',
@@ -2606,9 +2686,9 @@ export const GUITAR_TRAINING_BLOCKS: GuitarTrainingBlock[] = [
     id: 'gtr_pentatonic_legato',
     phaseLabel: 'Fase 3 · Fingerpicking, Ligados y Groove',
     focusTag: 'Pentatónica Am + H/P',
-    title: '7. Pentatónica Menor de La con Ligados (Trastes 5–8)',
+    title: '9. Pentatónica Menor de La con Ligados (Trastes 5–8)',
     defaultBpm: 92,
-    ratio: 0.125,
+    ratio: 0.1,
     subdivisionPerBeat: 2,
     drill: 'Toca la Caja 1 de La menor pentatónica articulando Hammer-On al subir y Pull-Off limpio al regresar.',
     cue: 'Púa firme en la primera nota de cada cuerda; deja que el dedo 3 o 4 martille con precisión.',
@@ -2627,9 +2707,9 @@ export const GUITAR_TRAINING_BLOCKS: GuitarTrainingBlock[] = [
     id: 'gtr_upper_triads',
     phaseLabel: 'Fase 3 · Fingerpicking, Ligados y Groove',
     focusTag: 'Tríadas agudas 1ª–3ª',
-    title: '8. Tríadas Agudas Móviles (C – F – G – Am en Cuerdas 1ª–3ª)',
+    title: '10. Tríadas Agudas Móviles (C – F – G – Am en Cuerdas 1ª–3ª)',
     defaultBpm: 86,
-    ratio: 0.125,
+    ratio: 0.1,
     subdivisionPerBeat: 1,
     drill: 'Rasguea únicamente las 3 cuerdas agudas (3ª–2ª–1ª) cortando el sonido entre pulsos con la mano izquierda.',
     cue: 'Ideal para funk, pop y reggae sin chocar con las frecuencias graves del bajo.',
@@ -2705,9 +2785,9 @@ export interface BassTrainingBlock {
 export const BASS_TRAINING_BLOCKS: BassTrainingBlock[] = [
   {
     id: 'bass_im_1234',
-    title: '1. Alternancia Estricta Índice–Medio (I–M) en Trastes 5–8',
+    title: '1. Calentamiento: Alternancia Estricta Índice–Medio (I–M) Trastes 5–8',
     defaultBpm: 76,
-    ratio: 0.25,
+    ratio: 0.125,
     subdivisionPerBeat: 2,
     drill: 'Alterna estrictamente Índice (I) y Medio (M) sin repetir dedo al cruzar de la 4ª (E) a la 3ª cuerda (A).',
     cue: 'Descansa el pulgar derecho sobre la pastilla y apaga la cuerda superior al bajar.',
@@ -2723,10 +2803,67 @@ export const BASS_TRAINING_BLOCKS: BassTrainingBlock[] = [
     ],
   },
   {
-    id: 'bass_lockin',
-    title: '2. Lock-In Bombo + Bajo (Cajón Tónica – 5ª – Octava en C)',
+    id: 'bass_spider_1324',
+    title: '2. Motricidad: Permutación Araña 1–3–2–4 en 4 Cuerdas',
+    defaultBpm: 78,
+    ratio: 0.125,
+    subdivisionPerBeat: 2,
+    drill: 'Fortalece dedos 3 y 4 manteniendo los demás cerca del diapasón en trastes 5–8.',
+    cue: 'Cero tensión en el pulgar izquierdo; pisa justo detrás de la varilla metálica.',
+    steps: [
+      { label: '4ª tr.5 (Dedo 1)', rightHandCue: 'I', kickSync: true, style: 'finger', sIdx: 3, fret: 5 },
+      { label: '4ª tr.7 (Dedo 3)', rightHandCue: 'M', kickSync: false, style: 'finger', sIdx: 3, fret: 7 },
+      { label: '4ª tr.6 (Dedo 2)', rightHandCue: 'I', kickSync: false, style: 'finger', sIdx: 3, fret: 6 },
+      { label: '4ª tr.8 (Dedo 4)', rightHandCue: 'M', kickSync: false, style: 'finger', sIdx: 3, fret: 8 },
+      { label: '2ª tr.5 (Dedo 1)', rightHandCue: 'I', kickSync: true, style: 'finger', sIdx: 1, fret: 5 },
+      { label: '2ª tr.7 (Dedo 3)', rightHandCue: 'M', kickSync: false, style: 'finger', sIdx: 1, fret: 7 },
+      { label: '2ª tr.6 (Dedo 2)', rightHandCue: 'I', kickSync: false, style: 'finger', sIdx: 1, fret: 6 },
+      { label: '2ª tr.8 (Dedo 4)', rightHandCue: 'M', kickSync: false, style: 'finger', sIdx: 1, fret: 8 },
+    ],
+  },
+  {
+    id: 'bass_string_crossing_raking',
+    title: '3. Cruce de Cuerdas (String Crossing) y Raking G → D → A → E',
+    defaultBpm: 84,
+    ratio: 0.125,
+    subdivisionPerBeat: 2,
+    drill: 'Desciende por las 4 cuerdas aprovechando el raking natural al bajar de cuerda aguda a grave.',
+    cue: 'Deja que el dedo caiga con gravedad hacia la cuerda superior para ahorrar energía.',
+    steps: [
+      { label: '1ª tr.5 (C3)', rightHandCue: 'M', kickSync: true, style: 'finger', sIdx: 0, fret: 5 },
+      { label: '1ª tr.7 (D3)', rightHandCue: 'I', kickSync: false, style: 'finger', sIdx: 0, fret: 7 },
+      { label: '2ª tr.5 (G2)', rightHandCue: 'I (Rake)', kickSync: false, style: 'finger', sIdx: 1, fret: 5 },
+      { label: '2ª tr.7 (A2)', rightHandCue: 'M', kickSync: false, style: 'finger', sIdx: 1, fret: 7 },
+      { label: '3ª tr.5 (D2)', rightHandCue: 'M (Rake)', kickSync: true, style: 'finger', sIdx: 2, fret: 5 },
+      { label: '3ª tr.7 (E2)', rightHandCue: 'I', kickSync: false, style: 'finger', sIdx: 2, fret: 7 },
+      { label: '4ª tr.5 (A1)', rightHandCue: 'I (Rake)', kickSync: false, style: 'finger', sIdx: 3, fret: 5 },
+      { label: '4ª tr.8 (C2)', rightHandCue: 'M', kickSync: false, style: 'finger', sIdx: 3, fret: 8 },
+    ],
+  },
+  {
+    id: 'bass_floating_thumb_muting',
+    title: '4. Apagado a Dos Manos (Floating Thumb + Notas Muertas)',
     defaultBpm: 88,
-    ratio: 0.25,
+    ratio: 0.125,
+    subdivisionPerBeat: 2,
+    drill: 'Silencia cuerdas graves con el pulgar flotante derecho y controla staccato limpio con la izquierda.',
+    cue: 'En el bajo profesional el silencio entre notas pesa tanto como la nota misma.',
+    steps: [
+      { label: '3ª tr.3 (C2)', rightHandCue: 'I + Pulgar en 4ª', kickSync: true, style: 'finger', sIdx: 2, fret: 3 },
+      { label: '3ª tr.3 (Corte)', rightHandCue: 'M (Ghost)', kickSync: false, style: 'finger', sIdx: 2, fret: 3 },
+      { label: '2ª tr.5 (G2)', rightHandCue: 'I + Pulgar en 3ª', kickSync: false, style: 'finger', sIdx: 1, fret: 5 },
+      { label: '2ª tr.5 (Corte)', rightHandCue: 'M (Ghost)', kickSync: false, style: 'finger', sIdx: 1, fret: 5 },
+      { label: '1ª tr.5 (C3)', rightHandCue: 'I + Pulgar en 2ª', kickSync: true, style: 'finger', sIdx: 0, fret: 5 },
+      { label: '1ª tr.3 (Bb2)', rightHandCue: 'M', kickSync: false, style: 'finger', sIdx: 0, fret: 3 },
+      { label: '2ª tr.5 (G2)', rightHandCue: 'M (Rake)', kickSync: false, style: 'finger', sIdx: 1, fret: 5 },
+      { label: '3ª tr.3 (C2)', rightHandCue: 'I + Bombo', kickSync: false, style: 'finger', sIdx: 2, fret: 3 },
+    ],
+  },
+  {
+    id: 'bass_lockin',
+    title: '5. Lock-In Bombo + Bajo (Cajón Tónica – 5ª – Octava en C)',
+    defaultBpm: 90,
+    ratio: 0.125,
     subdivisionPerBeat: 2,
     drill: 'Amarra la tónica C y su quinta G exactamente sobre los golpes marcados con Bombo.',
     cue: 'Controla cuándo se corta la nota levantando suavemente la presión de la mano izquierda.',
@@ -2743,9 +2880,9 @@ export const BASS_TRAINING_BLOCKS: BassTrainingBlock[] = [
   },
   {
     id: 'bass_slap_octaves',
-    title: '3. Octavas Funk y Slap/Pop (E1 → E2 → G1 → G2 → A1 → A2)',
+    title: '6. Octavas Funk y Slap/Pop (E1 → E2 → G1 → G2 → A1 → A2)',
     defaultBpm: 94,
-    ratio: 0.25,
+    ratio: 0.125,
     subdivisionPerBeat: 2,
     drill: 'Golpea la nota grave con el hueso del pulgar (Thumb) y pellizca la octava dos cuerdas abajo (Pop).',
     cue: 'Mueve el antebrazo con rotación de picaporte, no con tirones del brazo entero.',
@@ -2761,10 +2898,29 @@ export const BASS_TRAINING_BLOCKS: BassTrainingBlock[] = [
     ],
   },
   {
+    id: 'bass_transition_fills',
+    title: '7. Fills de Transición entre Acordes (C → F con Cromatismo)',
+    defaultBpm: 96,
+    ratio: 0.125,
+    subdivisionPerBeat: 2,
+    drill: 'Conecta el acorde C hacia F usando un dibujo pentatónico y aproximación de semitono E → F.',
+    cue: 'Un fill musical siempre aterriza limpio en el tiempo 1 del acorde destino.',
+    steps: [
+      { label: 'C2 Raíz (3ª tr.3)', rightHandCue: 'I + Bombo', kickSync: true, style: 'finger', sIdx: 2, fret: 3 },
+      { label: 'C2 (3ª tr.3)', rightHandCue: 'M', kickSync: false, style: 'finger', sIdx: 2, fret: 3 },
+      { label: 'E2 3ªM (2ª tr.2)', rightHandCue: 'I', kickSync: false, style: 'finger', sIdx: 1, fret: 2 },
+      { label: 'G2 5ªJ (2ª tr.5)', rightHandCue: 'M', kickSync: false, style: 'finger', sIdx: 1, fret: 5 },
+      { label: 'A2 6ªM (1ª tr.2)', rightHandCue: 'I', kickSync: true, style: 'finger', sIdx: 0, fret: 2 },
+      { label: 'C3 8ª (1ª tr.5)', rightHandCue: 'M', kickSync: false, style: 'finger', sIdx: 0, fret: 5 },
+      { label: 'E2 Puente (2ª tr.2)', rightHandCue: 'I (Semitono)', kickSync: false, style: 'finger', sIdx: 1, fret: 2 },
+      { label: 'F2 Destino (2ª tr.3)', rightHandCue: 'M + Bombo', kickSync: true, style: 'finger', sIdx: 1, fret: 3 },
+    ],
+  },
+  {
     id: 'bass_walking',
-    title: '4. Walking Bass ii–V–I (Dm7 – G7 – Cmaj7 con Aproximaciones)',
+    title: '8. Walking Bass ii–V–I (Dm7 – G7 – Cmaj7 con Aproximaciones)',
     defaultBpm: 100,
-    ratio: 0.25,
+    ratio: 0.125,
     subdivisionPerBeat: 1,
     drill: 'Camina en negras conectando raíces y terceras con aproximaciones cromáticas en el pulso 4.',
     cue: 'Canta la línea grave mientras la tocas; conecta siempre el pulso 4 a medio tono del nuevo acorde.',
@@ -6098,6 +6254,135 @@ export function evaluateWritingDraftWithWords(
     lines,
   };
 }
+
+export interface IntervalFretboardPos {
+  sIdx: number; // high-to-low index matching GUITAR_STRINGS (0=e..5=E) or BASS_STRINGS (0=G..3=E)
+  lowStrIdx: number; // low-to-high index (0=E..5=e or 0=E..3=G)
+  fret: number;
+  midi: number;
+  stringLabel: string;
+}
+
+export interface IntervalFretboardShape {
+  mode: 'guitar' | 'bass';
+  rootPos: IntervalFretboardPos;
+  targetPos: IntervalFretboardPos;
+  frets: number[]; // low-to-high (-1 = muted)
+  baseFret: number;
+  rootMidi: number;
+  targetMidi: number;
+  tabText: string;
+  sameString: boolean;
+}
+
+/**
+ * Finds a playable exact-octave 2-note interval shape on Guitar (6c) or Bass (4c)
+ * guaranteeing `targetMidi - rootMidi === semi` (so 9ths/11ths/13ths never collapse to 2nds/4ths/6ths).
+ */
+export function computeIntervalFretboardShape(
+  rootPc: number,
+  semi: number,
+  mode: 'guitar' | 'bass'
+): IntervalFretboardShape {
+  const normRoot = ((rootPc % 12) + 12) % 12;
+  const openLow = mode === 'bass' ? [28, 33, 38, 43] : [40, 45, 50, 55, 59, 64];
+  const labelsLow = mode === 'bass' ? ['4ª E', '3ª A', '2ª D', '1ª G'] : ['6ª E', '5ª A', '4ª D', '3ª G', '2ª B', '1ª e'];
+  const nStr = openLow.length;
+
+  let bestScore = Number.POSITIVE_INFINITY;
+  let bestPair: { rLow: number; rFret: number; rMidi: number; tLow: number; tFret: number; tMidi: number } | null = null;
+
+  for (let rLow = 0; rLow < nStr; rLow++) {
+    for (let rFret = 0; rFret <= 12; rFret++) {
+      const rMidi = openLow[rLow] + rFret;
+      if (rMidi % 12 !== normRoot) continue;
+      const tMidi = rMidi + semi;
+
+      for (let tLow = rLow; tLow < nStr; tLow++) {
+        const tFret = tMidi - openLow[tLow];
+        if (tFret < 0 || tFret > 15) continue;
+        if (tLow === rLow && tFret === rFret) continue;
+
+        const sameString = tLow === rLow;
+        const fretted = [rFret, tFret].filter((f) => f > 0);
+        const span = fretted.length === 2 ? Math.abs(fretted[1] - fretted[0]) : 0;
+        const maxFret = Math.max(rFret, tFret);
+        const minFret = Math.min(rFret, tFret);
+
+        // Score: prefer 2 distinct strings with playable <=4-fret span inside frets 0..12
+        let score = 0;
+        if (sameString) {
+          score += semi <= 2 ? 12 : 85;
+        }
+        if (span > 4) score += (span - 4) * 45;
+        else score += span * 2.5;
+        if (maxFret > 12) score += (maxFret - 12) * 35;
+        score += minFret * 1.6 + maxFret * 0.9;
+        // Prefer lower/middle root strings for comfortable anchor
+        score += rLow * 2.2;
+        // Slight penalty for wide open+high fret combos
+        if ((rFret === 0 && tFret > 5) || (tFret === 0 && rFret > 5)) {
+          score += 28;
+        }
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestPair = { rLow, rFret, rMidi, tLow, tFret, tMidi };
+        }
+      }
+    }
+  }
+
+  // Guaranteed fallback if extreme semi on 4-string bass exceeds fret 15
+  if (!bestPair) {
+    const rFret = (normRoot - (openLow[0] % 12) + 12) % 12;
+    const rMidi = openLow[0] + rFret;
+    const tLow = nStr - 1;
+    const tMidi = rMidi + semi;
+    const tFret = Math.max(0, tMidi - openLow[tLow]);
+    bestPair = { rLow: 0, rFret, rMidi, tLow, tFret, tMidi };
+  }
+
+  const frets = Array.from({ length: nStr }, () => -1);
+  frets[bestPair.rLow] = bestPair.rFret;
+  frets[bestPair.tLow] = bestPair.tFret;
+
+  const nonZero = [bestPair.rFret, bestPair.tFret].filter((f) => f > 0);
+  const maxNz = nonZero.length ? Math.max(...nonZero) : 0;
+  const minNz = nonZero.length ? Math.min(...nonZero) : 1;
+  const baseFret = maxNz <= 4 ? 1 : minNz;
+
+  const tabTokens = frets.map((f) => (f < 0 ? 'X' : String(f)));
+  const sameString = bestPair.rLow === bestPair.tLow;
+  const tabText = sameString
+    ? `${labelsLow[bestPair.rLow]}: tr.${bestPair.rFret} → tr.${bestPair.tFret}`
+    : tabTokens.join('-');
+
+  return {
+    mode,
+    rootPos: {
+      sIdx: nStr - 1 - bestPair.rLow,
+      lowStrIdx: bestPair.rLow,
+      fret: bestPair.rFret,
+      midi: bestPair.rMidi,
+      stringLabel: labelsLow[bestPair.rLow],
+    },
+    targetPos: {
+      sIdx: nStr - 1 - bestPair.tLow,
+      lowStrIdx: bestPair.tLow,
+      fret: bestPair.tFret,
+      midi: bestPair.tMidi,
+      stringLabel: labelsLow[bestPair.tLow],
+    },
+    frets,
+    baseFret,
+    rootMidi: bestPair.rMidi,
+    targetMidi: bestPair.tMidi,
+    tabText,
+    sameString,
+  };
+}
+
 
 
 

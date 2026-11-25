@@ -537,7 +537,7 @@ function hydrateImprovisationGymLab(
 // 3. INSTRUMENT ANATOMY INTERACTIVE DIAGRAMS (Guitar, Bass, Drum, Voice)
 // ============================================================================
 
-function buildAnatomySvgBody(inst: AnatomyInstrumentId): string {
+function buildAnatomySvgBody(inst: AnatomyInstrumentId, activeHotspotId = ''): string {
   if (inst === 'guitar') {
     return `
       <!-- Acoustic Guitar Silhouette -->
@@ -584,19 +584,161 @@ function buildAnatomySvgBody(inst: AnatomyInstrumentId): string {
       <circle cx="188" cy="64" r="30" fill="#451a03" fill-opacity="0.45" stroke="#fbbf24" stroke-width="1.6" />
     `;
   }
-  // voice
+  // voice — Detailed sagittal cutaway of singer's head, neck, vocal tract, larynx, lungs & diaphragm
+  const isMask = activeHotspotId === 'mascara';
+  const isPharynx = activeHotspotId === 'faringe';
+  const isLarynx = activeHotspotId === 'laringe';
+  const isDiaph = activeHotspotId === 'diafragma';
+
   return `
-    <!-- Stylized Vocal Tract & Respiratory Support Schematic -->
-    <ellipse cx="250" cy="182" rx="145" ry="44" fill="#064e3b" fill-opacity="0.18" stroke="#1e293b" stroke-width="1.5" stroke-dasharray="5 4" />
-    <path d="M 155,175 Q 250,138 345,175 L 345,216 Q 250,202 155,216 Z" fill="#064e3b" fill-opacity="0.45" stroke="#34d399" stroke-width="2" />
-    <rect x="234" y="126" width="32" height="44" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1.8" />
-    <rect x="314" y="104" width="54" height="34" rx="10" fill="#1e1b4b" stroke="#fbbf24" stroke-width="2" />
-    <path d="M 368,118 Q 418,62 486,62 L 560,62 L 560,94 L 470,94 Q 410,96 368,128 Z" fill="#0f172a" stroke="#a78bfa" stroke-width="2" />
-    <path d="M 476,40 Q 536,30 572,58 L 486,62 Z" fill="#0f172a" stroke="#f59e0b" stroke-width="1.6" />
-    <text x="112" y="132" fill="#34d399" font-size="10" font-weight="700">Costillas / Apoyo 360°</text>
-    <text x="340" y="154" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="700">Laringe</text>
-    <text x="432" y="114" text-anchor="middle" fill="#c4b5fd" font-size="10" font-weight="700">Faringe</text>
-    <text x="530" y="28" text-anchor="middle" fill="#fcd34d" font-size="10" font-weight="700">Máscara</text>
+    <defs>
+      <linearGradient id="voiceAirGrad" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0%" stop-color="#34d399" stop-opacity="0.85" />
+        <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.9" />
+        <stop offset="100%" stop-color="#fbbf24" stop-opacity="0.95" />
+      </linearGradient>
+      <radialGradient id="voiceMaskGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.45" />
+        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0" />
+      </radialGradient>
+    </defs>
+
+    <!-- Subtle Stage Grid / Subsystem Divider Bands -->
+    <rect x="14" y="14" width="166" height="312" rx="10" fill="#0d1526" stroke="#1e293b" stroke-width="1" />
+    <text x="26" y="34" fill="#94a3b8" font-size="9.5" font-weight="800" letter-spacing="0.8">3 SUBSISTEMAS</text>
+
+    <rect x="24" y="46" width="146" height="72" rx="8" fill="${isMask || isPharynx ? 'rgba(167,139,250,0.16)' : 'rgba(15,23,42,0.75)'}" stroke="${isMask || isPharynx ? '#a78bfa' : '#1e293b'}" stroke-width="1.3" />
+    <text x="34" y="64" fill="#f59e0b" font-size="10" font-weight="800">3. RESONADORES</text>
+    <text x="34" y="80" fill="#cbd5e1" font-size="9">Filtro acústico: máscara</text>
+    <text x="34" y="93" fill="#cbd5e1" font-size="9">facial, boca y faringe</text>
+    <text x="34" y="108" fill="#c4b5fd" font-size="8.5" font-weight="700">(Timbre y proyección)</text>
+
+    <rect x="24" y="130" width="146" height="72" rx="8" fill="${isLarynx ? 'rgba(245,158,11,0.16)' : 'rgba(15,23,42,0.75)'}" stroke="${isLarynx ? '#fbbf24' : '#1e293b'}" stroke-width="1.3" />
+    <text x="34" y="148" fill="#fbbf24" font-size="10" font-weight="800">2. VIBRADOR</text>
+    <text x="34" y="164" fill="#cbd5e1" font-size="9">Laringe y pliegues</text>
+    <text x="34" y="177" fill="#cbd5e1" font-size="9">vocales (fuente sonora)</text>
+    <text x="34" y="192" fill="#38bdf8" font-size="8.5" font-weight="700">(Altura y registros M1/M2)</text>
+
+    <rect x="24" y="214" width="146" height="98" rx="8" fill="${isDiaph ? 'rgba(16,185,129,0.16)' : 'rgba(15,23,42,0.75)'}" stroke="${isDiaph ? '#34d399' : '#1e293b'}" stroke-width="1.3" />
+    <text x="34" y="232" fill="#34d399" font-size="10" font-weight="800">1. MOTOR (APPOGGIO)</text>
+    <text x="34" y="248" fill="#cbd5e1" font-size="9">Pulmones, caja torácica</text>
+    <text x="34" y="261" fill="#cbd5e1" font-size="9">y domo del diafragma</text>
+    <text x="34" y="276" fill="#6ee7b7" font-size="8.5" font-weight="700">Expansión costal 360°</text>
+    <text x="34" y="294" fill="#94a3b8" font-size="8.5">Presión de aire estable</text>
+
+    <!-- Singer Sagittal Profile Silhouette (Head, Face, Neck & Upper Torso) -->
+    <path d="
+      M 254,328
+      L 254,238
+      C 254,218 272,208 286,198
+      L 288,158
+      C 262,144 248,116 250,82
+      C 252,40 286,18 334,18
+      C 374,18 400,36 408,64
+      L 422,88
+      C 426,95 422,102 412,104
+      L 414,114
+      L 404,118
+      C 402,124 404,132 412,135
+      L 408,144
+      C 404,154 396,160 384,162
+      L 360,164
+      L 356,204
+      C 374,214 396,226 398,248
+      L 398,328
+      Z"
+      fill="#111a2e" stroke="#475569" stroke-width="2" />
+
+    <!-- Cranial Brain Outline (Subtle anatomical reference) -->
+    <path d="M 272,82 C 272,46 302,32 336,32 C 364,32 384,46 388,68 C 362,64 334,68 310,82 Z"
+      fill="#1e293b" fill-opacity="0.45" stroke="#334155" stroke-width="1" />
+
+    <!-- ZONE 4: Frontal Sinuses, Nasal Cavity & Facial Mask -->
+    ${isMask ? `<circle cx="394" cy="92" r="40" fill="url(#voiceMaskGlow)" />` : ''}
+    <path d="M 358,78 Q 384,64 406,78 Q 412,92 396,96 L 362,96 Z"
+      fill="${isMask ? 'rgba(245,158,11,0.42)' : 'rgba(245,158,11,0.16)'}"
+      stroke="${isMask ? '#fbbf24' : '#d97706'}" stroke-width="${isMask ? '2.4' : '1.4'}" />
+    <!-- Frontal sinus pocket -->
+    <ellipse cx="395" cy="59" rx="7" ry="11" transform="rotate(-14 395 59)"
+      fill="${isMask ? 'rgba(251,191,36,0.48)' : 'rgba(245,158,11,0.18)'}"
+      stroke="${isMask ? '#fde047' : '#d97706'}" stroke-width="1.3" />
+    <!-- Acoustic Projection Waves leaving Mouth & Mask -->
+    <path d="M 426,96 Q 438,110 426,126" fill="none" stroke="#fbbf24" stroke-width="${isMask ? '2.2' : '1.3'}" opacity="${isMask ? '0.95' : '0.45'}" />
+    <path d="M 438,86 Q 456,110 438,136" fill="none" stroke="#fbbf24" stroke-width="${isMask ? '2' : '1.1'}" opacity="${isMask ? '0.8' : '0.32'}" />
+    <path d="M 450,78 Q 472,110 450,144" fill="none" stroke="#38bdf8" stroke-width="${isMask ? '1.8' : '1'}" opacity="${isMask ? '0.65' : '0.24'}" />
+
+    <!-- ZONE 3: Oral Cavity, Soft Palate (Velum), Tongue & Pharynx -->
+    <path d="
+      M 316,158
+      L 316,108
+      Q 320,86 352,86
+      Q 372,88 380,104
+      L 408,116
+      L 404,132
+      L 366,132
+      Q 344,132 342,158
+      Z"
+      fill="${isPharynx ? 'rgba(167,139,250,0.36)' : 'rgba(139,92,246,0.14)'}"
+      stroke="${isPharynx ? '#c4b5fd' : '#8b5cf6'}" stroke-width="${isPharynx ? '2.4' : '1.4'}" />
+    <!-- Arched Soft Palate (Velum) indicator -->
+    <path d="M 358,98 Q 344,96 338,112" fill="none" stroke="#e9d5ff" stroke-width="2.2" stroke-linecap="round" />
+    <!-- Tongue body (relaxed forward) -->
+    <path d="M 342,148 Q 358,120 398,124 Q 392,146 350,152 Z"
+      fill="#7f1d1d" fill-opacity="0.55" stroke="#fb7185" stroke-width="1.2" />
+
+    <!-- Trachea (Windpipe rings) -->
+    <rect x="315" y="160" width="24" height="66" rx="6" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5" />
+    <line x1="317" y1="204" x2="337" y2="204" stroke="#38bdf8" stroke-width="1" opacity="0.5" />
+    <line x1="317" y1="212" x2="337" y2="212" stroke="#38bdf8" stroke-width="1" opacity="0.5" />
+    <line x1="317" y1="220" x2="337" y2="220" stroke="#38bdf8" stroke-width="1" opacity="0.5" />
+
+    <!-- ZONE 2: Larynx & Vocal Folds -->
+    <rect x="307" y="169" width="40" height="32" rx="9"
+      fill="${isLarynx ? 'rgba(245,158,11,0.34)' : 'rgba(30,27,75,0.88)'}"
+      stroke="${isLarynx ? '#fde047' : '#fbbf24'}" stroke-width="${isLarynx ? '2.6' : '1.8'}" />
+    <!-- Vocal folds vibrating waves -->
+    <path d="M 314,185 Q 327,178 340,185 Q 327,192 314,185 Z"
+      fill="#fbbf24" fill-opacity="${isLarynx ? '0.9' : '0.6'}" stroke="#fef08a" stroke-width="1.2" />
+
+    <!-- ZONE 1: Lungs, Ribcage & Diaphragm Dome (Appoggio 360°) -->
+    <!-- Left & Right Lungs -->
+    <path d="M 318,224 C 282,226 268,252 272,286 Q 294,274 322,276 Z"
+      fill="${isDiaph ? 'rgba(56,189,248,0.28)' : 'rgba(56,189,248,0.12)'}" stroke="#38bdf8" stroke-width="1.4" />
+    <path d="M 334,224 C 368,226 382,252 378,286 Q 356,274 330,276 Z"
+      fill="${isDiaph ? 'rgba(56,189,248,0.28)' : 'rgba(56,189,248,0.12)'}" stroke="#38bdf8" stroke-width="1.4" />
+    <!-- Ribcage lateral arcs -->
+    <path d="M 264,244 Q 256,268 264,292" fill="none" stroke="#34d399" stroke-width="${isDiaph ? '2.4' : '1.4'}" stroke-dasharray="4 3" />
+    <path d="M 388,244 Q 396,268 388,292" fill="none" stroke="#34d399" stroke-width="${isDiaph ? '2.4' : '1.4'}" stroke-dasharray="4 3" />
+    <!-- Diaphragm muscular dome -->
+    <path d="M 264,296 Q 326,266 388,296 L 386,314 Q 326,290 266,314 Z"
+      fill="${isDiaph ? 'rgba(16,185,129,0.52)' : 'rgba(6,78,59,0.55)'}"
+      stroke="${isDiaph ? '#6ee7b7' : '#34d399'}" stroke-width="${isDiaph ? '2.6' : '1.8'}" />
+    <!-- 360° Expansion arrows -->
+    <text x="242" y="274" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="900">←</text>
+    <text x="410" y="274" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="900">→</text>
+
+    <!-- Ascending Airflow Path -->
+    <path d="M 326,272 L 326,120 Q 326,106 352,106 L 404,108"
+      fill="none" stroke="url(#voiceAirGrad)" stroke-width="2.2" stroke-dasharray="5 4" opacity="0.88" />
+    <polygon points="409,108 400,104 401,112" fill="#fbbf24" />
+
+    <!-- Right-Side Clean Callout Labels with Leader Lines -->
+    <line x1="414" y1="84" x2="490" y2="54" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="3 2" />
+    <text x="496" y="50" fill="${isMask ? '#fde047' : '#fbbf24'}" font-size="10.5" font-weight="800">4. Máscara y Senos</text>
+    <text x="496" y="64" fill="#94a3b8" font-size="9">Brillo y proyección (2.5–3.5 kHz)</text>
+
+    <line x1="344" y1="126" x2="490" y2="126" stroke="#a78bfa" stroke-width="1.2" stroke-dasharray="3 2" />
+    <text x="496" y="122" fill="${isPharynx ? '#e9d5ff' : '#c4b5fd'}" font-size="10.5" font-weight="800">3. Faringe y Paladar</text>
+    <text x="496" y="136" fill="#94a3b8" font-size="9">Espacio de medio bostezo</text>
+
+    <line x1="348" y1="186" x2="490" y2="196" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="3 2" />
+    <text x="496" y="192" fill="${isLarynx ? '#fde047' : '#fbbf24'}" font-size="10.5" font-weight="800">2. Laringe y Pliegues</text>
+    <text x="496" y="206" fill="#94a3b8" font-size="9">Vibración sin rigidez cervical</text>
+
+    <line x1="388" y1="292" x2="490" y2="278" stroke="#34d399" stroke-width="1.2" stroke-dasharray="3 2" />
+    <text x="496" y="274" fill="${isDiaph ? '#a7f3d0' : '#34d399'}" font-size="10.5" font-weight="800">1. Diafragma y Costillas</text>
+    <text x="496" y="288" fill="#94a3b8" font-size="9">Expansión costal 360° (Appoggio)</text>
+    <text x="496" y="302" fill="#64748b" font-size="8.5">Flujo de aire constante ↑</text>
   `;
 }
 
@@ -684,7 +826,7 @@ function hydrateAnatomyLab(
 
     svgHost.innerHTML = `
       <svg viewBox="${kit.svgViewBox}" class="w-full min-w-[280px] h-auto block rounded-lg bg-[#0b111e] border border-slate-800" role="img" aria-label="${escapeHtml(kit.title)}">
-        ${buildAnatomySvgBody(inst)}
+        ${buildAnatomySvgBody(inst, active.id)}
         ${pins}
       </svg>
     `;

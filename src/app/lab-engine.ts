@@ -13,6 +13,7 @@ import {
   computeEffectiveExplorerInstrument,
   computeExtensionPyramid,
   computeGuitarNeckWindow,
+  computeIntervalFretboardShape,
   computeNoteExplorerState,
   computePentatonicBoxWindow,
   computeSongFormMetrics,
@@ -22,6 +23,7 @@ import {
   midiToNoteName,
   renderTopViewDrumKitSvg,
   renderVerticalGuitarChordSvg,
+  type IntervalFretboardShape,
   computeVerticalChordBoxData,
   resolveExplorerKind,
   resolvePlayableChordVoicing,
@@ -52,6 +54,7 @@ import {
   buildStudioDataLabStage,
 } from './studio-labs';
 import { buildAcademyDataLabStage } from './academy-labs';
+import { buildExpansionDataLabStage } from './expansion-pack-labs';
 import type { DiagramModalManager } from './diagram-modal';
 
 export interface ScaleDefinition {
@@ -1386,6 +1389,230 @@ export class MusicAudioEngine {
       }
     });
   }
+
+  /**
+   * Real Web Audio Electric Guitar Signal Chain Simulator
+   * Supports Pickup Tone (Neck/Middle/Bridge), WaveShaper Overdrive, Chorus, Delay, Reverb,
+   * Palm Mute envelope, Pitch Bend, and swappable routing (Drive -> TimeFX vs TimeFX -> Drive).
+   */
+  playElectricGuitarFx(
+    midi: number,
+    duration = 0.9,
+    delay = 0,
+    opts: {
+      pickup: 'neck' | 'middle' | 'bridge';
+      drive: number;
+      chorus: boolean;
+      delayFx: boolean;
+      reverb: boolean;
+      driveBeforeTimeFx: boolean;
+      palmMute?: boolean;
+      bendSemis?: number;
+      volume?: number;
+    }
+  ): void {
+    const ctx = this.ensureContext();
+    const now = ctx.currentTime + delay;
+    const freq = this.midiToFreq(midi);
+    const dur = opts.palmMute ? Math.min(duration, 0.24) : duration;
+    const vol = opts.volume ?? 0.26;
+    const tailSec = (opts.delayFx ? 0.55 : 0) + (opts.reverb ? 0.65 : 0) + 0.12;
+
+    const pickupCutoffs = { neck: 2100, middle: 3400, bridge: 5200 };
+    const cutoff = opts.palmMute ? Math.min(1150, pickupCutoffs[opts.pickup] * 0.45) : pickupCutoffs[opts.pickup];
+
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(freq, now);
+
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(freq * 2, now);
+
+    if (opts.bendSemis && opts.bendSemis !== 0) {
+      const targetFreq = this.midiToFreq(midi + opts.bendSemis);
+      osc1.frequency.exponentialRampToValueAtTime(targetFreq, now + Math.min(0.28, dur * 0.45));
+      osc2.frequency.exponentialRampToValueAtTime(targetFreq * 2, now + Math.min(0.28, dur * 0.45));
+    }
+
+    const g2 = ctx.createGain();
+    g2.gain.setValueAtTime(opts.pickup === 'bridge' ? 0.34 : 0.18, now);
+
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, now);
+    env.gain.linearRampToValueAtTime(vol, now + 0.006);
+    env.gain.exponentialRampToValueAtTime(vol * (opts.palmMute ? 0.12 : 0.52), now + Math.min(0.14, dur * 0.5));
+    env.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+    const pickupFilter = ctx.createBiquadFilter();
+    pickupFilter.type = 'lowpass';
+    pickupFilter.frequency.setValueAtTime(cutoff, now);
+    pickupFilter.Q.setValueAtTime(opts.pickup === 'bridge' ? 2.6 : 1.4, now);
+
+    osc1.connect(pickupFilter);
+    osc2.connect(g2);
+    g2.connect(pickupFilter);
+    pickupFilter.connect(env);
+
+    const sources: (OscillatorNode | AudioBufferSourceNode)[] = [osc1, osc2];
+
+    const buildDriveNode = (): AudioNode => {
+      const shaper = ctx.createWaveShaper();
+      const k = Math.max(0, opts.drive);
+      const samples = 1024;
+      const curve = new Float32Array(samples);
+      for (let i = 0; i < samples; i++) {
+        const x = (i * 2) / samples - 1;
+        curve[i] = k > 0 ? ((3 + k) * x * 20 * (Math.PI / 180)) / (Math.PI + k * Math.abs(x)) : x;
+      }
+      shaper.curve = curve;
+      shaper.oversample = '2x';
+      return shaper;
+    };
+
+    const buildTimeFxBus = (input: AudioNode): AudioNode => {
+      const busOut = ctx.createGain();
+      busOut.gain.setValueAtTime(1, now);
+      input.connect(busOut);
+
+      if (opts.chorus) {
+        const chDelay = ctx.createDelay(0.08);
+        chDelay.delayTime.setValueAtTime(0.018, now);
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+        lfo.frequency.setValueAtTime(1.8, now);
+        lfoGain.gain.setValueAtTime(0.005, now);
+        lfo.connect(lfoGain);
+        lfoGain.connect(chDelay.delayTime);
+        const wet = ctx.createGain();
+        wet.gain.setValueAtTime(0.55, now);
+        input.connect(chDelay);
+        chDelay.connect(wet);
+        wet.connect(busOut);
+        lfo.start(now);
+        lfo.stop(now + dur + tailSec);
+        sources.push(lfo);
+      }
+
+      if (opts.delayFx) {
+        const tap1 = ctx.createDelay(0.6);
+        tap1.delayTime.setValueAtTime(0.24, now);
+        const gTap1 = ctx.createGain();
+        gTap1.gain.setValueAtTime(0.42, now);
+        const tap2 = ctx.createDelay(0.9);
+        tap2.delayTime.setValueAtTime(0.48, now);
+        const gTap2 = ctx.createGain();
+        gTap2.gain.setValueAtTime(0.22, now);
+        input.connect(tap1);
+        tap1.connect(gTap1);
+        gTap1.connect(busOut);
+        input.connect(tap2);
+        tap2.connect(gTap2);
+        gTap2.connect(busOut);
+      }
+
+      if (opts.reverb) {
+        [0.045, 0.095, 0.17, 0.28].forEach((t, idx) => {
+          const rDel = ctx.createDelay(0.4);
+          rDel.delayTime.setValueAtTime(t, now);
+          const rFilter = ctx.createBiquadFilter();
+          rFilter.type = 'lowpass';
+          rFilter.frequency.setValueAtTime(2200, now);
+          const rGain = ctx.createGain();
+          rGain.gain.setValueAtTime(0.24 / (idx + 1), now);
+          input.connect(rDel);
+          rDel.connect(rFilter);
+          rFilter.connect(rGain);
+          rGain.connect(busOut);
+        });
+      }
+      return busOut;
+    };
+
+    const masterOut = ctx.createGain();
+    masterOut.gain.setValueAtTime(0.85, now);
+
+    if (opts.drive > 0 && opts.driveBeforeTimeFx) {
+      const drv = buildDriveNode();
+      env.connect(drv);
+      const timeOut = buildTimeFxBus(drv);
+      timeOut.connect(masterOut);
+    } else if (opts.drive > 0 && !opts.driveBeforeTimeFx) {
+      const timeOut = buildTimeFxBus(env);
+      const drv = buildDriveNode();
+      timeOut.connect(drv);
+      drv.connect(masterOut);
+    } else {
+      const timeOut = buildTimeFxBus(env);
+      timeOut.connect(masterOut);
+    }
+
+    masterOut.connect(this.getDestination());
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + dur + 0.04);
+    osc2.stop(now + dur + 0.04);
+    this.registerVoice(masterOut, sources);
+    this.scheduleNoteGlow(midi, dur, delay, 'guitar');
+  }
+
+  /**
+   * Orchestral Family Synthesis (Strings, Brass, Woodwind) for Arrangement & Orchestration Labs
+   */
+  playOrchestralVoice(
+    midi: number,
+    duration = 1.4,
+    delay = 0,
+    family: 'strings' | 'brass' | 'woodwind' = 'strings',
+    volume = 0.2
+  ): void {
+    const ctx = this.ensureContext();
+    const now = ctx.currentTime + delay;
+    const freq = this.midiToFreq(midi);
+
+    const master = ctx.createGain();
+    const attack = family === 'strings' ? 0.16 : family === 'brass' ? 0.045 : 0.06;
+    master.gain.setValueAtTime(0.0001, now);
+    master.gain.linearRampToValueAtTime(volume, now + attack);
+    master.gain.setValueAtTime(volume * 0.85, now + Math.max(attack + 0.05, duration * 0.72));
+    master.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    if (family === 'brass') {
+      filter.frequency.setValueAtTime(freq * 1.8, now);
+      filter.frequency.linearRampToValueAtTime(Math.min(4600, freq * 6.5), now + 0.09);
+      filter.frequency.exponentialRampToValueAtTime(Math.max(850, freq * 3.0), now + duration);
+      filter.Q.setValueAtTime(2.2, now);
+    } else if (family === 'strings') {
+      filter.frequency.setValueAtTime(Math.min(3200, freq * 5.2), now);
+      filter.Q.setValueAtTime(1.1, now);
+    } else {
+      filter.frequency.setValueAtTime(Math.min(2800, freq * 4.0), now);
+      filter.Q.setValueAtTime(1.5, now);
+    }
+
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    osc1.type = family === 'woodwind' ? 'triangle' : 'sawtooth';
+    osc2.type = family === 'strings' ? 'sawtooth' : 'sine';
+    osc1.frequency.setValueAtTime(freq, now);
+    osc2.frequency.setValueAtTime(freq, now);
+    osc1.detune.setValueAtTime(family === 'strings' ? -6 : 0, now);
+    osc2.detune.setValueAtTime(family === 'strings' ? 6 : 2, now);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(master);
+    master.connect(this.getDestination());
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + duration + 0.03);
+    osc2.stop(now + duration + 0.03);
+    this.registerVoice(master, [osc1, osc2]);
+    this.scheduleNoteGlow(midi, duration, delay, 'piano');
+  }
 }
 
 /**
@@ -1793,6 +2020,7 @@ function buildMultiInstrumentExplorer(
     defaultRoot?: number;
     defaultScale?: string;
     defaultChord?: string;
+    chordFilterIds?: string[];
     defaultInterval?: number;
     defaultZone?: NeckZoneMode;
     mode?: PedagogicalExplorerKind;
@@ -1802,7 +2030,14 @@ function buildMultiInstrumentExplorer(
   let currentRoot = config.defaultRoot ?? 0;
   let currentScaleId = config.defaultScale ?? 'major';
   let compareScaleId = 'none';
-  let currentChordId = config.defaultChord ?? 'maj';
+  const filteredChordsDb =
+    config.chordFilterIds && config.chordFilterIds.length > 0
+      ? CHORDS_DB.filter((c) => config.chordFilterIds!.includes(c.id))
+      : CHORDS_DB;
+  let currentChordId =
+    config.defaultChord && filteredChordsDb.some((c) => c.id === config.defaultChord)
+      ? config.defaultChord
+      : filteredChordsDb[0]?.id ?? 'maj';
   let currentIntervalSemi = config.defaultInterval ?? 4;
   let currentNoteFilter: NoteFilterMode = 'single';
 
@@ -1861,7 +2096,7 @@ function buildMultiInstrumentExplorer(
     ...SCALES_DB.map((s) => `<option value="${s.id}">${s.name}</option>`),
   ].join('');
 
-  const chordOptionsHtml = CHORDS_DB.map(
+  const chordOptionsHtml = filteredChordsDb.map(
     (c) => `<option value="${c.id}" ${c.id === currentChordId ? 'selected' : ''}>${c.name} (${c.formula})</option>`
   ).join('');
 
@@ -3014,7 +3249,8 @@ function buildVocalAndWarmupLab(
   stage: HTMLElement,
   audio: MusicAudioEngine,
   onStatus: (msg: string) => void,
-  initialMode: 'warmup' | 'range' | 'harmony' = 'warmup'
+  initialMode: 'warmup' | 'range' | 'harmony' = 'warmup',
+  singleModeOnly = false
 ): void {
   let currentTab: 'warmup' | 'range' | 'harmony' = initialMode;
   let rootMidi = 60; // C4 default, user can transpose up/down by semitone!
@@ -3029,15 +3265,38 @@ function buildVocalAndWarmupLab(
     { name: 'Soprano (C4 – C6)', min: 60, max: 84, pass: 'F4 / F#5', desc: 'Voz aguda femenina: proyección cristalina en la octava 5.' },
   ];
 
+  const singleModeHeaders: Record<'warmup' | 'range' | 'harmony', { badge: string; desc: string }> = {
+    warmup: {
+      badge: '🔥 Calentamiento Vocal Guiado y Formantes SOVT',
+      desc: 'Transpone por semitonos y selecciona el tracto (Lip Trill o vocales) para calentar sin tensión.',
+    },
+    range: {
+      badge: '📏 Explorador Auditivo de Clasificaciones SATB y Passaggio',
+      desc: 'Compara los extremos y puentes vocales de las 6 tesituras clásicas y modernas.',
+    },
+    harmony: {
+      badge: '🎶 Armonizador Coral Interactivo (2, 3 y 4 Voces / Modo Práctica)',
+      desc: 'Escucha cómo se ensamblan las voces paralelas y prueba el modo Karaoke armónico.',
+    },
+  };
+
   const render = (): void => {
     const rootLabel = `${NOTE_NAMES[rootMidi % 12]}${Math.floor(rootMidi / 12) - 1}`;
-    stage.innerHTML = `
-      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:10px;">
-        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+    const singleHdr = singleModeHeaders[currentTab];
+    const headerLeftHtml = singleModeOnly
+      ? `<div>
+           <div style="font-size:0.9rem; font-weight:800; color:var(--accent-gold);">${singleHdr.badge}</div>
+           <div style="font-size:0.76rem; color:var(--text-muted); margin-top:2px;">${singleHdr.desc}</div>
+         </div>`
+      : `<div style="display:flex; gap:6px; flex-wrap:wrap;">
           <button type="button" class="btn js-vmode-btn" data-m="warmup" style="background:${currentTab === 'warmup' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.08)'}; color:${currentTab === 'warmup' ? '#090d16' : '#f8fafc'};">🔥 1. Rutina de Calentamiento Vocal y SOVT</button>
           <button type="button" class="btn js-vmode-btn" data-m="range" style="background:${currentTab === 'range' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.08)'}; color:${currentTab === 'range' ? '#090d16' : '#f8fafc'};">📏 2. Detector de Tesitura SATB y Passaggio</button>
           <button type="button" class="btn js-vmode-btn" data-m="harmony" style="background:${currentTab === 'harmony' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.08)'}; color:${currentTab === 'harmony' ? '#090d16' : '#f8fafc'};">🎶 3. Armonizador Coral (2, 3 y 4 Voces)</button>
-        </div>
+        </div>`;
+
+    stage.innerHTML = `
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:10px;">
+        ${headerLeftHtml}
         <button type="button" class="btn js-v-stop" style="background:rgba(244,63,94,0.2); color:#fb7185; border:1px solid rgba(244,63,94,0.4);">⏹ Detener Audio</button>
       </div>
       <div class="js-v-body"></div>
@@ -6504,6 +6763,10 @@ function buildDataLabStage(
     return;
   }
 
+  if (buildExpansionDataLabStage(stage, labType, article, audio, onStatus)) {
+    return;
+  }
+
   if (labType === 'harmonics-lab') {
     buildHarmonicsOscilloscopeLab(stage, audio, onStatus);
   } else if (labType === 'interval-9th-visualizer') {
@@ -6552,7 +6815,8 @@ function buildDataLabStage(
       stage,
       audio,
       onStatus,
-      labType === 'vocal-warmup-lab' ? 'warmup' : modeAttr === 'harmony' ? 'harmony' : 'range'
+      labType === 'vocal-warmup-lab' ? 'warmup' : modeAttr === 'harmony' ? 'harmony' : 'range',
+      true
     );
   } else if (labType === 'drum-rudiment-lab') {
     buildDrumRudimentAndPadsLab(stage, audio, onStatus);
@@ -6673,10 +6937,32 @@ function buildDataLabStage(
       dom7b9: '7b9',
     };
     const dataType = article.getAttribute('data-type') || 'maj';
+    const parentSectionId = article.closest('section[id]')?.getAttribute('id') || '';
+    let chordFilterIds: string[] | undefined;
+    let specializedTitle: string | undefined;
+    let specializedSubtitle: string | undefined;
+    if (resolvedKind === 'chord') {
+      if (parentSectionId === 'h-triadas' || dataType === 'maj') {
+        chordFilterIds = ['maj', 'min', 'dim', 'aug', 'sus2', 'sus4'];
+        specializedTitle = 'Laboratorio Especializado de Tríadas y Acordes Suspendidos (3 Notas)';
+        specializedSubtitle = 'Enfocado exclusivamente en Mayor, Menor, Disminuido, Aumentado, sus2 y sus4.';
+      } else if (parentSectionId === 'h-septimas' || dataType === 'maj7') {
+        chordFilterIds = ['maj7', '7', 'm7', 'm7b5', 'dim7', 'mMaj7'];
+        specializedTitle = 'Laboratorio Especializado de Acordes de Séptima (4 Notas)';
+        specializedSubtitle = 'Compara únicamente las 6 especies de cuatríadas: Maj7, Dominante 7, m7, m7b5, dim7 y m(Maj7).';
+      } else if (parentSectionId === 'h-alterados' || dataType === 'dom7b9') {
+        chordFilterIds = ['mMaj9', 'add9', '9', '7#9', '7b9'];
+        specializedTitle = 'Laboratorio Especializado de Tensiones y Dominantes Alterados (9, #9, b9)';
+        specializedSubtitle = 'Audita el color de add9, 9, el acorde Hendrix 7(#9), 7(b9) y el cinematográfico m(Maj9).';
+      }
+    }
     buildMultiInstrumentExplorer(stage, audio, onStatus, {
+      title: specializedTitle,
+      subtitle: specializedSubtitle,
       defaultRoot: parseInt(article.getAttribute('data-root') || '0', 10),
       defaultScale: article.getAttribute('data-scale') || 'major',
       defaultChord: chordMap[dataType] || 'maj',
+      chordFilterIds,
       defaultZone: article.getAttribute('data-mode') === 'chord-window' ? 'auto' : 'all',
       mode: resolvedKind,
       bassOnly: false,
@@ -7978,6 +8264,10 @@ function buildInterval9thVisualizerLab(
       </div>
     </div>
 
+    <div class="js-iv9-live-status" style="font-size:0.78rem; color:#38bdf8; background:rgba(15,23,42,0.85); border:1px solid rgba(56,189,248,0.28); border-radius:8px; padding:6px 10px; margin-bottom:8px; font-weight:700;">
+      🎧 Pulsa ▶ Melódico, 🔊 Armónico, 🔄 Comparar o haz clic en cualquier tecla o traste para escuchar.
+    </div>
+
     <div class="piano-wrapper js-iv9-piano-wrap" style="${hidePiano ? 'display:none;' : ''}">
       <div class="piano-keys js-iv9-piano"></div>
     </div>
@@ -8011,6 +8301,7 @@ function buildInterval9thVisualizerLab(
   const simpleBtnsEl = stage.querySelector<HTMLElement>('.js-iv9-simple-btns')!;
   const compBtnsEl = stage.querySelector<HTMLElement>('.js-iv9-comp-btns')!;
   const summaryEl = stage.querySelector<HTMLElement>('.js-iv9-summary')!;
+  const liveStatusEl = stage.querySelector<HTMLElement>('.js-iv9-live-status')!;
   const pianoWrapEl = stage.querySelector<HTMLElement>('.js-iv9-piano-wrap')!;
   const pianoEl = stage.querySelector<HTMLElement>('.js-iv9-piano')!;
   const neckTitleEl = stage.querySelector<HTMLElement>('.js-iv9-neck-title')!;
@@ -8021,13 +8312,94 @@ function buildInterval9thVisualizerLab(
   const getSpec = (): IntervalSpec =>
     intervalsDb.find((it) => it.semi === selectedSemi) || intervalsDb[13];
 
+  const renderExactIntervalNeckSvg = (
+    shape: IntervalFretboardShape,
+    spec: IntervalSpec,
+    rootName: string,
+    targetName: string
+  ): string => {
+    const isBass = shape.mode === 'bass';
+    const nStr = isBass ? 4 : 6;
+    const strNames = isBass ? ['E', 'A', 'D', 'G'] : ['E', 'A', 'D', 'G', 'B', 'e'];
+    const fretsShown = 5;
+    const w = 186;
+    const h = 152;
+    const x0 = 32;
+    const y0 = 28;
+    const gridW = 128;
+    const gridH = 96;
+    const stepX = gridW / (nStr - 1);
+    const stepY = gridH / fretsShown;
+    const targetColor = spec.group === 'compound' ? '#10b981' : '#38bdf8';
+    const shortTag = spec.short.split(' ')[0];
+
+    let lines = '';
+    for (let f = 0; f <= fretsShown; f++) {
+      const y = y0 + f * stepY;
+      lines += `<line x1="${x0}" y1="${y}" x2="${x0 + gridW}" y2="${y}" stroke="${f === 0 && shape.baseFret === 1 ? '#f8fafc' : '#475569'}" stroke-width="${f === 0 && shape.baseFret === 1 ? 3.2 : 1.1}"/>`;
+    }
+    for (let s = 0; s < nStr; s++) {
+      const x = x0 + s * stepX;
+      lines += `<line x1="${x}" y1="${y0}" x2="${x}" y2="${y0 + gridH}" stroke="#64748b" stroke-width="${(isBass ? 2.1 : 1.5) - s * 0.14}"/>`;
+      lines += `<text x="${x}" y="${y0 + gridH + 16}" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="700">${strNames[s]}</text>`;
+    }
+
+    let markers = '';
+    for (let s = 0; s < nStr; s++) {
+      const x = x0 + s * stepX;
+      const isRootHere = shape.rootPos.lowStrIdx === s;
+      const isTargetHere = shape.targetPos.lowStrIdx === s;
+      if (!isRootHere && !isTargetHere) {
+        markers += `<text x="${x}" y="${y0 - 8}" text-anchor="middle" fill="#64748b" font-size="10" font-weight="800">×</text>`;
+        continue;
+      }
+
+      const drawDot = (fretVal: number, fillCol: string, txt: string, txtCol: string) => {
+        if (fretVal === 0) {
+          markers += `<circle cx="${x}" cy="${y0 - 11}" r="6.5" fill="none" stroke="${fillCol}" stroke-width="2"/>`;
+          markers += `<text x="${x}" y="${y0 - 8}" text-anchor="middle" fill="${fillCol}" font-size="7.5" font-weight="900">${txt}</text>`;
+        } else {
+          const rel = Math.max(1, Math.min(fretsShown, fretVal - shape.baseFret + 1));
+          const cy = y0 + (rel - 0.5) * stepY;
+          markers += `<circle cx="${x}" cy="${cy}" r="8.5" fill="${fillCol}" stroke="#0b0f19" stroke-width="1.4"/>`;
+          markers += `<text x="${x}" y="${cy + 3}" text-anchor="middle" fill="${txtCol}" font-size="7.5" font-weight="900">${txt}</text>`;
+        }
+      };
+
+      if (isRootHere) drawDot(shape.rootPos.fret, '#f59e0b', '1', '#090d16');
+      if (isTargetHere) drawDot(shape.targetPos.fret, targetColor, shortTag.slice(0, 3), '#052e16');
+    }
+
+    const baseFretLabel =
+      shape.baseFret > 1
+        ? `<text x="${x0 - 10}" y="${y0 + stepY * 0.65}" text-anchor="end" fill="#fbbf24" font-size="10" font-weight="800">${shape.baseFret}fr</text>`
+        : '';
+
+    return `
+      <div style="display:flex; flex-direction:column; align-items:center; gap:4px; background:rgba(8,12,22,0.92); border:1px solid rgba(56,189,248,0.28); border-radius:8px; padding:8px;">
+        <div style="font-size:0.74rem; color:#f8fafc; font-weight:800;">
+          ${isBass ? 'Bajo (4c)' : 'Guitarra (6c)'}: <code style="color:#fbbf24;">${shape.tabText}</code>
+        </div>
+        <svg viewBox="0 0 ${w} ${h}" style="width:176px; height:auto; display:block;" role="img" aria-label="Diagrama exacto de intervalo ${rootName} a ${targetName}">
+          ${lines}
+          ${baseFretLabel}
+          ${markers}
+        </svg>
+        <div style="font-size:0.68rem; color:#94a3b8; text-align:center;">
+          <strong style="color:#fbbf24;">${rootName}</strong> (${shape.rootPos.stringLabel} tr.${shape.rootPos.fret}) →
+          <strong style="color:${targetColor};">${targetName}</strong> (${shape.targetPos.stringLabel} tr.${shape.targetPos.fret})
+        </div>
+      </div>
+    `;
+  };
+
   const renderPolygonGraph = (): void => {
     const preset = chordPolygonPresets[polyPresetIdx];
     const rootName = NOTE_NAMES[rootPc];
     const notes = preset.offsets.map((off) => ({
       off,
       pc: (rootPc + off) % 12,
-      midi: 60 + rootPc + off,
+      midi: 48 + rootPc + off,
       name: NOTE_NAMES[(rootPc + off) % 12],
     }));
 
@@ -8039,13 +8411,11 @@ function buildInterval9thVisualizerLab(
     const polyCy = 264;
     const polyR = notes.length <= 4 ? 86 : 96;
 
-    // Vertex positions starting at top (-90 deg) clockwise
     const pts = notes.map((n, idx) => {
       const ang = ((-90 + (idx * 360) / notes.length) * Math.PI) / 180;
       return { ...n, x: polyCx + polyR * Math.cos(ang), y: polyCy + polyR * Math.sin(ang) };
     });
 
-    // Connector lines from header note row down to polygon vertices (matching Image 2!)
     const headerNoteY = 104;
     const spacing = 26;
     const startX = topX - ((notes.length - 1) * spacing) / 2;
@@ -8062,7 +8432,6 @@ function buildInterval9thVisualizerLab(
       }
     });
 
-    // All pairwise edges inside polygon
     const pairEdges: string[] = [];
     const pairItems: { aName: string; bName: string; aMidi: number; bMidi: number; semi: number; label: string; isClash: boolean }[] = [];
 
@@ -8084,7 +8453,6 @@ function buildInterval9thVisualizerLab(
                   : intervalNameMap[modDiff] || `${modDiff}st`;
         const isClash = modDiff === 1 || modDiff === 6;
 
-        // Place badge slightly shifted along edge so overlapping diagonals don't collide
         const t = (i + j) % 2 === 0 ? 0.44 : 0.56;
         const mx = a.x + (b.x - a.x) * t;
         const my = a.y + (b.y - a.y) * t;
@@ -8163,16 +8531,40 @@ function buildInterval9thVisualizerLab(
     polyHost.innerHTML = pairListHtml + `<div style="display:flex; justify-content:center;">${svgHtml}</div>`;
   };
 
+  let currentShape: IntervalFretboardShape = computeIntervalFretboardShape(rootPc, selectedSemi, neckMode);
+
+  const pulseVisualMidi = (midi: number, delaySec: number, durSec: number, modeClass: 'glow-mode-note' | 'glow-mode-chord' = 'glow-mode-note') => {
+    const startMs = Math.max(0, Math.round(delaySec * 1000));
+    const endMs = startMs + Math.max(220, Math.round(durSec * 1000));
+    audio.schedule(() => {
+      if (!stage.isConnected) return;
+      stage.querySelectorAll<HTMLElement>(`.js-iv9-key[data-midi="${midi}"]`).forEach((k) => {
+        k.classList.add('playing-glow', modeClass);
+      });
+      stage.querySelectorAll<HTMLElement>(`.js-iv9-cell[data-midi="${midi}"] .fret-note`).forEach((n) => {
+        n.classList.add('playing-glow', modeClass);
+      });
+    }, startMs);
+    audio.schedule(() => {
+      if (!stage.isConnected) return;
+      stage.querySelectorAll<HTMLElement>(`.js-iv9-key[data-midi="${midi}"]`).forEach((k) => {
+        k.classList.remove('playing-glow', modeClass);
+      });
+      stage.querySelectorAll<HTMLElement>(`.js-iv9-cell[data-midi="${midi}"] .fret-note`).forEach((n) => {
+        n.classList.remove('playing-glow', modeClass);
+      });
+    }, endMs);
+  };
+
   const render = (): void => {
     renderPolygonGraph();
     const spec = getSpec();
     const isBass = neckMode === 'bass';
-    const baseMidi = isBass ? 36 + rootPc : 48 + rootPc;
-    const targetMidi = baseMidi + spec.semi;
     const simpleSemi = spec.semi > 12 ? spec.semi - 12 : spec.semi;
     const rootName = NOTE_NAMES[rootPc];
     const targetPc = (rootPc + spec.semi) % 12;
     const targetName = NOTE_NAMES[targetPc];
+    currentShape = computeIntervalFretboardShape(rootPc, spec.semi, neckMode);
 
     semiSel.value = String(selectedSemi);
     pianoWrapEl.style.display = hidePiano ? 'none' : '';
@@ -8198,7 +8590,6 @@ function buildInterval9thVisualizerLab(
     simpleBtnsEl.innerHTML = renderBtnGroup('simple');
     compBtnsEl.innerHTML = renderBtnGroup('compound');
 
-    const dyadMidis = [baseMidi, targetMidi];
     summaryEl.innerHTML = `
       <div>
         <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:4px;">
@@ -8214,18 +8605,18 @@ function buildInterval9thVisualizerLab(
         </div>
       </div>
       <div>
-        ${renderMiniChordNeckSvg(dyadMidis, baseMidi, neckMode)}
+        ${renderExactIntervalNeckSvg(currentShape, spec, rootName, targetName)}
       </div>
     `;
 
-    // 2-Octave Piano (C4 = 60 to B5 = 83)
-    const pianoRootMidi = 60 + rootPc;
+    // 3-Octave Piano (C3 = 48 to B5 = 83) so ALL roots (C..B) + compound intervals (up to 13M = +21 st) always fit visibly!
+    const pianoRootMidi = 48 + rootPc;
     const pianoTargetMidi = pianoRootMidi + spec.semi;
     const pianoSimpleMidi = pianoRootMidi + simpleSemi;
     let pianoHtml = '';
-    for (let oct = 0; oct < 2; oct++) {
+    for (let oct = 0; oct < 3; oct++) {
       for (let pc = 0; pc < 12; pc++) {
-        const midi = 60 + oct * 12 + pc;
+        const midi = 48 + oct * 12 + pc;
         const isBlack = [1, 3, 6, 8, 10].includes(pc);
         const isRootKey = midi === pianoRootMidi;
         const isTargetKey = midi === pianoTargetMidi;
@@ -8233,37 +8624,45 @@ function buildInterval9thVisualizerLab(
         const keyClass = isBlack ? 'key-black' : 'key-white';
         const stateClass = isRootKey ? 'is-root' : isTargetKey || isSimpleKey ? 'in-scale' : '';
         const extraStyle = isTargetKey && spec.semi > 12 ? 'background:#10b981 !important; color:#052e16 !important;' : '';
-        pianoHtml += `<div class="${keyClass} ${stateClass} js-iv9-key" data-midi="${midi}" style="${extraStyle}" title="${NOTE_NAMES[pc]}${4 + oct}"><span>${NOTE_NAMES[pc]}${isRootKey ? ' (1)' : isTargetKey ? ` (${spec.short.split(' ')[0]})` : isSimpleKey ? ' (Simple)' : ''}</span></div>`;
+        pianoHtml += `<div class="${keyClass} ${stateClass} js-iv9-key" data-midi="${midi}" style="${extraStyle}" title="${NOTE_NAMES[pc]}${3 + oct}"><span>${NOTE_NAMES[pc]}${isRootKey ? ' (1)' : isTargetKey ? ` (${spec.short.split(' ')[0]})` : isSimpleKey ? ' (Simple)' : ''}</span></div>`;
       }
     }
     pianoEl.innerHTML = pianoHtml;
 
-    // 12-Fret Interactive Neck
+    // 12-Fret (or up to 15 if needed) Interactive Neck with exact octave shape ring highlighted
     const stringsConfig = isBass ? BASS_STRINGS : GUITAR_STRINGS;
+    const maxNeckFret = Math.max(12, currentShape.rootPos.fret, currentShape.targetPos.fret);
     neckTitleEl.textContent = isBass
       ? `🎸 Mapa del Intervalo ${spec.short} (${rootName} → ${targetName}) en BAJO ELÉCTRICO (4 Cuerdas: G–D–A–E)`
       : `🎸 Mapa del Intervalo ${spec.short} (${rootName} → ${targetName}) en GUITARRA (6 Cuerdas: e–B–G–D–A–E)`;
 
     let neckHtml = `<div class="fretboard-wrapper">`;
     neckHtml += `<div class="fretboard-row" style="border-bottom:1px solid rgba(255,255,255,0.16); margin-bottom:4px;"><div class="string-label" style="color:var(--text-muted); font-size:0.7rem;">Traste</div>`;
-    for (let f = 0; f <= 12; f++) {
-      const marker = [3, 5, 7, 9, 12].includes(f) ? '•' : '';
+    for (let f = 0; f <= maxNeckFret; f++) {
+      const marker = [3, 5, 7, 9, 12, 15].includes(f) ? '•' : '';
       neckHtml += `<div class="fret-cell" style="height:20px; border:none; color:var(--text-muted); font-size:0.72rem; font-weight:700;">${f === 0 ? '0' : `${f}${marker}`}</div>`;
     }
     neckHtml += `</div>`;
 
-    stringsConfig.forEach((st) => {
+    stringsConfig.forEach((st, sIdx) => {
       neckHtml += `<div class="fretboard-row"><div class="string-label" style="color:${isBass ? '#38bdf8' : '#fbbf24'};">${st.label}</div>`;
-      for (let f = 0; f <= 12; f++) {
+      for (let f = 0; f <= maxNeckFret; f++) {
         const midi = st.openMidi + f;
         const pc = midi % 12;
         const noteName = NOTE_NAMES[pc];
         const isRoot = pc === rootPc;
         const isTarget = pc === targetPc;
+        const isExactRoot = sIdx === currentShape.rootPos.sIdx && f === currentShape.rootPos.fret;
+        const isExactTarget = sIdx === currentShape.targetPos.sIdx && f === currentShape.targetPos.fret;
         const stateClass = isRoot ? 'root' : isTarget ? (spec.group === 'compound' ? 'char' : 'active') : '';
+        const exactRingStyle = isExactRoot
+          ? 'outline:2px solid #fef08a; box-shadow:0 0 10px rgba(251,191,36,0.75); transform:scale(1.1);'
+          : isExactTarget
+            ? `outline:2px solid #ffffff; box-shadow:0 0 10px ${spec.group === 'compound' ? 'rgba(16,185,129,0.8)' : 'rgba(56,189,248,0.8)'}; transform:scale(1.1);`
+            : '';
         neckHtml += `
-          <div class="fret-cell js-iv9-cell" data-midi="${midi}" title="Cuerda ${st.label}, Traste ${f}: ${noteName}">
-            <div class="fret-note ${stateClass}">${noteName}</div>
+          <div class="fret-cell js-iv9-cell" data-midi="${midi}" data-sidx="${sIdx}" data-fret="${f}" title="Cuerda ${st.label}, Traste ${f}: ${noteName}">
+            <div class="fret-note ${stateClass}" style="${exactRingStyle}">${noteName}</div>
           </div>
         `;
       }
@@ -8276,12 +8675,15 @@ function buildInterval9thVisualizerLab(
   const playInterval = (mode: 'asc' | 'harm' | 'cmp'): void => {
     const spec = getSpec();
     const isBass = neckMode === 'bass';
-    const baseMidi = isBass ? 36 + rootPc : 52 + rootPc;
+    // CRITICAL FIX: C3 = 48 (previously 52 = E3 which transposed every note +4 semitones!)
+    const baseMidi = isBass ? 36 + rootPc : 48 + rootPc;
     const targetMidi = baseMidi + spec.semi;
     const simpleMidi = baseMidi + (spec.semi > 12 ? spec.semi - 12 : spec.semi);
+    const rootName = NOTE_NAMES[rootPc];
+    const targetName = NOTE_NAMES[(rootPc + spec.semi) % 12];
     audio.stopAll();
 
-    const playNote = (m: number, dur: number, delay: number) => {
+    const playNote = (m: number, dur: number, delay: number, visualMode: 'glow-mode-note' | 'glow-mode-chord' = 'glow-mode-note') => {
       if (isBass) {
         audio.playElectricBass(m, dur, delay, 0.38, 'finger', false);
       } else {
@@ -8290,23 +8692,30 @@ function buildInterval9thVisualizerLab(
           audio.playAcousticPiano(m, dur, delay, 0.22, false);
         }
       }
+      pulseVisualMidi(m, delay, dur, visualMode);
     };
 
     if (mode === 'asc') {
-      playNote(baseMidi, 0.9, 0);
-      playNote(targetMidi, 1.3, 0.55);
-      onStatus(`Intervalo Melódico: ${NOTE_NAMES[rootPc]} → ${NOTE_NAMES[(rootPc + spec.semi) % 12]} (${spec.name})`);
+      playNote(baseMidi, 0.9, 0, 'glow-mode-note');
+      playNote(targetMidi, 1.3, 0.55, 'glow-mode-note');
+      const msg = `▶ Melódico: ${rootName} (${midiToNoteName(baseMidi)}) → ${targetName} (${midiToNoteName(targetMidi)}) · ${spec.name}`;
+      liveStatusEl.textContent = msg;
+      onStatus(msg);
     } else if (mode === 'harm') {
-      playNote(baseMidi, 1.5, 0);
-      playNote(targetMidi, 1.5, 0.03);
-      onStatus(`Intervalo Armónico: ${NOTE_NAMES[rootPc]} + ${NOTE_NAMES[(rootPc + spec.semi) % 12]} (${spec.name})`);
+      playNote(baseMidi, 1.5, 0, 'glow-mode-chord');
+      playNote(targetMidi, 1.5, 0.03, 'glow-mode-chord');
+      const msg = `🔊 Armónico: ${rootName} (${midiToNoteName(baseMidi)}) + ${targetName} (${midiToNoteName(targetMidi)}) · ${spec.name}`;
+      liveStatusEl.textContent = msg;
+      onStatus(msg);
     } else {
       const compMidi = spec.semi <= 12 ? baseMidi + spec.semi + 12 : targetMidi;
-      playNote(baseMidi, 1.0, 0);
-      playNote(simpleMidi, 1.0, 0.04);
-      playNote(baseMidi, 1.3, 0.95);
-      playNote(compMidi, 1.3, 0.99);
-      onStatus(`Comparando Intervalo Simple Cerrado vs. Compuesto Abierto (Octava Superior / 9ª-11ª-13ª)`);
+      playNote(baseMidi, 1.0, 0, 'glow-mode-chord');
+      playNote(simpleMidi, 1.0, 0.04, 'glow-mode-chord');
+      playNote(baseMidi, 1.3, 0.95, 'glow-mode-chord');
+      playNote(compMidi, 1.3, 0.99, 'glow-mode-chord');
+      const msg = `🔄 Comparando: Simple (${midiToNoteName(baseMidi)}+${midiToNoteName(simpleMidi)}) vs. Compuesto (${midiToNoteName(baseMidi)}+${midiToNoteName(compMidi)})`;
+      liveStatusEl.textContent = msg;
+      onStatus(msg);
     }
   };
 
@@ -8348,7 +8757,9 @@ function buildInterval9thVisualizerLab(
     } else {
       audio.strumChord(midis, hidePiano ? 'guitar' : 'piano', 0, false);
     }
-    onStatus(`Analizando acorde ${NOTE_NAMES[rootPc]}${preset.suffix}`);
+    const msg = `🕸️ Acorde Polígono: ${NOTE_NAMES[rootPc]}${preset.suffix}`;
+    liveStatusEl.textContent = msg;
+    onStatus(msg);
   });
 
   stage.addEventListener('click', (e) => {
@@ -8364,7 +8775,10 @@ function buildInterval9thVisualizerLab(
         audio.playElectricBass(36 + rootPc, 1.4, 0, 0.36, 'finger', false, { skipGlow: true });
         audio.strumChord(midis, hidePiano ? 'guitar' : 'piano', 0, false);
       }
-      onStatus(`Acorde completo: ${NOTE_NAMES[rootPc]}${preset.suffix}`);
+      midis.forEach((m) => pulseVisualMidi(m, 0, 1.2, 'glow-mode-chord'));
+      const msg = `🔊 Acorde completo: ${NOTE_NAMES[rootPc]}${preset.suffix}`;
+      liveStatusEl.textContent = msg;
+      onStatus(msg);
       return;
     }
     const polyNote = target.closest<HTMLElement>('.js-iv9-poly-note');
@@ -8377,7 +8791,10 @@ function buildInterval9thVisualizerLab(
       } else {
         audio.playAcousticPiano(midi, 1.1, 0, 0.35, true);
       }
-      onStatus(`Nota del polígono: ${polyNote.getAttribute('data-name')}`);
+      pulseVisualMidi(midi, 0, 0.85, 'glow-mode-note');
+      const msg = `Nota del polígono: ${polyNote.getAttribute('data-name')} (${midiToNoteName(midi)})`;
+      liveStatusEl.textContent = msg;
+      onStatus(msg);
       return;
     }
     const pairEdge = target.closest<HTMLElement>('.js-iv9-pair-edge');
@@ -8395,6 +8812,7 @@ function buildInterval9thVisualizerLab(
         } else {
           audio.playAcousticPiano(m, dur, del, 0.3, false);
         }
+        pulseVisualMidi(m, del, dur, 'glow-mode-note');
       };
       playEdgeNote(ma, 0.9, 0);
       playEdgeNote(mb, 1.1, 0.35);
@@ -8404,7 +8822,9 @@ function buildInterval9thVisualizerLab(
         selectedSemi = rawSemi;
         render();
       }
-      onStatus(`Intervalo interno del acorde: ${desc}`);
+      const msg = `🕸️ Intervalo interno del acorde: ${desc}`;
+      liveStatusEl.textContent = msg;
+      onStatus(msg);
       return;
     }
     if (target.closest('.js-iv9-toggle-piano')) {
@@ -8429,10 +8849,22 @@ function buildInterval9thVisualizerLab(
         setVisualInstrumentFocus(neckMode === 'bass' ? 'bass-only' : 'guitar-only');
       }
       render();
-      onStatus(`Visualizador de Intervalos: Mástil cambiado a ${neckMode === 'bass' ? 'Bajo (4 Cuerdas)' : 'Guitarra (6 Cuerdas)'}`);
+      const msg = `Mástil cambiado a ${neckMode === 'bass' ? 'Bajo (4 Cuerdas)' : 'Guitarra (6 Cuerdas)'}`;
+      liveStatusEl.textContent = `🎸 ${msg}`;
+      onStatus(`Visualizador de Intervalos: ${msg}`);
       return;
     }
-    const cell = target.closest<HTMLElement>('.js-iv9-cell, .js-iv9-key');
+    const pianoKey = target.closest<HTMLElement>('.js-iv9-key');
+    if (pianoKey) {
+      const midi = parseInt(pianoKey.getAttribute('data-midi')!, 10);
+      audio.playAcousticPiano(midi, 1.1, 0, 0.35, true);
+      pulseVisualMidi(midi, 0, 0.75, 'glow-mode-note');
+      const msg = `🎹 Piano: ${midiToNoteName(midi)}`;
+      liveStatusEl.textContent = msg;
+      onStatus(msg);
+      return;
+    }
+    const cell = target.closest<HTMLElement>('.js-iv9-cell');
     if (cell) {
       const midi = parseInt(cell.getAttribute('data-midi')!, 10);
       if (neckMode === 'bass') {
@@ -8440,6 +8872,10 @@ function buildInterval9thVisualizerLab(
       } else {
         audio.playPluckedGuitar(midi, 1.1, 0, 0.3, true);
       }
+      pulseVisualMidi(midi, 0, 0.75, 'glow-mode-note');
+      const msg = `🎸 ${neckMode === 'bass' ? 'Bajo' : 'Guitarra'}: ${midiToNoteName(midi)}`;
+      liveStatusEl.textContent = msg;
+      onStatus(msg);
       return;
     }
     if (target.closest('.js-iv9-play-asc')) playInterval('asc');
@@ -8447,6 +8883,7 @@ function buildInterval9thVisualizerLab(
     else if (target.closest('.js-iv9-play-cmp')) playInterval('cmp');
     else if (target.closest('.js-iv9-stop')) {
       audio.stopAll();
+      liveStatusEl.textContent = '⏹ Audio detenido.';
       onStatus('Audio detenido');
     }
   });

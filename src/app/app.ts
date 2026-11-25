@@ -69,6 +69,15 @@ import {
   type StageGraduationSummary,
   type StageRubricEntry,
 } from './academy-practice';
+import {
+  APP_THEME_PRESETS,
+  DEFAULT_APP_THEME,
+  THEME_STORAGE_KEY,
+  getThemePreset,
+  resolveThemeId,
+  type AppThemeId,
+  type AppThemeOption,
+} from './theme-presets';
 
 export interface CategoryPart {
   id: string;
@@ -141,8 +150,8 @@ export class App implements OnInit, OnDestroy {
   readonly categories: CategoryPart[] = [
     { id: 'teoria', label: '1. Teoría y Acústica', count: 9 },
     { id: 'armonia', label: '2. Armonía Práctica', count: 19 },
-    { id: 'composicion', label: '3. Composición y Letras', count: 10 },
-    { id: 'guitarra-ac', label: '4. Guitarra Acústica', count: 7 },
+    { id: 'composicion', label: '3. Composición y Letras', count: 11 },
+    { id: 'guitarra-ac', label: '4. Guitarra Acústica', count: 8 },
     { id: 'guitarra-el', label: '5. Guitarra Eléctrica', count: 6 },
     { id: 'bajo', label: '6. Bajo Eléctrico (4 Cuerdas)', count: 6 },
     { id: 'bateria', label: '7. Batería y Percusión', count: 6 },
@@ -150,7 +159,8 @@ export class App implements OnInit, OnDestroy {
     { id: 'folclore', label: '9. Vientos Andinos y Folclore', count: 4 },
     { id: 'arreglos', label: '10. Arreglos y Orquestación', count: 4 },
     { id: 'produccion', label: '11. Producción y Proyectos', count: 3 },
-    { id: 'all', label: '📚 Toda la Enciclopedia Completa', count: 80 },
+    { id: 'entrenamiento', label: '12. Entrenamiento, Salud y Banda', count: 3 },
+    { id: 'all', label: '📚 Toda la Enciclopedia Completa', count: 85 },
   ];
 
   readonly activeCat = signal<CategoryPart>(this.categories[0]);
@@ -164,6 +174,12 @@ export class App implements OnInit, OnDestroy {
   );
   readonly currentInstrument = signal<'guitar' | 'piano' | 'bass'>('guitar');
   readonly visualInstrumentFocus = signal<VisualInstrumentFocus>('all');
+
+  // Curated 4-Theme UI Switcher (Paper Light, Warm Light, Graphite Dark, Slate Dark)
+  readonly themePresets = APP_THEME_PRESETS;
+  readonly activeTheme = signal<AppThemeId>(DEFAULT_APP_THEME);
+  readonly showThemeMenu = signal<boolean>(false);
+  readonly activeThemePreset = computed<AppThemeOption>(() => getThemePreset(this.activeTheme()));
 
   // Reader Mode: 'full' renders the entire module continuously so the user scrolls freely; 'focused' isolates 1 section
   readonly lessonViewMode = signal<'focused' | 'full'>('full');
@@ -542,8 +558,11 @@ export class App implements OnInit, OnDestroy {
             this.graduationRubrics.set(parsedRub as GraduationRubricState);
           }
         }
+        const savedTheme = resolveThemeId(localStorage.getItem(THEME_STORAGE_KEY));
+        this.activeTheme.set(savedTheme);
+        this.applyThemeToDocument(savedTheme);
       } catch {
-        // Ignore storage read errors in restricted iframes
+        this.applyThemeToDocument(DEFAULT_APP_THEME);
       }
 
       this.liveNotesListener = (ev: Event) => {
@@ -609,7 +628,9 @@ export class App implements OnInit, OnDestroy {
       const baseHtml =
         id === 'all'
           ? Object.values(ENCYCLOPEDIA_CONTENT).join('\n')
-          : ENCYCLOPEDIA_CONTENT[id] || '<p>Módulo no encontrado.</p>';
+          : id === 'entrenamiento'
+            ? ''
+            : ENCYCLOPEDIA_CONTENT[id] || '<p>Módulo no encontrado.</p>';
       const withTreatise = injectTreatiseEnrichmentIntoCategoryHtml(id, baseHtml);
       const withGames = injectSectionGamesIntoCategoryHtml(id, withTreatise);
       return replaceLegacyMarkers(withGames);
@@ -693,8 +714,40 @@ export class App implements OnInit, OnDestroy {
   closeAllOverlays(): void {
     this.showPaths.set(false);
     this.showGlossary.set(false);
+    this.showThemeMenu.set(false);
     this.mobileMenuOpen.set(false);
     this.modalManager.close();
+  }
+
+  toggleThemeMenu(): void {
+    this.showThemeMenu.update((v) => !v);
+  }
+
+  closeThemeMenu(): void {
+    this.showThemeMenu.set(false);
+  }
+
+  selectTheme(themeId: AppThemeId): void {
+    const resolved = resolveThemeId(themeId);
+    this.activeTheme.set(resolved);
+    this.showThemeMenu.set(false);
+    this.applyThemeToDocument(resolved);
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        localStorage.setItem(THEME_STORAGE_KEY, resolved);
+      } catch {
+        // Ignore storage write errors in restricted iframes
+      }
+    }
+  }
+
+  private applyThemeToDocument(themeId: AppThemeId): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const preset = getThemePreset(themeId);
+    const root = document.documentElement;
+    root.dataset['theme'] = preset.id;
+    root.classList.toggle('dark', preset.isDark);
+    root.style.colorScheme = preset.isDark ? 'dark' : 'light';
   }
 
   closePaths(): void {
@@ -711,6 +764,7 @@ export class App implements OnInit, OnDestroy {
       if (next) {
         this.showGlossary.set(false);
         this.showPaths.set(false);
+        this.showThemeMenu.set(false);
       }
       return next;
     });
@@ -719,7 +773,10 @@ export class App implements OnInit, OnDestroy {
   toggleGlossary(): void {
     this.showGlossary.update((v) => {
       const next = !v;
-      if (next) this.showPaths.set(false);
+      if (next) {
+        this.showPaths.set(false);
+        this.showThemeMenu.set(false);
+      }
       return next;
     });
   }
@@ -727,7 +784,10 @@ export class App implements OnInit, OnDestroy {
   togglePaths(): void {
     this.showPaths.update((v) => {
       const next = !v;
-      if (next) this.showGlossary.set(false);
+      if (next) {
+        this.showGlossary.set(false);
+        this.showThemeMenu.set(false);
+      }
       return next;
     });
   }
@@ -1054,6 +1114,49 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
+  openGuidedTrainingSession(preferredInst?: 'guitarra' | 'bajo' | 'bateria' | 'canto'): void {
+    const currentCatId = this.activeCat().id;
+    const targetInst: 'guitarra' | 'bajo' | 'bateria' | 'canto' =
+      preferredInst ||
+      (currentCatId === 'bateria'
+        ? 'bateria'
+        : currentCatId === 'bajo'
+          ? 'bajo'
+          : currentCatId === 'canto'
+            ? 'canto'
+            : 'guitarra');
+
+    this.showPaths.set(false);
+    this.showGlossary.set(false);
+    this.showChordDiagram.set(false);
+    this.mobileMenuOpen.set(false);
+    this.searchQuery.set('');
+
+    this.openLesson('entrenamiento', 'entreno-diario');
+
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => {
+        const labEl = document.getElementById('lab-sesion-entrenamiento');
+        if (labEl) {
+          const btn = labEl.querySelector<HTMLButtonElement>(
+            `.js-dt-inst[data-inst="${targetInst}"]`
+          );
+          if (btn && !btn.classList.contains('active')) {
+            btn.click();
+          }
+        }
+        const secEl = document.getElementById('entreno-diario');
+        if (secEl) {
+          this.isProgrammaticScroll = true;
+          secEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setTimeout(() => {
+            this.isProgrammaticScroll = false;
+          }, 700);
+        }
+      }, 120);
+    }
+  }
+
   loadCategory(cat: CategoryPart, initialSectionId?: string): void {
     this.modalManager.close();
     this.audio.stopAll();
@@ -1244,7 +1347,7 @@ export class App implements OnInit, OnDestroy {
       banner.className = 'level-locked-banner';
       banner.innerHTML = `
         <span>🔒 <strong>Nivel ${attr}</strong> (${title}) oculto en modo <em>${levelLabel}</em>.</span>
-        <button type="button" class="btn js-unlock-block" style="background:rgba(245,158,11,0.18); color:#fde047; border:1px solid rgba(245,158,11,0.45);">
+        <button type="button" class="btn btn-primary js-unlock-block">
           🔓 Desbloquear bloque
         </button>
       `;
@@ -1350,6 +1453,27 @@ export class App implements OnInit, OnDestroy {
   handleContentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
     if (!target) return;
+
+    const jumpSessionBtn = target.closest('button.js-jump-guided-session') as HTMLElement | null;
+    if (jumpSessionBtn) {
+      const inst = jumpSessionBtn.getAttribute('data-inst') as
+        | 'guitarra'
+        | 'bajo'
+        | 'bateria'
+        | 'canto'
+        | null;
+      this.openGuidedTrainingSession(inst || undefined);
+      return;
+    }
+
+    const jumpCrossBtn = target.closest('button.js-jump-cross-section') as HTMLElement | null;
+    if (jumpCrossBtn) {
+      const targetId = jumpCrossBtn.getAttribute('data-target');
+      if (targetId) {
+        this.jumpToCrossSection(targetId);
+      }
+      return;
+    }
 
     const treatiseBtn = target.closest('button.js-treatise-chord') as HTMLElement | null;
     if (treatiseBtn) {
@@ -1526,6 +1650,44 @@ export class App implements OnInit, OnDestroy {
       ];
       hits.forEach((h) => this.audio.playDrumHit(h.piece, h.t));
       this.activeNoteLabel.set('Etapa 0 · Ritmo (golpes largos, cortos y síncopas sobre el pulso)');
+    } else if (name === 'demoTimeSig34') {
+      // 3/4 Waltz: 2 bars x 3 quarter-note pulses subdivided in pairs (1-y 2-y 3-y)
+      const step = 0.28;
+      for (let bar = 0; bar < 2; bar++) {
+        const base = bar * 6 * step;
+        [0, 1, 2, 3, 4, 5].forEach((eighth) => {
+          const t = base + eighth * step;
+          if (eighth === 0) {
+            this.audio.playDrumHit('kick', t);
+            this.playMidiNote(48, 0.35, t, false);
+          } else if (eighth === 2 || eighth === 4) {
+            this.audio.playDrumHit('snare', t);
+            this.playMidiNote(64, 0.24, t, false);
+          } else {
+            this.audio.playDrumHit('hihat', t);
+          }
+        });
+      }
+      this.activeNoteLabel.set('Compás 3/4 (Vals): 3 pulsos por compás (UN-y · dos-y · tres-y)');
+    } else if (name === 'demoTimeSig68') {
+      // 6/8 Compound: 2 bars x 2 big pulses of 3 eighth-notes (UN-dos-tres · CUATRO-cinco-seis)
+      const step = 0.24;
+      for (let bar = 0; bar < 2; bar++) {
+        const base = bar * 6 * step;
+        [0, 1, 2, 3, 4, 5].forEach((eighth) => {
+          const t = base + eighth * step;
+          if (eighth === 0) {
+            this.audio.playDrumHit('kick', t);
+            this.playMidiNote(48, 0.45, t, false);
+          } else if (eighth === 3) {
+            this.audio.playDrumHit('clap', t);
+            this.playMidiNote(55, 0.45, t, false);
+          } else {
+            this.audio.playDrumHit('hihat', t);
+          }
+        });
+      }
+      this.activeNoteLabel.set('Compás 6/8: 2 pulsos grandes de 3 corcheas (UN-dos-tres · CUATRO-cinco-seis)');
     } else if (name === 'demoMelodyHook') {
       const melody = [60, 64, 67, 64, 60, 62, 64, 60];
       melody.forEach((m, i) => this.playMidiNote(m, 0.36, i * 0.28, false));

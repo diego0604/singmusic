@@ -228,7 +228,7 @@ export const TREATISE_ENRICHMENT_SEARCH_META: TreatiseSearchMeta[] = [
   {
     catId: 'canto',
     catLabel: '8. Canto y Calentamiento Vocal',
-    sectionId: 'v-calentamiento',
+    sectionId: 'v-interpretacion-estilos',
     sectionTitle: '⚡ Gimnasio de Agilidad, Respiración 4-2-8, SOVT y Modificación de Vocales',
     nivel: '1-3',
     keywords: 'gimnasio de agilidad riffs melismas trinos modificacion de vocales i e a o u passaggio respiracion appoggio sovt afinacion vibrato',
@@ -244,13 +244,85 @@ export const TREATISE_ENRICHMENT_SEARCH_META: TreatiseSearchMeta[] = [
     snippet: 'Entrena velocidad y motricidad con los dedos 1–4 al metrónomo (+5 BPM) y memoriza acordes aleatorios tocándolos y reconociéndolos en el mástil.',
   },
   {
-    catId: 'guitarra-ac',
-    catLabel: '4. Guitarra Acústica',
+    catId: 'entrenamiento',
+    catLabel: '12. Entrenamiento, Salud y Banda',
     sectionId: 'entreno-diario',
-    sectionTitle: '⏱️ Sesión Diaria de Entrenamiento Guiada (Guitarra, Bajo, Batería y Canto)',
+    sectionTitle: '⏱️ Sesión Diaria de Entrenamiento Guiada (Guitarra, Bajo 8 Bloques, Batería y Canto)',
     nivel: '1-3',
     keywords: 'sesion de entrenamiento diario rutina 10 20 30 minutos guitarra bajo bateria canto motricidad temporizador metronomo',
-    snippet: 'Rutinas cronometradas de 10, 20 o 30 minutos con metrónomo guía y bloques progresivos de motricidad, técnica y groove.',
+    snippet: 'Rutinas cronometradas de 10, 20 o 30 minutos con metrónomo guía y bloques progresivos de motricidad (10 en guitarra, 8 en bajo, 6 en batería y 5 en canto).',
+  },
+  {
+    catId: 'entrenamiento',
+    catLabel: '12. Entrenamiento, Salud y Banda',
+    sectionId: 'e-salud-practica',
+    sectionTitle: '🩺 Salud Física/Vocal y Práctica Deliberada (Escalera de Chunking Lento)',
+    nivel: '1-3',
+    keywords: 'salud fisica musico tendinitis munecas ergonomia fatiga vocal practica deliberada chunking lento escalera bpm',
+    snippet: 'Prevención de lesiones en muñecas y voz, postura sin tensión y entrenador interactivo de chunking lento (55% → 72% → 88% → 100%).',
+  },
+  {
+    catId: 'entrenamiento',
+    catLabel: '12. Entrenamiento, Salud y Banda',
+    sectionId: 'e-tocar-en-banda',
+    sectionTitle: '🤝 Códigos de Ensayo, Dinámica y Jam Session en Banda',
+    nivel: '1-3',
+    keywords: 'tocar en banda ensayo jam session count in senales visuales dinamica espacio frecuencias escuchar',
+    snippet: 'Reglas reales de ensayo, señales visuales de entrada/corte/solo y simulador interactivo de dinámica en banda.',
+  },
+  {
+    catId: 'composicion',
+    catLabel: '3. Composición y Letras',
+    sectionId: 'c-canciones-reales',
+    sectionTitle: '🎧 Anatomía de Canciones Reales (Repertorio Desarmado por Capas)',
+    nivel: '1-3',
+    keywords: 'canciones reales repertorio desarmado let it be stand by me billie jean creep autumn leaves 6/8 mezclador capas mute solo',
+    snippet: 'Desarma 5 canciones reconocibles en 4 capas reales (Batería, Bajo, Armonía y Melodía) con Mute/Solo en vivo para oír por qué funcionan.',
+  },
+  {
+    catId: 'guitarra-ac',
+    catLabel: '4. Guitarra Acústica',
+    sectionId: 'ga-ritmo-fingerstyle',
+    sectionTitle: '🖐️ Entrenador Interactivo de Fingerstyle, PIMA y Travis Picking',
+    nivel: '1-3',
+    keywords: 'fingerstyle pima travis picking mano derecha pulgar alternado balada 6/8 bossa nova percusion slap acustica',
+    snippet: 'Practica 6 patrones de mano derecha P–i–m–a y Travis Picking sincronizados con acordes, cuerdas iluminadas y BPM.',
+  },
+  {
+    catId: 'guitarra-el',
+    catLabel: '5. Guitarra Eléctrica',
+    sectionId: 'ge-fundamentos',
+    sectionTitle: '🎛️ Simulador de Cadena de Efectos, Pastillas, Palm Mute y Técnicas Expresivas',
+    nivel: '1-3',
+    keywords: 'guitarra electrica pedales cadena efectos overdrive chorus delay reverb pastillas mastil puente palm mute power chords legato bending tapping',
+    snippet: 'Prueba pastillas, pedales y el orden Overdrive ↔ Delay/Reverb con audio DSP real y demos de Palm Mute, Legato, Bending y Tapping.',
+  },
+  {
+    catId: 'bajo',
+    catLabel: '6. Bajo Eléctrico (4 Cuerdas)',
+    sectionId: 'b-gimnasio',
+    sectionTitle: '🎸 Gimnasio de Motricidad en Bajo (Permutaciones 1-3-2-4, Raking, Apagado y Fills)',
+    nivel: '1-3',
+    keywords: 'bajo motricidad digitacion permutaciones 1 3 2 4 cruce cuerdas raking apagado dos manos floating thumb ghost notes fills transicion',
+    snippet: '4 ejercicios dedicados de motricidad en mástil de 4 cuerdas (permutación, raking descendente, muteo a dos manos y fills de transición).',
+  },
+  {
+    catId: 'arreglos',
+    catLabel: '10. Arreglos y Orquestación',
+    sectionId: 'a-generos',
+    sectionTitle: '🎛️ Mezclador Interactivo de Arreglos por Género (Mute / Solo en 4 Capas)',
+    nivel: '2-3',
+    keywords: 'mezclador arreglos generos pop rock balada funk jazz bossa andina mute solo bandas frecuencia orquestacion',
+    snippet: 'Escucha cómo se reparten las frecuencias en 5 géneros silenciando o soleando Batería, Bajo, Armonía y Melodía en tiempo real.',
+  },
+  {
+    catId: 'arreglos',
+    catLabel: '10. Arreglos y Orquestación',
+    sectionId: 'a-vientos-orquestacion',
+    sectionTitle: '🎻 Comparador Orquestal (Cuerdas, Metales Bb, Maderas) y Transposición en Vivo',
+    nivel: '2-3',
+    keywords: 'vientos orquestacion cuerdas metales trompeta bb saxo maderas quena transposicion voicing cerrado abierto drop 2',
+    snippet: 'Calcula transposición real vs. escrita (Bb/C) y compara Voicing Cerrado vs. Drop 2 en Cuerdas, Metales, Maderas y Quena.',
   },
 ];
 
@@ -336,7 +408,7 @@ function wrapDenseSubheadingInDetails(
   if (nextArticle !== -1 && nextArticle < blockEnd) blockEnd = nextArticle;
 
   const innerBlock = html.slice(h3Idx, blockEnd);
-  const wrapped = `<details data-nivel="${nivel}" class="callout-box mt-4"><summary style="color:#fbbf24; font-weight:800;">🎓 ${summaryTitle} (Nivel ${nivel} — Pulsa para ver fórmulas matemáticas y detalle avanzado)</summary>${innerBlock}</details>`;
+  const wrapped = `<details data-nivel="${nivel}" class="callout-box mt-4"><summary style="color:var(--accent-text); font-weight:800;">🎓 ${summaryTitle} (Nivel ${nivel} — Pulsa para ver fórmulas matemáticas y detalle avanzado)</summary>${innerBlock}</details>`;
   return html.slice(0, h3Idx) + wrapped + html.slice(blockEnd);
 }
 
@@ -360,7 +432,11 @@ export function injectTreatiseEnrichmentIntoCategoryHtml(catId: string, html: st
 
   if (catId === 'armonia' || catId === 'all') {
     out = prependAfterSectionHeader(out, 'h-triadas', buildZeroToHeroChordBuildingHtml());
+    out = appendInsideSection(out, 'h-triadas', buildHarmonyGuidedLabHtml('h-triadas', 'Retos Interactivos de Tríadas (Cambia 1 Nota y Repara el Acorde Roto)'));
     out = insertAfterSection(out, 'h-triadas', buildFretboardTriadsSectionHtml('h-triadas-mastil', 'armonia', '1B. Tríadas en el Mástil (Inversiones y Sets de 3 Cuerdas)'));
+    out = appendInsideSection(out, 'h-septimas', buildHarmonyGuidedLabHtml('h-septimas', 'Retos Interactivos de Séptimas (Construye Maj7 y Repara G7)'));
+    out = appendInsideSection(out, 'h-diatonica', buildHarmonyGuidedLabHtml('h-diatonica', 'Reto Guiado de Armonía Diatónica (Completa la Función Dominante)'));
+    out = appendInsideSection(out, 'h-cadencias', buildHarmonyGuidedLabHtml('h-cadencias', 'Reto Guiado de Cadencias (Completa la Cadencia Rota V7 → vi)'));
     out = appendInsideSection(out, 'h-extensiones', buildTensionesIlustradasRescueAndGlueHtml());
     out = appendInsideSection(out, 'h-poli-hibridos', buildPolychordVsHybridMatrixHtml());
     out = insertAfterSection(out, 'h-poli-hibridos', buildPolychordVisualizerSectionHtml());
@@ -369,21 +445,28 @@ export function injectTreatiseEnrichmentIntoCategoryHtml(catId: string, html: st
     out = insertAfterSection(out, 'h-neoriemann', buildNeighborChordsSectionHtml());
   }
 
+  if (catId === 'composicion' || catId === 'all') {
+    out = insertAfterSection(out, 'c-ejemplo', buildRealSongsDissectionSectionHtml());
+  }
+
   if (catId === 'guitarra-ac' || catId === 'all') {
     out = appendInsideSection(out, 'ga-acordes', buildGuitarKuleshovCagedAndColombianHtml());
-    out = insertAfterSection(out, 'ga-acordes', buildFretboardTriadsSectionHtml('ga-triadas-mastil', 'guitarra-ac', '2B. Tríadas en el Mástil (Inversiones y Sets de 3 Cuerdas)'));
+    out = appendInsideSection(out, 'ga-acordes', buildTriadsCrossLinkCalloutHtml());
+    out = appendInsideSection(out, 'ga-ritmo-fingerstyle', buildFingerstylePimaLabHtml());
     out = insertAfterSection(out, 'ga-ritmo-fingerstyle', buildGuitarStrummingSectionHtml());
     out = insertAfterSection(out, 'ga-rasgueos', buildGuitarDexterityAndMemorySectionHtml());
-    out = insertAfterSection(out, 'ga-motricidad-memoria', buildDailyTrainingSectionHtml());
   }
 
   if (catId === 'guitarra-el' || catId === 'all') {
+    out = appendInsideSection(out, 'ge-fundamentos', buildElectricFxChainLabHtml('fundamentos'));
+    out = appendInsideSection(out, 'ge-tecnicas', buildElectricFxChainLabHtml('expresion'));
     out = appendInsideSection(out, 'ge-riffs-solos', buildElectricGuitarGlueTriadsAndOctavesHtml());
     out = appendInsideSection(out, 'ge-gimnasio', buildInstrumentSessionCalloutHtml('guitarra', 'ge'));
   }
 
   if (catId === 'bajo' || catId === 'all') {
     out = appendInsideSection(out, 'b-bajo-bateria', buildBassLockInAndExpressiveHtml());
+    out = appendInsideSection(out, 'b-gimnasio', buildBassMotorLabHtml());
     out = appendInsideSection(out, 'b-gimnasio', buildInstrumentSessionCalloutHtml('bajo', 'bajo'));
     out = appendInsideSection(out, 'b-mutear-articulacion', buildBassExpressiveQuickJumpHtml());
   }
@@ -394,15 +477,37 @@ export function injectTreatiseEnrichmentIntoCategoryHtml(catId: string, html: st
   }
 
   if (catId === 'canto' || catId === 'all') {
-    out = prependAfterSectionHeader(out, 'v-calentamiento', buildVocalAgilityAndVowelLabHtml());
     out = appendInsideSection(out, 'v-calentamiento', buildVocalDiagnosticAndHygieneHtml());
     out = appendInsideSection(out, 'v-calentamiento', buildInstrumentSessionCalloutHtml('canto', 'canto'));
+    out = prependAfterSectionHeader(out, 'v-interpretacion-estilos', buildVocalAgilityAndVowelLabHtml());
     out = appendInsideSection(out, 'v-interpretacion-estilos', buildVocalSixLayersBeltAndMicHtml());
   }
 
   if (catId === 'arreglos' || catId === 'all') {
     out = appendInsideSection(out, 'a-fundamentos', buildArreglosIlustradosBulletproofPadHtml());
+    out = appendInsideSection(out, 'a-vientos-orquestacion', buildOrchestralTimbreLabHtml());
+    out = appendInsideSection(out, 'a-generos', buildArrangementLayerMixerLabHtml());
     out = appendInsideSection(out, 'a-integracion', buildBandChartAndVoicesSectionHtml());
+  }
+
+  if (catId === 'entrenamiento') {
+    return (
+      buildDailyTrainingSectionHtml() +
+      '\n' +
+      buildHealthAndDeliberatePracticeSectionHtml() +
+      '\n' +
+      buildBandRehearsalSectionHtml()
+    );
+  }
+
+  if (catId === 'all') {
+    out +=
+      '\n' +
+      buildDailyTrainingSectionHtml() +
+      '\n' +
+      buildHealthAndDeliberatePracticeSectionHtml() +
+      '\n' +
+      buildBandRehearsalSectionHtml();
   }
 
   return out;
@@ -1724,9 +1829,9 @@ function buildInterval9thVisualizerSectionHtml(): string {
       </div>
     </div>
 
-    <article class="interactive-widget mt-6" id="lab-visualizador-9nintervalos" data-lab="interval-9th-visualizer" data-nivel="2">
+    <article class="interactive-widget mt-6" id="lab-visualizador-9nintervalos" data-lab="interval-9th-visualizer" data-nivel="1">
       <div class="widget-header">
-        <span class="widget-tag">Laboratorio Interactivo · Mástil 6c / 4c</span>
+        <span class="widget-tag">Laboratorio Interactivo · Piano 3 Octavas + Mástil 6c / 4c</span>
         <h3>📐 Visualizador de Intervalos y 9nas (Simples y Compuestos: 1ª a 9ª, 11ª y 13ª)</h3>
         <p class="text-sm">Elige la nota raíz, selecciona cualquier intervalo simple o tensión compuesta (<code>♭9</code>, <code>9</code>, <code>#9</code>, <code>11</code>, <code>#11</code>, <code>♭13</code>, <code>13</code>), alterna entre <strong>Guitarra (6c)</strong> y <strong>Bajo (4c)</strong> y escucha el intervalo solo o dentro de un acorde con novena.</p>
       </div>
@@ -2043,9 +2148,9 @@ function buildGuitarDexterityAndMemorySectionHtml(): string {
 
     <article class="interactive-widget mt-4" id="lab-digitacion-guitarra" data-lab="guitar-dexterity-lab" data-nivel="1">
       <div class="widget-header">
-        <span class="widget-tag">Motricidad y Velocidad · 10 Ejercicios + Zoom de Mástil + Dedos 1–4</span>
-        <h3>⚡ Gimnasio de Digitación en Guitarra (Araña, Permutaciones, Ligados y Barridos)</h3>
-        <p class="text-sm">Elige entre <strong>10 rutinas progresivas</strong> (<code>1-2-3-4</code>, <code>1-3-2-4</code>, <code>1-4-2-3</code>, <code>4-3-2-1</code>, cruce en terceras, salto de cuerda, extensión, ligados H/P, arpegio Sweep y cambio de posición), haz zoom a la zona activa para ver botones grandes y alterna entre <strong>Dedos Grandes 1–4</strong> o notas con BPM progresivo.</p>
+        <span class="widget-tag">Motricidad y Calentamiento · 14 Ejercicios + Zoom de Mástil + Dedos 1–4</span>
+        <h3>⚡ Gimnasio de Digitación y Calentamiento en Guitarra (Arañas, Diagonales, Fuerza 3–4, Ligados y Barridos)</h3>
+        <p class="text-sm">Elige entre <strong>14 rutinas progresivas</strong> (araña <code>1-2-3-4</code>, permutaciones, <strong>calentamiento cromático diagonal</strong>, <strong>araña con dedos anclados</strong>, <strong>trinos anular–meñique 3–4</strong>, <strong>inside/outside picking</strong>, extensión <code>1–2–4</code>, ligados H/P, Sweep y cambio de posición), haz zoom a la zona activa y entrena con BPM progresivo.</p>
       </div>
       <div class="lab-stage"></div>
     </article>
@@ -2064,16 +2169,16 @@ function buildGuitarDexterityAndMemorySectionHtml(): string {
 
 function buildDailyTrainingSectionHtml(): string {
   return `
-  <section id="entreno-diario" class="module-section" data-cat="guitarra-ac" data-nivel="1-3" data-menu="3D. Sesión Diaria de Entrenamiento (4 Instrumentos)">
+  <section id="entreno-diario" class="module-section" data-cat="entrenamiento" data-nivel="1-3" data-menu="1. Sesión Diaria Guiada (4 Instrumentos)">
     <div class="module-header">
-      <span class="nav-badge badge-lvl2">Rutina Completa · 8 Bloques de Guitarra, Bajo, Batería y Canto</span>
-      <h2 class="module-title">3D. Sesión de Entrenamiento Guiada (10, 20 o 30 Minutos)</h2>
-      <p class="module-subtitle">Alterna entre <strong>Guitarra (8 ejercicios en 3 fases: motricidad, acordes con Caja Vertical y arpegios/ligados/tríadas)</strong>, Bajo Eléctrico, Batería y Canto con metrónomo guía integrado.</p>
+      <span class="nav-badge badge-lvl2">Centro Independiente · 10 Bloques Guitarra · 8 Bloques Bajo · 6 Batería · 5 Canto</span>
+      <h2 class="module-title">1. Sesión Diaria de Entrenamiento Guiada (10, 20 o 30 Minutos)</h2>
+      <p class="module-subtitle">Centro unificado de práctica cronometrada con metrónomo guía: <strong>Guitarra (10 bloques)</strong>, <strong>Bajo Eléctrico (8 bloques completos con permutaciones, raking, muteo y fills)</strong>, <strong>Batería (6 bloques)</strong> y <strong>Canto (5 bloques)</strong>.</p>
     </div>
 
     <article class="interactive-widget mt-3" id="lab-sesion-entrenamiento" data-lab="daily-training-session-lab" data-preset="guitarra" data-nivel="1">
       <div class="widget-header">
-        <span class="widget-tag">Entrenador Cronometrado · 4 Instrumentos + Zoom por Zona y Dedos 1–4</span>
+        <span class="widget-tag">Entrenador Cronometrado Central · 4 Instrumentos + Zoom por Zona y Dedos 1–4</span>
         <h3>⏱️ Planificador y Temporizador de Práctica Diaria</h3>
         <p class="text-sm">Elige tu instrumento y duración, haz zoom a cualquier zona del mástil y completa cada bloque paso a paso sin perder el foco.</p>
       </div>
@@ -2084,23 +2189,34 @@ function buildDailyTrainingSectionHtml(): string {
 }
 
 function buildInstrumentSessionCalloutHtml(inst: 'guitarra' | 'bajo' | 'bateria' | 'canto', suffix: string): string {
-  const labels: Record<string, string> = {
-    guitarra: 'Guitarra (8 Ejercicios: Araña, Permutaciones, Cejillas, Fingerpicking PIMA, Ligados y Tríadas)',
-    bajo: 'Bajo Eléctrico (Alternancia I–M, Lock-In y Walking)',
-    bateria: 'Batería (Rudimentos, Gap Click, Ghost Notes y Fills)',
-    canto: 'Canto (Appoggio 4-2-8, SOVT, Passaggio y Agilidad)',
+  const labels: Record<string, { title: string; detail: string }> = {
+    guitarra: {
+      title: 'Guitarra (10 Bloques Cronometrados)',
+      detail: 'Calentamiento Araña/Diagonal, Fuerza 3–4, Cejillas, Fingerpicking PIMA, Ligados y Tríadas en 10, 20 o 30 minutos.',
+    },
+    bajo: {
+      title: 'Bajo Eléctrico (8 Bloques Completos)',
+      detail: 'Alternancia I–M, Araña 1–3–2–4, Cruce/Raking G→E, Floating Thumb + Ghost Notes, Lock-In Bombo, Octavas Slap, Fills y Walking Bass.',
+    },
+    bateria: {
+      title: 'Batería (6 Bloques Cronometrados)',
+      detail: 'Paradiddle, Double Stroke Roll, Rock, Independencia 4 Extremidades, Lineal Funk y Fills.',
+    },
+    canto: {
+      title: 'Canto (5 Bloques Cronometrados)',
+      detail: 'Appoggio 4-2-8, SOVT Lip Trill, Sirena de Passaggio, Igualación de Vocales y Agilidad.',
+    },
   };
+  const info = labels[inst];
   return `
-  <div class="callout-box guitar-card-clean mt-5" style="border-top:3px solid #10b981;" data-nivel="1">
-    <h3>⏱️ Sesión Guiada de Entrenamiento — ${labels[inst]}</h3>
-    <p class="text-xs mb-2">Practica con reloj real por bloques (10, 20 o 30 minutos) y metrónomo integrado adaptado a este instrumento:</p>
-    <article class="interactive-widget mt-2" id="lab-sesion-${suffix}" data-lab="daily-training-session-lab" data-preset="${inst}" data-nivel="1">
-      <div class="widget-header">
-        <span class="widget-tag">Sesión de Práctica Diaria · ${inst.toUpperCase()}</span>
-        <h4>Rutina Cronometrada Paso a Paso</h4>
-      </div>
-      <div class="lab-stage"></div>
-    </article>
+  <div class="callout-box mt-5" id="callout-sesion-${suffix}" style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;" data-nivel="1">
+    <div style="flex:1; min-width:220px;">
+      <h4 style="margin:0 0 4px; color:var(--success);">⏱️ Sesión Guiada de Entrenamiento — ${info.title}</h4>
+      <p class="text-xs" style="margin:0; color:var(--text-secondary);">${info.detail}</p>
+    </div>
+    <button type="button" class="btn btn-primary js-jump-guided-session" data-inst="${inst}" style="white-space:nowrap;">
+      ⏱️ Abrir Sesión Guiada (${inst.toUpperCase()}) →
+    </button>
   </div>
   `;
 }
@@ -2157,15 +2273,21 @@ function buildBandChartAndVoicesSectionHtml(): string {
 function buildDrumProNotationGapAndKitHtml(): string {
   return `
   <div class="callout-box mt-6" style="border-left: 4px solid #38bdf8;" data-nivel="1">
-    <h3>🥁 Notación de Batería en Pentagrama PAS Sincronizada, Gap Click, Sonido del Kit y Ejercicios de Práctica</h3>
+    <h3>🥁 Notación de Batería en Pentagrama PAS Sincronizada, Gap Click, Sonido del Kit y 8 Ejercicios de Motricidad</h3>
     <p class="text-sm mb-3">
-      Domina el estándar internacional PAS de lectura (<code>✕</code> arriba = Hi-Hat/Crash, espacio 3 = Caja/Tarola, espacio 1 = Bombo), pon a prueba tu reloj interno cuando desaparece el metrónomo, explora técnicas del kit y practica <strong>4 ejercicios de motricidad y coordinación</strong> en la pestaña 4.
+      Domina el estándar internacional PAS de lectura (<code>✕</code> arriba = Hi-Hat/Crash, espacio 3 = Caja/Tarola, espacio 1 = Bombo), fortalece tu reloj interno con el <strong>Entrenador de Tempo Interno (Gap Click)</strong>, explora técnicas del kit y practica <strong>8 ejercicios progresivos de motricidad, rebote, pies e independencia</strong> en la pestaña 4.
     </p>
+    <div class="card mb-3" style="border-left: 3px solid #fbbf24;">
+      <h4>⏱️ ¿Qué es el Gap Click y por qué lo usan todos los bateristas profesionales?</h4>
+      <p class="text-xs">
+        Un metrónomo normal funciona como "rueditas de bicicleta": mientras suena, te apoyas en él, pero apenas se apaga tiendes a acelerar (<em>rushing</em>) o atrasarte (<em>dragging</em>). El <strong>Gap Click</strong> alterna <strong>compases con click audible</strong> seguidos de <strong>compases en silencio total</strong> (el <em>gap</em> o hueco). Tu reto es seguir tocando o marcando el pulso durante el silencio y aterrizar exactamente junto al click cuando regresa en el <strong>Tiempo 1</strong>. En la pestaña 2 verás tu desviación real en <strong>milisegundos (<code>ms</code>)</strong> y una rutina progresiva de 4 niveles.
+      </p>
+    </div>
     <article class="interactive-widget mt-3" id="lab-bateria-pro" data-lab="drum-pro-lab" data-preset="staff" data-nivel="1">
       <div class="widget-header">
-        <span class="widget-tag">Batería Completa · Pentagrama PAS + Gap Click + Sonido del Kit + Práctica</span>
-        <h3>🥁 Pentagrama de Batería Sincronizado, Gap Click, Kit y Ejercicios de Práctica</h3>
-        <p class="text-sm">Edita golpes en la rejilla PAS, entrena tu precisión en ms en <strong>Gap Click</strong>, prueba <strong>Sonido del Kit</strong> o practica singles, paradiddles e independencia en <strong>Ejercicios de Práctica</strong>.</p>
+        <span class="widget-tag">Batería Completa · Pentagrama PAS + Gap Click + Sonido del Kit + 8 Ejercicios</span>
+        <h3>🥁 Pentagrama de Batería Sincronizado, Gap Click, Kit y 8 Ejercicios de Motricidad</h3>
+        <p class="text-sm">Edita golpes en la rejilla PAS, mide tu precisión en <code>ms</code> en <strong>Gap Click</strong>, prueba <strong>Sonido del Kit</strong> o entrena singles, dobles, paradiddles, pies y grooves lineales en <strong>Ejercicios de Práctica</strong>.</p>
       </div>
       <div class="lab-stage"></div>
     </article>
@@ -2235,5 +2357,261 @@ function buildVocalAgilityAndVowelLabHtml(): string {
   </div>
   `;
 }
+
+function buildRealSongsDissectionSectionHtml(): string {
+  return `
+  <section id="c-canciones-reales" class="module-section" data-cat="composicion" data-nivel="1-3" data-menu="9B. Anatomía de Canciones Reales (Repertorio Desarmado)">
+    <div class="module-header">
+      <span class="nav-badge badge-lvl1">Repertorio Real · Niveles 1–3 · Mezclador Interactivo de 4 Capas</span>
+      <h2 class="module-title">9B. Cómo Suenan Canciones Reales: Repertorio Desarmado por Capas</h2>
+      <p class="module-subtitle">La teoría cobra vida cuando escuchas cómo <strong>Armonía, Bajo, Batería y Melodía</strong> se entrelazan en canciones reales reconocibles. Silencia (Mute) o aísla (Solo) cada instrumento en vivo.</p>
+    </div>
+
+    <p class="text-sm mb-3">
+      Un error clásico al estudiar música es ver escalas, acordes y ritmo en cajas separadas. En una canción real, el gancho (<em>hook</em>) nace del diálogo entre las 4 capas: a veces manda el ostinato de bajo (<em>"Stand By Me"</em>, <em>"Billie Jean"</em>), a veces manda un acorde sorpresa tomado prestado del modo menor (<em>"Creep"</em>) y a veces manda el balanceo ternario del compás 6/8.
+    </p>
+
+    <article class="interactive-widget mt-3" id="lab-canciones-reales" data-lab="real-songs-lab" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Repertorio Interactivo · 6 Canciones Reales (N1–N3) · Mute / Solo en Vivo</span>
+        <h3>🎧 Desarmador Interactivo de Canciones Reales</h3>
+        <p class="text-sm">Elige una canción, pulsa <strong>Reproducir</strong> y prueba a silenciar el bajo o la armonía mientras suena para sentir exactamente qué aporta cada capa.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </section>
+  `;
+}
+
+function buildTriadsCrossLinkCalloutHtml(): string {
+  return `
+  <div class="callout-box mt-4" style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px;" data-nivel="2">
+    <div style="flex:1; min-width:220px;">
+      <h4 style="margin:0 0 3px; color:var(--accent-text);">🎸 Mapa Interactivo de Tríadas e Inversiones en el Mástil</h4>
+      <p class="text-xs" style="margin:0; color:var(--text-secondary);">Para evitar contenido duplicado, el visualizador completo de tríadas (estado fundamental, 1ª y 2ª inversión por grupos de 3 cuerdas) está centralizado en Armonía Práctica.</p>
+    </div>
+    <button type="button" class="btn btn-primary js-jump-cross-section" data-target="h-triadas-mastil" style="white-space:nowrap;">
+      Ir a Tríadas en el Mástil →
+    </button>
+  </div>
+  `;
+}
+
+function buildFingerstylePimaLabHtml(): string {
+  return `
+  <div class="callout-box mt-5" style="border-left:4px solid #10b981;" data-nivel="1">
+    <h3>🖐️ Entrenador Interactivo de Mano Derecha: PIMA, Balada 6/8 y Travis Picking</h3>
+    <p class="text-sm mb-3">
+      Leer patrones de dedos sin oírlos ni ver qué cuerda se pulsa en cada corchea hace lento el aprendizaje. Practica aquí los <strong>6 patrones esenciales de fingerstyle</strong> (de PIMA clásico y 6/8 hasta Travis Picking, percusión <em>thumb slap</em> y Bossa Nova) con cambio automático de acordes y velocidad ajustable.
+    </p>
+    <article class="interactive-widget mt-2" id="lab-fingerstyle-pima" data-lab="fingerstyle-pima-lab" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Guitarra Acústica · 6 Patrones P–i–m–a + Travis Picking + BPM</span>
+        <h3>🎸 Laboratorio Interactivo de Fingerstyle y Mano Derecha</h3>
+        <p class="text-sm">Haz clic en cualquier paso individual para escuchar qué dedo pulsa qué cuerda, o activa el loop sobre la progresión completa.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </div>
+  `;
+}
+
+function buildElectricFxChainLabHtml(preset: 'fundamentos' | 'expresion'): string {
+  const isExpr = preset === 'expresion';
+  return `
+  <div class="callout-box mt-5" style="border-left:4px solid ${isExpr ? '#f472b6' : '#f97316'};" data-nivel="${isExpr ? '2' : '1'}">
+    <h3>${isExpr ? '⚡ Banco Interactivo de Técnicas Expresivas (Legato, Bending + Vibrato y Tapping)' : '🎛️ Simulador Real de Cadena de Efectos, Pastillas y Palm Mute'}</h3>
+    <p class="text-sm mb-3">
+      ${
+        isExpr
+          ? 'Escucha cómo el <strong>Legato (Hammer-On / Pull-Off)</strong>, el <strong>Bending afinado de 1 tono</strong> y el <strong>Two-Hand Tapping</strong> responden a tu selección de pastillas, compresión, overdrive y delay.'
+          : 'En la guitarra eléctrica tu tono nace de tres piezas: <strong>la pastilla</strong> (mástil cálida vs. puente mordiente), <strong>la articulación</strong> (<em>Palm Mute</em> vs. abierto) y <strong>el orden de los pedales</strong>. Invierte el orden <code>Overdrive ↔ Delay/Reverb</code> para escuchar por qué el orden cambia radicalmente la claridad.'
+      }
+    </p>
+    <article class="interactive-widget mt-2" id="lab-electric-fx-${preset}" data-lab="electric-fx-chain-lab" data-preset="${preset}" data-nivel="${isExpr ? '2' : '1'}">
+      <div class="widget-header">
+        <span class="widget-tag">DSP Web Audio Real · Pastillas + Pedalboard + Orden de Señal</span>
+        <h3>${isExpr ? '🎸 Laboratorio Expresivo de Guitarra Eléctrica' : '🎛️ Pedalboard y Simulador de Cadena de Efectos'}</h3>
+        <p class="text-sm">Cambia de pastilla, enciende/apaga pedales o invierte el orden de saturación y eco para escuchar la diferencia al instante.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </div>
+  `;
+}
+
+function buildBassMotorLabHtml(): string {
+  return `
+  <div class="callout-box mt-5" style="border-left:4px solid #38bdf8;" data-nivel="1">
+    <h3>🎸 Entrenador de Motricidad en Bajo (4 Cuerdas): Permutaciones, Raking, Muteo y Fills</h3>
+    <p class="text-sm mb-3">
+      Un bajista sólido no solo toca la tónica: controla la independencia de sus 4 dedos (<code>1–3–2–4</code>), cruza cuerdas descendentes con <strong>Raking</strong>, silencia cuerdas vecinas con <strong>Floating Thumb + Ghost Notes</strong> y conecta acordes con <strong>fills musicales</strong> sin perder el tiempo 1.
+    </p>
+    <article class="interactive-widget mt-2" id="lab-bajo-motricidad" data-lab="bass-motor-lab" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Bajo Eléctrico 4 Cuerdas · Digitación + Raking + Muteo + Fills</span>
+        <h3>⚡ Gimnasio Interactivo de Motricidad para Bajo Eléctrico</h3>
+        <p class="text-sm">Selecciona cualquiera de los 4 ejercicios, ajusta el BPM y sigue los trastes, dedos izquierdos (1–4) y mano derecha (I/M/Rake/Mute).</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </div>
+  `;
+}
+
+function buildArrangementLayerMixerLabHtml(): string {
+  return `
+  <div class="callout-box mt-5" style="border-left:4px solid #10b981;" data-nivel="2">
+    <h3>🎛️ Mezclador Interactivo de Arreglos por Género (Mute / Solo en 4 Capas)</h3>
+    <p class="text-sm mb-3">
+      Para entender cómo suena un buen arreglo sin enmascarar frecuencias, nada supera escuchar las 4 capas por separado y juntas. Alterna entre <strong>Pop/Rock, Balada Cinematográfica, Funk con Metales, Jazz/Bossa y Fusión Andina</strong> y mutea o solea cada pista en vivo.
+    </p>
+    <article class="interactive-widget mt-2" id="lab-arreglos-mezclador" data-lab="arrangement-layer-mixer-lab" data-nivel="2">
+      <div class="widget-header">
+        <span class="widget-tag">Consola de Arreglos · 5 Géneros · Mute / Solo + Zonas de Frecuencia</span>
+        <h3>🎚️ Radiografía Sonora por Género (Batería · Bajo · Armonía · Melodía)</h3>
+        <p class="text-sm">Escucha qué desaparece cuando silencias el bajo o la armonía, y observa la banda de frecuencias asignada a cada instrumento.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </div>
+  `;
+}
+
+function buildOrchestralTimbreLabHtml(): string {
+  return `
+  <div class="callout-box mt-5" style="border-left:4px solid #e5a93c;" data-nivel="2">
+    <h3>🎻 Comparador de Familias Orquestales, Voicing Cerrado vs. Drop 2 y Transposición</h3>
+    <p class="text-sm mb-3">
+      Escucha cómo cambian el color y la claridad al pasar un mismo acorde de un <strong>voicing cerrado</strong> a un <strong>voicing abierto / Drop 2</strong> en Cuerdas, Metales, Maderas y Aerófonos Andinos, y calcula al instante la transposición real ↔ escrita para instrumentos en Si♭.
+    </p>
+    <article class="interactive-widget mt-2" id="lab-orquestacion-timbres" data-lab="orchestral-timbre-lab" data-nivel="2">
+      <div class="widget-header">
+        <span class="widget-tag">Orquestación Interactiva · Cuerdas / Metales / Maderas / Andino</span>
+        <h3>🎺 Laboratorio de Timbres Orquestales y Transposición Real ↔ Partitura</h3>
+        <p class="text-sm">Compara voicings cerrados y abiertos por familia y comprueba qué nota debes escribirle a una Trompeta o Clarinete en Si♭.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </div>
+  `;
+}
+
+function buildHarmonyGuidedLabHtml(scope: 'h-triadas' | 'h-septimas' | 'h-cadencias' | 'h-diatonica', title: string): string {
+  return `
+  <div class="callout-box mt-5" style="border-left:4px solid #10b981;" data-nivel="1">
+    <h3>🎯 Práctica Guiada Paso a Paso: ${title}</h3>
+    <p class="text-sm mb-3">
+      Antes de saltar a explorar acordes libres, pon a prueba tu oído y tus manos con retos breves y creativos directamente sobre <strong>Piano, Guitarra o Bajo</strong>.
+    </p>
+    <article class="interactive-widget mt-2" id="lab-harmony-guided-${scope}" data-lab="harmony-guided-lab" data-scope="${scope}" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Ejercicio Creativo Guiado · Multi-Instrumento (Piano | Guitarra | Bajo)</span>
+        <h3>🧩 ${title}</h3>
+        <p class="text-sm">Elige tu instrumento arriba, escucha el acorde o progresión y toca la nota o acorde que transforma o repara la armonía.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </div>
+  `;
+}
+
+function buildHealthAndDeliberatePracticeSectionHtml(): string {
+  return `
+  <section id="e-salud-practica" class="module-section" data-cat="entrenamiento" data-nivel="1-3" data-menu="2. Salud Física/Vocal y Práctica Deliberada (Chunking)">
+    <div class="module-header">
+      <span class="nav-badge badge-lvl1">Prevención de Lesiones + Ciencia del Estudio · Niveles 1–3</span>
+      <h2 class="module-title">2. Salud del Músico, Ergonomía y Práctica Deliberada (Cómo Estudiar Sin Frustrarte)</h2>
+      <p class="module-subtitle">Tocar bien durante décadas depende menos de "practicar 4 horas a la fuerza" y más de estudiar sin tensión física, cuidar la voz y dividir los pasajes difíciles en bloques lentos (<em>chunking</em>).</p>
+    </div>
+
+    <div class="grid-cards mb-4">
+      <div class="card">
+        <h4>🖐️ Muñecas, Manos y Postura (Cero Tendinitis)</h4>
+        <p class="text-xs">
+          • <strong>Muñeca neutra (sin doblarla 90°):</strong> Tanto en guitarra/bajo como en piano o batería, una muñeca quebrada comprime el túnel carpiano.<br>
+          • <strong>Fuerza mínima útil:</strong> En guitarra/bajo pisa justo detrás del traste metálico; si aprietas demasiado desafinas la nota y fatigas el pulgar.<br>
+          • <strong>Regla 25/5:</strong> Cada 25 minutos detente 5 minutos, suelta brazos y hombros. El dolor agudo NUNCA es "normal": si arde o pincha, para de inmediato.
+        </p>
+      </div>
+      <div class="card">
+        <h4>🎤 Higiene Vocal y Prevención de Fatiga</h4>
+        <p class="text-xs">
+          • <strong>Calienta 5 min antes (SOVT):</strong> Nunca arranques cantando agudos a volumen máximo en frío.<br>
+          • <strong>Hidratación real:</strong> Bebe agua a lo largo del día (el agua tarda horas en hidratar el tejido) y descansa 10 min tras ensayos intensos.<br>
+          • <strong>Señal de alerta:</strong> Carraspear constantemente, pérdida de agudos suaves o picazón indican fatiga: baja volumen y haz enfriamiento suave descendente.
+        </p>
+      </div>
+      <div class="card">
+        <h4>🧠 Práctica Deliberada: El Método del Chunking</h4>
+        <p class="text-xs">
+          • <strong>No toques la canción entera desde el inicio si fallas en el compás 18:</strong> Aislar solo esos 2 compases ahorra 80% de tiempo.<br>
+          • <strong>Baja al 55% del tempo:</strong> Si no puedes tocarlo relajado y perfecto despacio, tu cerebro está memorizando el error.<br>
+          • <strong>Regla de 3 seguidas:</strong> Solo sube el BPM cuando encadenes 3 repeticiones limpias consecutivas sin tensión.
+        </p>
+      </div>
+    </div>
+
+    <article class="interactive-widget mt-3" id="lab-practica-deliberada" data-lab="practice-deliberate-lab" data-preset="chunking" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Estudio Inteligente · Escalera 55% → 72% → 88% → 100%</span>
+        <h3>🎯 Entrenador de Práctica Deliberada (Escalera de Chunking Lento)</h3>
+        <p class="text-sm">Escribe el BPM objetivo de la canción que estás estudiando, activa el metrónomo en Fase 1 y encadena 3 repeticiones limpias para subir automáticamente de velocidad.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </section>
+  `;
+}
+
+function buildBandRehearsalSectionHtml(): string {
+  return `
+  <section id="e-tocar-en-banda" class="module-section" data-cat="entrenamiento" data-nivel="1-3" data-menu="3. Tocar en Banda: Ensayo, Dinámica y Códigos de Jam">
+    <div class="module-header">
+      <span class="nav-badge badge-lvl2">Música en Vivo y Ensayos · Comunicación Real en Escenario</span>
+      <h2 class="module-title">3. Cómo Tocar en Banda: Códigos de Ensayo, Espacio Sonoro y Jam Session</h2>
+      <p class="module-subtitle">Tocar solo en tu habitación es distinto a sonar compacto con otros músicos. Aquí están las reglas no escritas que hacen que todos quieran volver a llamarte para tocar.</p>
+    </div>
+
+    <div class="grid-cards mb-4">
+      <div class="card">
+        <h4>👂 1. Escucha Más de lo que Tocas (Espacio = Groove)</h4>
+        <p class="text-xs">
+          • <strong>No ocupes el rango del otro:</strong> Si hay bajista, el pianista/guitarrista aligera las notas graves para no embarrar.<br>
+          • <strong>Si hay dos guitarras:</strong> Una toca acordes abiertos abajo y la otra tríadas agudas, arpegios o cejilla/capo en otro registro.<br>
+          • <strong>El silencio también es música:</strong> Dejar huecos hace que el coro explote cuando entran todos.
+        </p>
+      </div>
+      <div class="card">
+        <h4>👀 2. Señales Visuales Universales de Jam y Escenario</h4>
+        <p class="text-xs">
+          • <strong>Count-In claro:</strong> Quien empieza cuenta 4 pulsos audibles mirando a la banda.<br>
+          • <strong>Cabeza / Dedo circular:</strong> "Repetimos esta vuelta una vez más".<br>
+          • <strong>Mano bajando / subiendo:</strong> Bajar volumen a <em>piano</em> para un solo o subir a <em>forte</em> para el clímax.<br>
+          • <strong>Mirar al baterista y bajar mástil/mano:</strong> Señal de corte final en unísono (<em>Trash Ending</em>).
+        </p>
+      </div>
+      <div class="card">
+        <h4>📋 3. Disciplina de Ensayo Productivo</h4>
+        <p class="text-xs">
+          • <strong>Llega afinado y con tu parte estudiada:</strong> El ensayo es para ensamblar entradas, finales y dinámicas, no para aprender tus acordes desde cero.<br>
+          • <strong>Volumen de ensayo controlado:</strong> Si nadie oye a la voz sin gritar, todos los amplificadores están demasiado altos.<br>
+          • <strong>Graba con el móvil:</strong> Escuchar 2 minutos de ensayo grabado revela en segundos qué sobra y qué acelera.
+        </p>
+      </div>
+    </div>
+
+    <article class="interactive-widget mt-3" id="lab-banda-dinamica" data-lab="practice-deliberate-lab" data-preset="band" data-nivel="1">
+      <div class="widget-header">
+        <span class="widget-tag">Ensamble en Vivo · Count-In + Dinámica + Señales de Final</span>
+        <h3>🤝 Simulador de Dinámica y Señales de Banda</h3>
+        <p class="text-sm">Escucha cómo suenan un Count-In limpio, una bajada dinámica para dar paso a un solo y un corte final en unísono.</p>
+      </div>
+      <div class="lab-stage"></div>
+    </article>
+  </section>
+  `;
+}
+
 
 

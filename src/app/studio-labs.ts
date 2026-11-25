@@ -1518,6 +1518,102 @@ function buildDrumProLab(
         { hand: 'L★', piece: 'snare' },
       ],
     },
+    {
+      id: 'double_stroke',
+      name: '5. Calentamiento de Rebote: Double Stroke Roll (R R L L · R R L L)',
+      focus: 'Control de rebote (fingers + muñeca) para velocidad sin tensión',
+      tip: 'Lanza el primer golpe con la muñeca y recoge el segundo rebote cerrando los dedos traseros (anular y meñique) para que el 2º golpe suene igual de definido.',
+      steps: [
+        { hand: 'R1★', piece: 'snare', dual: 'kick' },
+        { hand: 'R2', piece: 'ghost' },
+        { hand: 'L1★', piece: 'snare' },
+        { hand: 'L2', piece: 'ghost' },
+        { hand: 'R1★', piece: 'snare', dual: 'hihat' },
+        { hand: 'R2', piece: 'ghost' },
+        { hand: 'L1★', piece: 'snare' },
+        { hand: 'L2', piece: 'ghost' },
+        { hand: 'R1★', piece: 'tom', dual: 'kick' },
+        { hand: 'R2', piece: 'tom' },
+        { hand: 'L1★', piece: 'snare' },
+        { hand: 'L2', piece: 'ghost' },
+        { hand: 'R1★', piece: 'snare', dual: 'hihat' },
+        { hand: 'R2', piece: 'ghost' },
+        { hand: 'L1★', piece: 'snare' },
+        { hand: 'L2', piece: 'ghost' },
+      ],
+    },
+    {
+      id: 'paradiddle_diddle',
+      name: '6. Paradiddle-Diddle (R L R R L L) — Fills Fluidos y Polirritmia',
+      focus: 'Motricidad asimétrica en bloques de 6 golpes sobre compás de 4/4',
+      tip: 'Combina un grupo de 6 (R L R R L L) dos veces + 4 golpes de cierre (R L R L). El acento se desplaza con musicalidad moderna.',
+      steps: [
+        { hand: 'R★', piece: 'tom', dual: 'kick' },
+        { hand: 'L', piece: 'ghost' },
+        { hand: 'R', piece: 'hihat' },
+        { hand: 'R', piece: 'hihat' },
+        { hand: 'L', piece: 'ghost' },
+        { hand: 'L', piece: 'ghost' },
+        { hand: 'R★', piece: 'tom', dual: 'kick' },
+        { hand: 'L', piece: 'ghost' },
+        { hand: 'R', piece: 'hihat' },
+        { hand: 'R', piece: 'hihat' },
+        { hand: 'L', piece: 'ghost' },
+        { hand: 'L', piece: 'ghost' },
+        { hand: 'R★', piece: 'snare', dual: 'kick' },
+        { hand: 'L', piece: 'ghost' },
+        { hand: 'R★', piece: 'tom' },
+        { hand: 'L★', piece: 'snare' },
+      ],
+    },
+    {
+      id: 'foot_independence',
+      name: '7. Independencia de Pies: Bombo (PD) vs. Pedal Hi-Hat (PI)',
+      focus: 'Coordinación inferior y estabilidad postural sobre el banquillo',
+      tip: 'Mantén el Pie Izquierdo (PI) pisando el pedal Hi-Hat en contratiempos o en 2 y 4 mientras el Pie Derecho (BD) dibuja figuras sin tensar la espalda.',
+      steps: [
+        { hand: 'BD(PD)', piece: 'kick', dual: 'hihat' },
+        { hand: 'L', piece: 'ghost' },
+        { hand: 'PI(HH)', piece: 'hihat' },
+        { hand: 'BD(PD)', piece: 'kick' },
+        { hand: 'SD★+PI', piece: 'snare', dual: 'hihat' },
+        { hand: 'R', piece: 'hihat' },
+        { hand: 'BD(PD)', piece: 'kick' },
+        { hand: 'L', piece: 'ghost' },
+        { hand: 'BD(PD)', piece: 'kick', dual: 'hihat' },
+        { hand: 'BD(PD)', piece: 'kick' },
+        { hand: 'PI(HH)', piece: 'hihat' },
+        { hand: 'L', piece: 'ghost' },
+        { hand: 'SD★+PI', piece: 'snare', dual: 'hihat' },
+        { hand: 'R', piece: 'hihat' },
+        { hand: 'BD(PD)', piece: 'kick' },
+        { hand: 'PI(HH)', piece: 'hihat' },
+      ],
+    },
+    {
+      id: 'linear_funk',
+      name: '8. Groove Lineal Funk (R – L – BD sin Golpes Simultáneos)',
+      focus: 'Precisión milimétrica entre manos y bombo (estilo David Garibaldi)',
+      tip: 'Regla de oro del drumming lineal: nunca caen dos extremidades a la vez. Cada semicorchea pertenece a una sola pieza creando un groove limpio y filoso.',
+      steps: [
+        { hand: 'BD★', piece: 'kick' },
+        { hand: 'R(HH)', piece: 'hihat' },
+        { hand: 'L(g)', piece: 'ghost' },
+        { hand: 'R(HH)', piece: 'hihat' },
+        { hand: 'L(SD)★', piece: 'snare' },
+        { hand: 'R(HH)', piece: 'hihat' },
+        { hand: 'BD', piece: 'kick' },
+        { hand: 'L(g)', piece: 'ghost' },
+        { hand: 'R(HH)', piece: 'hihat' },
+        { hand: 'BD', piece: 'kick' },
+        { hand: 'R(HH)', piece: 'hihat' },
+        { hand: 'L(g)', piece: 'ghost' },
+        { hand: 'L(SD)★', piece: 'snare' },
+        { hand: 'R(HH)', piece: 'hihat' },
+        { hand: 'L(g)', piece: 'ghost' },
+        { hand: 'BD', piece: 'kick' },
+      ],
+    },
   ];
   let drillIdx = 0;
   let drillBpm = 84;
@@ -1611,19 +1707,22 @@ function buildDrumProLab(
     if (!drill || stepIdx < 0 || stepIdx >= drill.steps.length) return [];
     const st = drill.steps[stepIdx];
     const hits: DrumLimbHit[] = [];
+    const isLeftFoot = st.hand.includes('PI');
     const mainPiece: DrumKitCode =
       st.piece === 'kick'
         ? 'BD'
-        : st.piece === 'hihat'
-          ? 'HH'
-          : st.piece === 'tom'
-            ? 'T1'
-            : 'SD';
+        : isLeftFoot && st.piece === 'hihat'
+          ? 'HHP'
+          : st.piece === 'hihat'
+            ? 'HH'
+            : st.piece === 'tom'
+              ? 'T1'
+              : 'SD';
     const isLeft = st.hand.startsWith('L') || st.hand === 'g' || st.hand.startsWith('SD');
-    const mainLimb = mainPiece === 'BD' ? 'RF' : isLeft ? 'L' : 'R';
+    const mainLimb = mainPiece === 'BD' ? 'RF' : mainPiece === 'HHP' ? 'LF' : isLeft ? 'L' : 'R';
     hits.push({ piece: mainPiece, limb: mainLimb, accent: st.hand.includes('★') });
     if (st.dual === 'kick') hits.push({ piece: 'BD', limb: 'RF' });
-    if (st.dual === 'hihat') hits.push({ piece: 'HH', limb: 'R' });
+    if (st.dual === 'hihat') hits.push({ piece: isLeftFoot ? 'HHP' : 'HH', limb: isLeftFoot ? 'LF' : 'R' });
     return hits;
   };
 
@@ -1788,6 +1887,37 @@ function buildDrumProLab(
         : 'Listo para entrenar tu reloj interno';
 
       body = `
+        <div class="card" style="margin-bottom:10px; border-left:3px solid #38bdf8;">
+          <h4 style="color:#38bdf8; margin-bottom:6px;">🧠 ¿Cómo funciona el Entrenador de Tempo Interno (Gap Click)?</h4>
+          <p class="text-xs" style="color:#cbd5e1; line-height:1.5; margin-bottom:8px;">
+            El metrónomo suena durante <strong>X compases</strong> y luego <strong>se apaga por completo</strong> durante <strong>Y compases</strong> (zona de silencio). Durante ese silencio tu cerebro y tu cuerpo sostienen el pulso solos: pulsa <strong>TAP / ESPACIO</strong> (o toca tu groove) y comprueba si regresas exactamente a tiempo en el <strong>Tiempo 1</strong>.
+          </p>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(195px, 1fr)); gap:8px; margin-bottom:8px;">
+            <div style="background:rgba(15,23,42,0.88); border:1px solid #1e293b; border-radius:8px; padding:8px;">
+              <div class="text-xs" style="color:#fbbf24; font-weight:800; margin-bottom:3px;">1. Cómo leer tu desvío (ms)</div>
+              <div class="text-xs" style="color:#cbd5e1;">
+                • <strong style="color:#34d399;">±0 a ±25 ms:</strong> Reloj sólido de estudio.<br>
+                • <strong style="color:#fb7185;">Negativo (-ms):</strong> Te adelantaste (<em>rushing</em>).<br>
+                • <strong style="color:#38bdf8;">Positivo (+ms):</strong> Te atrasaste (<em>dragging</em>).
+              </div>
+            </div>
+            <div style="background:rgba(15,23,42,0.88); border:1px solid #1e293b; border-radius:8px; padding:8px;">
+              <div class="text-xs" style="color:#34d399; font-weight:800; margin-bottom:3px;">2. Truco de subdivisión interna</div>
+              <div class="text-xs" style="color:#cbd5e1;">
+                Nunca cuentes en silencio con notas largas: cuenta mentalmente en <strong>corcheas (1-y-2-y-3-y-4-y)</strong> o mueve el talón izquierdo en <strong>2 y 4</strong> para no perder el pulso al hacer fills.
+              </div>
+            </div>
+            <div style="background:rgba(15,23,42,0.88); border:1px solid #1e293b; border-radius:8px; padding:8px;">
+              <div class="text-xs" style="color:#c4b5fd; font-weight:800; margin-bottom:3px;">3. Rutina progresiva (4 Niveles)</div>
+              <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">
+                <button type="button" class="btn js-gap-level" data-on="3" data-off="1" style="font-size:0.7rem; padding:3px 7px;">N1: 3+1</button>
+                <button type="button" class="btn js-gap-level" data-on="2" data-off="1" style="font-size:0.7rem; padding:3px 7px;">N2: 2+1</button>
+                <button type="button" class="btn js-gap-level" data-on="1" data-off="1" style="font-size:0.7rem; padding:3px 7px;">N3: 1+1</button>
+                <button type="button" class="btn js-gap-level" data-on="1" data-off="2" style="font-size:0.7rem; padding:3px 7px;">N4: 1+2 Pro</button>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="grid-2" style="align-items:center;">
           <div class="card">
             <h4 style="color:#fbbf24;">⏱️ Configuración del Gap Click</h4>
@@ -1799,6 +1929,7 @@ function buildDrumProLab(
                 <select class="lab-select js-gap-on">
                   <option value="1" ${gapBarsOn === 1 ? 'selected' : ''}>1 compás</option>
                   <option value="2" ${gapBarsOn === 2 ? 'selected' : ''}>2 compases</option>
+                  <option value="3" ${gapBarsOn === 3 ? 'selected' : ''}>3 compases</option>
                 </select>
               </label>
               <label class="text-xs">Compases en Silencio:
@@ -2078,6 +2209,17 @@ function buildDrumProLab(
     }
     if (t.closest('.js-dp-play')) {
       toggleStaffPlay();
+      return;
+    }
+    const gapLevelBtn = t.closest<HTMLElement>('.js-gap-level');
+    if (gapLevelBtn) {
+      gapBarsOn = parseInt(gapLevelBtn.getAttribute('data-on') || '2', 10);
+      gapBarsSilent = parseInt(gapLevelBtn.getAttribute('data-off') || '1', 10);
+      const wasRunning = gapRunning;
+      stopAllDrums(true);
+      lastGapEval = `Nivel cargado: ${gapBarsOn} compás(es) con click → ${gapBarsSilent} compás(es) en silencio.`;
+      render();
+      if (wasRunning) startGapClick();
       return;
     }
     if (t.closest('.js-gap-toggle')) {
@@ -3304,6 +3446,70 @@ export function buildGuitarDexterityLab(
         { sIdx: 4, relFret: 3, finger: 2, label: 'Pos B-2' },
         { sIdx: 4, relFret: 4, finger: 3, label: 'Pos B-3' },
         { sIdx: 4, relFret: 5, finger: 4, label: 'Pos B-4' },
+      ],
+    },
+    diagWarmup: {
+      title: '11. Calentamiento Cromático en Diagonal (Cuerdas 6ª → 1ª)',
+      levelTag: 'Nivel 1 · Calentamiento',
+      focus: 'Desplazamiento diagonal fluido para lubricar articulaciones al iniciar',
+      cue: 'Cada dedo cae en una cuerda más aguda y un traste más arriba; regresa invirtiendo la diagonal sin tensar el hombro.',
+      steps: [
+        { sIdx: 5, relFret: 0, finger: 1, label: '6ª-1' },
+        { sIdx: 4, relFret: 1, finger: 2, label: '5ª-2' },
+        { sIdx: 3, relFret: 2, finger: 3, label: '4ª-3' },
+        { sIdx: 2, relFret: 3, finger: 4, label: '3ª-4' },
+        { sIdx: 2, relFret: 0, finger: 1, label: '3ª-1' },
+        { sIdx: 1, relFret: 1, finger: 2, label: '2ª-2' },
+        { sIdx: 0, relFret: 2, finger: 3, label: '1ª-3' },
+        { sIdx: 0, relFret: 3, finger: 4, label: '1ª-4' },
+      ],
+    },
+    anchoredSpider: {
+      title: '12. Araña Pegada / Dedos Anclados (Cero Vuelo de Dedos)',
+      levelTag: 'Nivel 1 · Economía',
+      focus: 'Independencia real moviendo solo 1 dedo mientras los otros 3 quedan apoyados',
+      cue: 'Deja los 4 dedos posados en la 4ª cuerda y cruza únicamente el dedo activo a la 3ª cuerda antes de regresar.',
+      steps: [
+        { sIdx: 3, relFret: 0, finger: 1, label: '4ª-1 (Ancla)' },
+        { sIdx: 2, relFret: 0, finger: 1, label: '3ª-1 (Cruza)' },
+        { sIdx: 3, relFret: 1, finger: 2, label: '4ª-2 (Ancla)' },
+        { sIdx: 2, relFret: 1, finger: 2, label: '3ª-2 (Cruza)' },
+        { sIdx: 3, relFret: 2, finger: 3, label: '4ª-3 (Ancla)' },
+        { sIdx: 2, relFret: 2, finger: 3, label: '3ª-3 (Cruza)' },
+        { sIdx: 3, relFret: 3, finger: 4, label: '4ª-4 (Ancla)' },
+        { sIdx: 2, relFret: 3, finger: 4, label: '3ª-4 (Cruza)' },
+      ],
+    },
+    ringPinkyTrill: {
+      title: '13. Trinos de Resistencia Anular–Meñique (3–4 en 3 Cuerdas)',
+      levelTag: 'Nivel 2 · Fuerza 3–4',
+      focus: 'Fortalecimiento específico del par más débil de la mano izquierda (dedos 3 y 4)',
+      cue: 'Ancla el dedo 1 como referencia suave y alterna 3–4–3–4 con el mismo volumen; detente si notas fatiga.',
+      steps: [
+        { sIdx: 3, relFret: 2, finger: 3, label: '4ª-3' },
+        { sIdx: 3, relFret: 3, finger: 4, label: '4ª-4' },
+        { sIdx: 3, relFret: 2, finger: 3, label: '4ª-3' },
+        { sIdx: 3, relFret: 3, finger: 4, label: '4ª-4' },
+        { sIdx: 2, relFret: 2, finger: 3, label: '3ª-3' },
+        { sIdx: 2, relFret: 3, finger: 4, label: '3ª-4' },
+        { sIdx: 1, relFret: 2, finger: 3, label: '2ª-3' },
+        { sIdx: 1, relFret: 3, finger: 4, label: '2ª-4' },
+      ],
+    },
+    insideOutsidePick: {
+      title: '14. Inside / Outside Picking en 2 Cuerdas (Sincronía Púa–Dedos)',
+      levelTag: 'Nivel 2 · Mano Derecha',
+      focus: 'Limpieza en cambios de cuerda por dentro y por fuera con púa alternada estricta',
+      cue: 'Mantén la púa estrictamente ↓ ↑ ↓ ↑ sin repetir dirección al cruzar entre 3ª y 2ª cuerda.',
+      steps: [
+        { sIdx: 2, relFret: 0, finger: 1, label: '3ª-1 (↓)' },
+        { sIdx: 1, relFret: 0, finger: 1, label: '2ª-1 (↑)' },
+        { sIdx: 2, relFret: 2, finger: 3, label: '3ª-3 (↓)' },
+        { sIdx: 1, relFret: 2, finger: 3, label: '2ª-3 (↑)' },
+        { sIdx: 2, relFret: 3, finger: 4, label: '3ª-4 (↓)' },
+        { sIdx: 1, relFret: 3, finger: 4, label: '2ª-4 (↑)' },
+        { sIdx: 2, relFret: 1, finger: 2, label: '3ª-2 (↓)' },
+        { sIdx: 1, relFret: 1, finger: 2, label: '2ª-2 (↑)' },
       ],
     },
   };

@@ -99,15 +99,15 @@ export const ACADEMY_STAGES: AcademyStage[] = [
       'Notas, cifrado y enarmonía',
       'Tonos y semitonos',
       'Compases, figuras, silencios y subdivisiones',
-      'Escalas mayores, menores y pentatónicas',
       'Intervalos',
+      'Escalas mayores, menores y pentatónicas',
       'Tonalidades, armaduras y lectura musical básica',
     ],
     lessons: [
       { catId: 'teoria', sectionId: 't-notas', title: '2. Notas, Tonos, Semitonos, #/♭ y Enarmonía', nivel: '1' },
       { catId: 'teoria', sectionId: 't-ritmo', title: '3. Ritmo Desde Cero: Figuras, Silencios, Síncopa y Compases', nivel: '1' },
-      { catId: 'teoria', sectionId: 't-escalas', title: '4. Escala Mayor Intuitiva, Menor y Pentatónicas', nivel: '1' },
-      { catId: 'teoria', sectionId: 't-intervalos', title: '5. Intervalos: Medir y Escuchar Distancias', nivel: '1' },
+      { catId: 'teoria', sectionId: 't-intervalos', title: '4. Intervalos: Medir y Escuchar Distancias', nivel: '1' },
+      { catId: 'teoria', sectionId: 't-escalas', title: '5. Escala Mayor Intuitiva, Menor y Pentatónicas', nivel: '1' },
       { catId: 'teoria', sectionId: 't-tonalidades', title: '6. Tonalidad, Armaduras en 5 seg. y Círculo de Quintas', nivel: '1' },
       { catId: 'teoria', sectionId: 't-lectura', title: '7. Lectura Musical Básica en Pentagrama y Tablatura', nivel: '1' },
     ],
@@ -344,8 +344,8 @@ export const ACADEMY_LEARNING_PATHS: AcademyLearningPath[] = [
       { catId: 'teoria', sectionId: 't-sonido', title: '1. Sonido Intuitivo: Altura, Duración y Timbre', badge: 'Etapa 0' },
       { catId: 'teoria', sectionId: 't-notas', title: '2. Notas, Tonos, Semitonos y Alteraciones', badge: 'Etapa 1' },
       { catId: 'teoria', sectionId: 't-ritmo', title: '3. Ritmo Desde Cero: Figuras, Silencios y Síncopa', badge: 'Etapa 1' },
-      { catId: 'teoria', sectionId: 't-escalas', title: '4. Escala Mayor Intuitiva, Menor y Pentatónicas', badge: 'Etapa 1' },
-      { catId: 'teoria', sectionId: 't-intervalos', title: '5. Intervalos Básicos (2ª a 8ª)', badge: 'Etapa 1' },
+      { catId: 'teoria', sectionId: 't-intervalos', title: '4. Intervalos Básicos (2ª a 8ª)', badge: 'Etapa 1' },
+      { catId: 'teoria', sectionId: 't-escalas', title: '5. Escala Mayor Intuitiva, Menor y Pentatónicas', badge: 'Etapa 1' },
       { catId: 'teoria', sectionId: 't-tonalidades', title: '6. Tonalidad, Armaduras en 5 seg. y Círculo', badge: 'Etapa 1' },
       { catId: 'armonia', sectionId: 'h-triadas', title: 'Tríadas: Cómo Nacen los Acordes', badge: 'Etapa 3' },
     ],
@@ -410,13 +410,14 @@ export const ACADEMY_LEARNING_PATHS: AcademyLearningPath[] = [
   {
     id: 'canto-arreglo',
     title: '🎤 Canto, Melismas y Arreglo a Voces',
-    subtitle: 'Calentamiento SOVT, apoyo, agilidad vocal, modificación de vocales y armonización a 2–4 voces.',
+    subtitle: 'Respiración, detector de tesitura, calentamiento SOVT, agilidad vocal, modificación de vocales y armonización a 2–4 voces.',
     steps: [
-      { catId: 'canto', sectionId: 'v-calentamiento', title: 'Rutina Diaria SOVT y Cuidado Vocal', badge: 'N1' },
-      { catId: 'canto', sectionId: 'v-fundamentos', title: 'Respiración Costo-Diafragmática y Apoyo', badge: 'N1–N2' },
-      { catId: 'canto', sectionId: 'v-afinacion-registros', title: 'Registros, Passaggio y Modificación Vocal', badge: 'N2–N3' },
-      { catId: 'canto', sectionId: 'v-interpretacion-estilos', title: 'Gimnasio de Agilidad, Riffs y Melismas', badge: 'N2–N3' },
-      { catId: 'arreglos', sectionId: 'a-integracion', title: 'Escritura Práctica y Arreglo a 2–4 Voces', badge: 'N2–N3' },
+      { catId: 'canto', sectionId: 'v-fundamentos', title: '1. Respiración Costo-Diafragmática y Anatomía Vocal', badge: 'N1' },
+      { catId: 'canto', sectionId: 'v-detector-tesitura', title: '2. Descubre tu Tesitura y 6 Ejercicios Fundamentales', badge: 'N1' },
+      { catId: 'canto', sectionId: 'v-calentamiento', title: '3. Calentamiento SOVT, Autodiagnóstico y Rutina Diaria', badge: 'N1–N2' },
+      { catId: 'canto', sectionId: 'v-afinacion-registros', title: '4. Registros, Passaggio y Afinación SATB', badge: 'N2–N3' },
+      { catId: 'canto', sectionId: 'v-interpretacion-estilos', title: '5. Agilidad Melismática, Vocales e Interpretación', badge: 'N2–N3' },
+      { catId: 'canto', sectionId: 'v-armonia-vocal', title: '6. Armonía Vocal y Coro a 2–4 Voces (SATB)', badge: 'N3' },
     ],
   },
 ];
@@ -437,12 +438,28 @@ export const TEORIA_PEDAGOGICAL_ORDER: TeoriaOrderConfig[] = [
   { id: 't-sonido', menuTitle: '1. Sonido Intuitivo y Armónicos' },
   { id: 't-notas', menuTitle: '2. Notas, Tonos, Semitonos y Alteraciones' },
   { id: 't-ritmo', menuTitle: '3. Ritmo Desde Cero y Compases' },
-  { id: 't-escalas', menuTitle: '4. Escala Mayor Intuitiva, Menor y Pentatónicas' },
-  { id: 't-intervalos', menuTitle: '5. Intervalos Básicos (2ª a 8ª)' },
+  { id: 't-intervalos', menuTitle: '4. Intervalos Básicos (2ª a 8ª)' },
+  { id: 't-escalas', menuTitle: '5. Escala Mayor Intuitiva, Menor y Pentatónicas' },
   { id: 't-tonalidades', menuTitle: '6. Tonalidad, Armaduras y Círculo de Quintas' },
   { id: 't-lectura', menuTitle: '7. Lectura Musical Básica' },
   { id: 't-oido', menuTitle: '8. Entrenamiento Auditivo Funcional' },
 ];
+
+export const CANTO_PEDAGOGICAL_ORDER: TeoriaOrderConfig[] = [
+  { id: 'v-fundamentos', menuTitle: '1. Respiración, Anatomía Vocal y Apoyo (Appoggio)' },
+  { id: 'v-detector-tesitura', menuTitle: '2. Descubre tu Tesitura (Micrófono) y 6 Ejercicios Fundamentales' },
+  { id: 'v-calentamiento', menuTitle: '3. Calentamiento Vocal SOVT, Autodiagnóstico y Rutina Diaria' },
+  { id: 'v-afinacion-registros', menuTitle: '4. Registros, Passaggio y Afinación SATB' },
+  { id: 'v-interpretacion-estilos', menuTitle: '5. Agilidad Melismática, Vocales, Vibrato e Interpretación' },
+  { id: 'v-armonia-vocal', menuTitle: '6. Armonía Vocal (2, 3 y 4 Voces / SATB)' },
+];
+
+function stripDuplicateCantoLegacy(html: string): string {
+  return html
+    .replace(/<div[^>]*data-usar="canto-legacy"[^>]*>[\s\S]*?<\/div>/gi, '')
+    .replace(/<article[^>]*data-usar="canto-legacy"[^>]*>[\s\S]*?<\/article>/gi, '')
+    .replace(/<!--\s*USAR:canto-legacy\s*-->/gi, '');
+}
 
 export interface ParsedHtmlSection {
   id: string;
@@ -581,14 +598,42 @@ export function assembleAcademyCategoryHtml(
     return result.join('\n');
   }
 
+  if (catId === 'canto') {
+    const parsed = splitHtmlSections(enrichedCategoryHtml);
+    const byId = new Map<string, ParsedHtmlSection>();
+    for (const s of parsed) {
+      byId.set(s.id, s);
+    }
+
+    const ordered: string[] = [];
+    for (const cfg of CANTO_PEDAGOGICAL_ORDER) {
+      const found = byId.get(cfg.id);
+      if (found) {
+        let updated = updateSectionAttributes(stripDuplicateCantoLegacy(found.html), {
+          menuTitle: cfg.menuTitle,
+        });
+        updated = applyUpgrade(cfg.id, updated);
+        ordered.push(updated);
+        byId.delete(cfg.id);
+      }
+    }
+    for (const leftover of byId.values()) {
+      ordered.push(applyUpgrade(leftover.id, stripDuplicateCantoLegacy(leftover.html)));
+    }
+    return ordered.join('\n');
+  }
+
   if (catId === 'all') {
-    // In 'all', avoid duplicating relocated sections and reorder teoria sections cleanly
+    // In 'all', avoid duplicating relocated sections and reorder teoria + canto sections cleanly
     const allSections = splitHtmlSections(enrichedCategoryHtml);
     const teoriaOrderedIds = new Set(TEORIA_PEDAGOGICAL_ORDER.map((x) => x.id));
+    const cantoOrderedIds = new Set(CANTO_PEDAGOGICAL_ORDER.map((x) => x.id));
     const teoriaMap = new Map<string, ParsedHtmlSection>();
+    const cantoMap = new Map<string, ParsedHtmlSection>();
     const nonTeoria: ParsedHtmlSection[] = [];
     let sec9th: ParsedHtmlSection | undefined;
     let secModes: ParsedHtmlSection | undefined;
+    let cantoSlotInserted = false;
 
     for (const sec of allSections) {
       if (sec.id === 't-visualizador-9nintervalos') {
@@ -597,6 +642,12 @@ export function assembleAcademyCategoryHtml(
         secModes = sec;
       } else if (teoriaOrderedIds.has(sec.id)) {
         teoriaMap.set(sec.id, sec);
+      } else if (cantoOrderedIds.has(sec.id)) {
+        cantoMap.set(sec.id, sec);
+        if (!cantoSlotInserted) {
+          cantoSlotInserted = true;
+          nonTeoria.push({ id: '__CANTO_SLOT__', menuTitle: '', nivel: '1', html: '' });
+        }
       } else {
         nonTeoria.push(sec);
       }
@@ -610,6 +661,20 @@ export function assembleAcademyCategoryHtml(
       }
     }
     for (const sec of nonTeoria) {
+      if (sec.id === '__CANTO_SLOT__') {
+        for (const cfg of CANTO_PEDAGOGICAL_ORDER) {
+          const cs = cantoMap.get(cfg.id);
+          if (cs) {
+            out.push(
+              applyUpgrade(
+                cfg.id,
+                updateSectionAttributes(stripDuplicateCantoLegacy(cs.html), { menuTitle: cfg.menuTitle })
+              )
+            );
+          }
+        }
+        continue;
+      }
       out.push(applyUpgrade(sec.id, sec.html));
       if (sec.id === 'h-extensiones' && sec9th) {
         out.push(
@@ -703,7 +768,8 @@ export function resolveCategoryForSectionId(sectionId: string): string {
     ['h-', 'armonia'],
     ['c-', 'composicion'],
     ['ga-', 'guitarra-ac'],
-    ['entreno-diario', 'guitarra-ac'],
+    ['entreno-diario', 'entrenamiento'],
+    ['e-', 'entrenamiento'],
     ['ge-', 'guitarra-el'],
     ['b-', 'bajo'],
     ['d-', 'bateria'],
